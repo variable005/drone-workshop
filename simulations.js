@@ -33,6 +33,25 @@ class DroneSimulations {
         this.switchSimulation(targetId);
       });
     });
+
+    // Sidebar collapse & expand handling
+    const btnCollapse = document.getElementById('btn-collapse-sidebar');
+    const btnExpand = document.getElementById('btn-expand-sidebar');
+    const simContainer = document.querySelector('.sim-suite-container');
+
+    if (btnCollapse && btnExpand && simContainer) {
+      btnCollapse.addEventListener('click', () => {
+        simContainer.classList.add('sidebar-collapsed');
+        btnExpand.style.display = 'inline-flex';
+        window.dispatchEvent(new Event('resize'));
+      });
+
+      btnExpand.addEventListener('click', () => {
+        simContainer.classList.remove('sidebar-collapsed');
+        btnExpand.style.display = 'none';
+        window.dispatchEvent(new Event('resize'));
+      });
+    }
   }
 
   switchSimulation(simId) {
@@ -4994,22 +5013,22 @@ class DroneSimulations {
     const btnFcApm = document.getElementById('btn-fc-apm');
     const btnViewAirframe = document.getElementById('btn-view-airframe');
     const btnViewPinout = document.getElementById('btn-view-pinout');
-    const btnToggleViewTop = document.getElementById('btn-asm-toggle-view');
-    const btnResetStep = document.getElementById('btn-asm-reset-step');
     const btnPrev = document.getElementById('btn-asm-prev');
     const btnNext = document.getElementById('btn-asm-next');
     const stepPillsContainer = document.getElementById('asm-step-pills');
 
-    // Guidance text elements
+    // Visual Guidance Elements
     const stepBadge = document.getElementById('asm-step-badge');
     const stepTitleHeader = document.getElementById('asm-step-title-header');
     const phaseBadge = document.getElementById('asm-phase-badge');
     const fcBadge = document.getElementById('asm-fc-badge');
     const stepHeading = document.getElementById('asm-step-heading');
-    const stepInstructions = document.getElementById('asm-step-instructions');
-    const stepTools = document.getElementById('asm-step-tools');
+    const microActionsContainer = document.getElementById('asm-micro-actions');
     const stepPitfall = document.getElementById('asm-step-pitfall');
-    const stepTest = document.getElementById('asm-step-test');
+    const btnVerify = document.getElementById('btn-asm-verify');
+    const verifyIcon = document.getElementById('asm-verify-icon');
+    const verifyText = document.getElementById('asm-verify-text');
+    const stepDeepDive = document.getElementById('asm-step-deepdive');
     const partDetails = document.getElementById('asm-part-details');
     const chipBtns = document.querySelectorAll('#asm-component-chips .chip-btn');
 
@@ -5018,163 +5037,141 @@ class DroneSimulations {
     let viewMode = 'airframe';  // 'airframe' | 'pinout'
     let currentStep = 1;        // 1 to 10
     let completedSteps = new Set([1]);
+    let verifiedSteps = new Set();
     let selectedPart = 'frame';
     let animTimer = 0;
     let mouse = { x: 0, y: 0, hoveredPart: null };
 
-    // 10 Detailed Assembly Steps
+    // 10 Visual-First Student Steps (Zero Dense Walls of Text!)
     const stepsData = [
       {
         step: 1,
-        title: "Frame Inspection & Bottom Plate PDB Preparation",
-        phase: "Phase 1: Mechanical Airframe & Power Foundation",
-        instructions: `Inspect the F450 frame kit. You have two main fiberglass plates: Top Plate and Bottom Plate. The Bottom Plate has integrated gold/tin copper traces with + and - solder pads acting as your Power Distribution Board (PDB).<br><br>
-        <strong>Arm Color Orientation:</strong> Mount the two <strong>RED arms to the FRONT</strong> (facing forward) and the two <strong>WHITE or BLACK arms to the REAR</strong>. This visual color contrast is vital so you can distinguish the drone's heading line-of-sight while flying.<br><br>
-        Use 16x M2.5 socket head screws from underneath to secure the 4 arms into the brass threaded inserts of the bottom plate. Do not install the top plate yet!`,
-        tools: "• F450 Bottom Plate, 2x Red Arms (Front), 2x White/Black Arms (Rear), 16x M2.5 Screws, 2.0mm Hex Driver",
-        pitfall: "Never install arms upside down! The motor mounting holes must face upward and the lower landing gear tabs curve downward. Tighten screws snugly; do not over-torque into brass threads.",
-        test: "Frame stands flat on its four legs with zero wobble. Red arms are pointing forward (10 o'clock and 2 o'clock).",
+        title: "Frame Assembly & Bottom Plate PDB",
+        phase: "Phase 1: Mechanical Base",
+        actions: [
+          { num: 1, title: "RED ARMS GO FRONT ➔", desc: "Mount the 2 Red arms facing forward (Nose). White/black arms go to the rear (Tail) for line-of-sight orientation." },
+          { num: 2, title: "INSERT 16 M2.5 SCREWS 🔩", desc: "Thread 4 screws per arm from underneath the bottom PDB plate into the brass arm inserts." },
+          { num: 3, title: "SNUG TIGHT ONLY ✋", desc: "Tighten snug with 2.0mm hex key. Never overtighten into brass threads. Leave top plate off for now." }
+        ],
+        pitfall: "Never install arms upside down! Landing leg tabs must point down. Do not overtighten screws into brass.",
+        deepdive: "The F450 frame uses an integrated Power Distribution Board (PDB) on the bottom fiberglass plate. This eliminates wire harnesses by routing high DC current directly through heavy copper layers.",
         highlightParts: ['frame']
       },
       {
         step: 2,
-        title: "Soldering Power Module (XT60) & 4x ESC Power Leads to PDB",
-        phase: "Phase 1: Mechanical Airframe & Power Foundation",
-        instructions: `The bottom plate PDB routes raw 11.1V–16.8V LiPo battery power directly to all 4 ESCs and the flight controller.<br><br>
-        1. <strong>Pre-tin the pads:</strong> Apply rosin flux and melt a generous mound of shiny 63/37 solder onto each of the 4 pairs of ESC pads and the central battery pads.<br>
-        2. <strong>Solder Power Module XT60 Lead:</strong> Strip 4mm of silicone insulation from the 3DR Power Module wires. Solder the thick RED wire to positive (+) and thick BLACK wire to negative (-).<br>
-        3. <strong>Solder 4x ESC Power Wires:</strong> Route each ESC along an arm. Strip, twist, pre-tin, and solder Red to (+) and Black to (-). Hold iron steady for 3 seconds until solder liquefies and forms a smooth bond.`,
-        tools: "• Soldering Station (380°C–400°C), 63/37 Rosin Core Solder, Rosin Flux Pen, Brass Tip Cleaner, 3DR Power Module, 4x 30A ESCs",
-        pitfall: "Solder bridges! The (+) and (-) pads are close together. A single stray copper wire strand or solder blob bridging (+) and (-) will cause an explosive dead-short when the battery is connected.",
-        test: "Visual inspection: Every solder joint must be shiny and concave. Give each wire a gentle tug test to verify mechanical bond.",
+        title: "Soldering Power Module & 4x ESC Leads",
+        phase: "Phase 1: Power Foundation",
+        actions: [
+          { num: 1, title: "FLUX & PRE-TIN PADS 🧈", desc: "Apply rosin flux and melt a clean, shiny dome of 63/37 solder onto all (+) and (-) copper pads first." },
+          { num: 2, title: "SOLDER XT60 LEADS 🔌", desc: "Strip 4mm of Power Module wire. Solder thick Red wire to (+) and thick Black wire to (-)." },
+          { num: 3, title: "SOLDER 4x ESC POWER ⚡", desc: "Route each ESC along an arm. Solder Red to (+) and Black to (-). Hold iron steady for 3 seconds." }
+        ],
+        pitfall: "Beware solder bridges! A single copper whisker bridging (+) and (-) creates a battery dead-short.",
+        deepdive: "Soldering station should be set to 380°C–400°C for high-copper ground planes. Ensure joint cools naturally to form a concave, mirror-shiny molecular bond.",
         highlightParts: ['power', 'escs']
       },
       {
         step: 3,
-        title: "Mounting 4x 2212 Brushless Motors (Screw Length Caution)",
-        phase: "Phase 2: Propulsion System & Wiring",
-        instructions: `Attach the 4x 2212 920KV/1000KV brushless motors to the ends of the arms using M3 screws.<br><br>
-        1. <strong>Motor Placement:</strong> Pay attention to the motor shaft threads! If your motors have CW/CCW labeled caps, place CW motors (silver nut) on Motors 3 & 4 and CCW motors (black nut) on Motors 1 & 2.<br>
-        2. <strong>Threadlocker:</strong> Add a tiny drop of Blue Loctite (242) to each M3 screw so engine vibration cannot loosen them in mid-air.<br>
-        3. <strong>CRITICAL SCREW INSPECTION:</strong> Before tightening, look closely into the side ventilation slots of the motor bell!`,
-        tools: "• 4x 2212 Brushless Motors, 16x M3 Screws (6mm or 8mm), Blue Threadlocker (Loctite 242), 2.0mm Hex Key",
-        pitfall: "THE DEADLY SCREW LENGTH TRAP: If your M3 screws are even 2mm too long, they will protrude inside the motor base and crush directly into the copper stator coil windings! This pierces the enamel insulation, causing an instant phase-to-ground short circuit that destroys the ESC upon arming. Always verify visually that screw tips do not contact copper coils.",
-        test: "Spin each motor bell freely by hand. There should be smooth magnetic cogging with zero scraping sound or mechanical resistance.",
+        title: "Mounting 4x 2212 Motors (Screw Length!)",
+        phase: "Phase 2: Propulsion System",
+        actions: [
+          { num: 1, title: "MOUNT 4 MOTORS 🛞", desc: "M1 & M2 (Black Nut) on diagonal corners. M3 & M4 (Silver Nut) on opposite corners." },
+          { num: 2, title: "CHECK SCREW LENGTH ⚠️", desc: "Max 6mm screw length! Long screws pierce into stator copper coils and destroy motor & ESC!" },
+          { num: 3, title: "FREE SPIN TEST 🔄", desc: "Add drop of blue Loctite 242. Spin each motor by hand—must rotate smoothly with zero scraping." }
+        ],
+        pitfall: "FATAL ERROR: M3 screws longer than 6mm will pierce motor copper windings, shorting the stator to frame ground!",
+        deepdive: "Brushless 2212 motors have 14 neodymium magnets and 12 stator poles. The internal clearance between mounting base and copper wire is under 2mm.",
         highlightParts: ['motors']
       },
       {
         step: 4,
-        title: "Connecting ESC 3-Phase Bullet Leads & Motor Rotation Rules",
-        phase: "Phase 2: Propulsion System & Wiring",
-        instructions: `Every brushless motor has 3 silicone phase wires (U, V, W) with no fixed (+) or (-) polarity. Connect the 3 motor bullet connectors to the 3 matching female bullet sockets on each ESC.<br><br>
-        <strong>ArduCopter Quad-X Spin Direction Standards:</strong><br>
-        • <strong>Motor 1 (Front-Right):</strong> Must spin <strong>Counter-Clockwise (CCW)</strong>.<br>
-        • <strong>Motor 2 (Rear-Left):</strong> Must spin <strong>Counter-Clockwise (CCW)</strong>.<br>
-        • <strong>Motor 3 (Front-Left):</strong> Must spin <strong>Clockwise (CW)</strong>.<br>
-        • <strong>Motor 4 (Rear-Right):</strong> Must spin <strong>Clockwise (CW)</strong>.<br><br>
-        <strong>The Golden Direction Swap Rule:</strong> If any motor spins the wrong direction, simply <strong>swap ANY TWO of its three phase wires</strong>! This instantly inverts the magnetic stator field rotation.`,
-        tools: "• 4x 3.5mm Bullet Connectors (or direct solder), Heat Shrink Tubing, Electrical Tape / Zip Ties for arm wire neatness",
-        pitfall: "Loose bullet connectors. If a bullet connector vibrates loose during flight, the motor immediately stalls and the drone flips violently (death roll). Ensure bullets fit with tight friction; insulate with heat shrink.",
-        test: "Verify wires are secured tightly to arms with zip ties so propellers cannot clip them in flight.",
+        title: "Motor 3-Phase Leads & Direction Swap",
+        phase: "Phase 2: Propulsion System",
+        actions: [
+          { num: 1, title: "PLUG 3 BULLET WIRES 🔌", desc: "Connect the 3 motor bullet connectors into the 3 matching ESC bullet sockets." },
+          { num: 2, title: "CHECK SPIN DIRECTION 🔄", desc: "Motors 1 & 2 spin Counter-Clockwise (CCW). Motors 3 & 4 spin Clockwise (CW)." },
+          { num: 3, title: "2-WIRE SWAP RULE 🔀", desc: "If motor spins backward, simply swap ANY TWO of its 3 wires! Reverses rotation instantly." }
+        ],
+        pitfall: "Loose bullet connectors cause mid-air motor stall and violent death-roll flips. Secure with zip ties.",
+        deepdive: "Brushless motors use 3-phase AC trapezoidal commutation generated by the 6-MOSFET ESC bridge. Reversing any two phases inverts the phase angle by 120°.",
         highlightParts: ['motors', 'escs']
       },
       {
         step: 5,
-        title: "Flight Controller Anti-Vibration Mounting & Heading Alignment",
-        phase: "Phase 3: Brain Installation & Flight Controller Orientation",
-        instructions: `Now assemble the F450 Top Plate over the bottom plate and mount the flight controller.<br><br>
-        1. <strong>Center of Gravity (CoG):</strong> The flight controller contains sensitive MEMS gyroscopes and accelerometers. It must be mounted at the dead center of the frame (intersection of the arm diagonals).<br>
-        2. <strong>Vibration Isolation:</strong> High-frequency motor vibrations blind the gyroscope, causing erratic flyaways. Mount the flight controller on a <strong>rubber anti-vibration damping plate</strong> with silicone bobbins or high-density 3M foam tape.<br>
-        3. <strong>HEADING ARROW ORIENTATION:</strong> The white printed arrow on top of the Pixhawk or APM 2.8 casing <strong>MUST point forward</strong> toward the red arms (between Motor 3 and Motor 1). If mounted backward or rotated 90°, the drone will violently flip over on takeoff!`,
-        tools: "• Pixhawk 2.4.8 or APM 2.8 Flight Controller, Anti-Vibration Damping Plate, 4x Silicone Rubber Bobbins / 3M Damping Foam",
-        pitfall: "Rigidly bolting the flight controller directly to the carbon fiber / fiberglass frame without vibration dampers. Motor vibrations will saturate the gyro sensors, causing erratic altitude hold and toilet-bowling.",
-        test: "Verify the white arrow on the FC case points exactly straight forward toward the space between the front two red arms.",
+        title: "Flight Controller Mounting & Forward Arrow",
+        phase: "Phase 3: Brain Installation",
+        actions: [
+          { num: 1, title: "INSTALL TOP PLATE 🧱", desc: "Fasten top plate over arms using M2.5 screws, sandwiching the wiring inside." },
+          { num: 2, title: "STICK VIBRATION BOBBINS 🟦", desc: "Mount flight controller on rubber anti-vibration damping platform at exact frame center (CoG)." },
+          { num: 3, title: "ARROW POINTS FORWARD ▲", desc: "White arrow on casing MUST point straight toward the two red front arms!" }
+        ],
+        pitfall: "Never mount FC backward or bolt directly to frame! Motor vibrations blind the gyros, causing violent flips.",
+        deepdive: "MEMS gyros and accelerometers require vibration damping below 150Hz to prevent sensor aliasing. Rubber bobbins isolate high-frequency acoustic noise.",
         highlightParts: ['fc']
       },
       {
         step: 6,
-        title: "Powering Flight Controller (Power Module & APM JP1 Jumper Rule)",
-        phase: "Phase 3: Brain Installation & Flight Controller Orientation",
-        instructions: `The 3DR Power Module supplies clean, regulated 5.3V DC power to the flight controller and measures total battery voltage and current consumption.<br><br>
-        1. Plug the 6-pin Power Module ribbon cable into the <strong>POWER</strong> port (Pixhawk) or <strong>PM</strong> port (APM 2.8).<br><br>
-        <strong>CRITICAL APM 2.8 JUMPER JP1 GOTCHA:</strong><br>
-        • If your ESCs have built-in 5V BEC (servo lead has Red wire): <strong>YOU MUST REMOVE JUMPER JP1</strong>! Leaving JP1 installed connects the ESC 5V regulator in parallel with the Power Module 5.3V regulator, causing back-feeding, overheating, and brownout resets.<br>
-        • If your ESCs are OPTO (no 5V BEC): Keep JP1 installed so the Power Module powers both inputs and outputs.<br><br>
-        <strong>Pixhawk Note:</strong> Pixhawk has internal power isolation diodes. The Power Module powers the internal computer, while the Main Out servo rail remains isolated.`,
-        tools: "• 6-Pin Power Module Cable, Needle-nose pliers / tweezers for APM Jumper JP1",
-        pitfall: "Leaving JP1 installed on APM 2.8 while using standard BEC ESCs. The dual power sources fight each other, causing the APM to reset mid-air!",
-        test: "Ensure 6-pin cable is clicked firmly into the POWER/PM port with red wire on Pin 1 (VCC).",
+        title: "Powering FC & The APM JP1 Jumper Rule",
+        phase: "Phase 3: Brain Installation",
+        actions: [
+          { num: 1, title: "PLUG 6-PIN POWER CABLE 🔌", desc: "Plug Power Module ribbon cable into POWER (Pixhawk) or PM (APM 2.8) port." },
+          { num: 2, title: "APM 2.8: REMOVE JP1 ⚠️", desc: "PULL OUT JUMPER JP1! If ESCs have built-in 5V BEC, leaving JP1 causes dual regulator conflict!" },
+          { num: 3, title: "PIXHAWK: AUTO-ISOLATED ✅", desc: "Pixhawk has internal power diodes. Main Out rail remains safely isolated." }
+        ],
+        pitfall: "Leaving JP1 installed on APM 2.8 with BEC ESCs will overheat regulators and cause mid-flight resets!",
+        deepdive: "3DR Power Module supplies clean 5.3V @ 2.25A and provides analog voltage and current telemetry. APM 2.8 requires rail separation via jumper JP1.",
         highlightParts: ['power', 'fc']
       },
       {
         step: 7,
-        title: "Plugging ESC Signal Wires into FC Outputs 1 to 4",
-        phase: "Phase 4: Signal Control & Wiring Connections",
-        instructions: `Each ESC has a 3-wire servo lead (White/Yellow = Signal, Red = +5V BEC, Black/Brown = Ground). Connect them into the FC Output rail in strict order according to the ArduCopter Quad-X motor layout:<br><br>
-        • <strong>Output 1:</strong> Motor 1 (Front-Right, CCW)<br>
-        • <strong>Output 2:</strong> Motor 2 (Rear-Left, CCW)<br>
-        • <strong>Output 3:</strong> Motor 3 (Front-Left, CW)<br>
-        • <strong>Output 4:</strong> Motor 4 (Rear-Right, CW)<br><br>
-        <strong>Pin Orientation (G-V-S Rule):</strong><br>
-        • <strong>G (Ground - Black/Brown):</strong> Outer / Top pin.<br>
-        • <strong>V (Power - Red):</strong> Middle pin.<br>
-        • <strong>S (Signal - White/Orange):</strong> Inner / Bottom pin.`,
-        tools: "• 4x ESC 3-pin servo leads, FC Output Header",
-        pitfall: "Plugging servo leads backward (Signal to Ground). Look closely at the small 'G V S' or '— + S' stamp on the casing before inserting plugs. Plugging Motor 1 into Output 3 will cause instant flip on takeoff!",
-        test: "Verify each motor's signal wire leads to the exact matching output channel (1 to 4) and Ground (black) is on the outer pin.",
+        title: "ESC Signal Wires to Outputs 1 to 4",
+        phase: "Phase 4: Signal Wiring",
+        actions: [
+          { num: 1, title: "FOLLOW QUAD-X ORDER 🔢", desc: "M1 ➔ Out 1 (FR), M2 ➔ Out 2 (RL), M3 ➔ Out 3 (FL), M4 ➔ Out 4 (RR)." },
+          { num: 2, title: "G-V-S PIN RULE 📍", desc: "Ground (Black) on outer edge, Power (Red) in center, Signal (White/Orange) on inner pin." },
+          { num: 3, title: "CLEAN WIRE RUNS 🪢", desc: "Route servo leads cleanly into FC output headers. Ensure plugs are fully seated." }
+        ],
+        pitfall: "Plugging servo leads backward (Signal to Ground) or swapping motor numbers will cause an instant takeoff flip!",
+        deepdive: "ArduCopter Quad-X motor mixing differs from Betaflight. Motor 1 is front-right CCW, Motor 2 is rear-left CCW, Motor 3 is front-left CW, Motor 4 is rear-right CW.",
         highlightParts: ['escs', 'fc']
       },
       {
         step: 8,
-        title: "Connecting Radio Receiver (FlySky FS-iA6B / SBUS / PPM)",
-        phase: "Phase 4: Signal Control & Wiring Connections",
-        instructions: `The radio receiver receives stick inputs from your handheld transmitter and passes them to the flight controller.<br><br>
-        <strong>If Using Pixhawk 2.4.8:</strong><br>
-        • Modern setup uses a <strong>single 3-pin servo cable</strong> from the receiver's <strong>PPM / SBUS / i-Bus</strong> port directly into the <strong>RC IN</strong> port on the Pixhawk. That single cable carries all 6 to 14 channels digitally!<br><br>
-        <strong>If Using APM 2.8:</strong><br>
-        • <strong>PWM Mode (Standard):</strong> Connect 5 or 6 individual 3-pin servo cables from RX Ch1–Ch6 to APM INPUTS 1–6 (Ch1=Roll, Ch2=Pitch, Ch3=Throttle, Ch4=Yaw, Ch5=Flight Mode 3-pos switch, Ch6=Aux/Tuning).<br>
-        • <strong>PPM Mode:</strong> Place a jumper across APM Input 2 & 3 signal pins, and connect single PPM wire to Input 1.<br><br>
-        Mount receiver antennas at <strong>90° relative to each other</strong> (V-shape) using plastic zip ties and heat shrink tubes.`,
-        tools: "• FlySky FS-iA6B or FrSky Receiver, 3-pin servo jumper cables, 2x Antenna Tubes, Zip Ties",
-        pitfall: "Plugging a digital receiver into Pixhawk's 'SPKT/DSM' or 'TELEM' port instead of 'RC IN'. Pixhawk will report 'No RC Receiver Detected'.",
-        test: "Receiver LED illuminates solid (bound). In Mission Planner 'Radio Calibration' screen, moving sticks moves green channel bars.",
+        title: "Radio Receiver (FlySky FS-iA6B / SBUS)",
+        phase: "Phase 4: Signal Wiring",
+        actions: [
+          { num: 1, title: "PIXHAWK: 1 CABLE TO RC IN 📡", desc: "Single 3-pin cable from receiver PPM/SBUS port to RC IN handles all 6–14 channels digitally!" },
+          { num: 2, title: "APM 2.8: PLUG CH 1 TO 6 🎛️", desc: "Connect 6 servo leads: Ch1=Roll, Ch2=Pitch, Ch3=Throttle, Ch4=Yaw, Ch5=Mode, Ch6=Aux." },
+          { num: 3, title: "90° V-ANTENNA SHAPE ✌️", desc: "Mount the two receiver antennas in a 90° V using zip ties for maximum radio reception." }
+        ],
+        pitfall: "Do not plug digital receiver into Pixhawk's SPKT/DSM port. Use the designated RC IN port.",
+        deepdive: "ExpressLRS / CRSF / SBUS use inverted or non-inverted serial UART streams. Single-wire digital protocols reduce wiring clutter and packet latency.",
         highlightParts: ['rx', 'fc']
       },
       {
         step: 9,
-        title: "GPS/Compass Mast, APM MAG Jumper, Safety Switch & Telemetry",
-        phase: "Phase 5: Navigation, Telemetry & Auxiliary Hardware",
-        instructions: `1. <strong>Elevated GPS Mast:</strong> Mount the Ublox NEO-M8N GPS puck onto an elevated 10cm–15cm folding mast. The arrow on the GPS puck <strong>MUST point forward</strong> (same direction as the flight controller arrow)!<br>
-        *Why elevated?* PDB high-current copper traces carry up to 60A DC, generating severe magnetic distortion that blinds the internal compass. Elevating the magnetometer 12cm isolates it from magnetic noise.<br><br>
-        2. <strong>Compass Connection:</strong><br>
-        • <strong>Pixhawk:</strong> 6-pin cable to <strong>GPS</strong> port, 4-pin cable to <strong>I2C</strong> port.<br>
-        • <strong>APM 2.8:</strong> 5-pin cable to <strong>GPS</strong> port, 4-pin cable to side <strong>I2C</strong> port.<br>
-        • <strong>CRITICAL APM 2.8 GOTCHA:</strong> <strong>REMOVE THE MAG JUMPER</strong> next to the GPS port to disable the internal compass. If you leave the jumper in, the APM tries to read both internal and external compasses simultaneously, causing severe compass variance errors and toilet-bowling in GPS Loiter mode!<br><br>
-        3. <strong>Pixhawk Safety Switch & Buzzer:</strong> Plug the safety switch into <strong>SWITCH</strong> and buzzer into <strong>BUZZER</strong>. The drone will NOT arm until this safety button is held for 2 seconds!<br>
-        4. <strong>Telemetry Radio (Air Module):</strong> Plug the 6-pin (Pixhawk) or 5-pin (APM) cable from the 433/915MHz air radio into <strong>TELEM 1</strong>.`,
-        tools: "• Ublox NEO-M8N GPS/Compass, Aluminum Folding Mast, Safety Switch, Piezo Buzzer, 3DR 433/915MHz Telemetry Radio, Tweezers",
-        pitfall: "Forgetting to remove the APM 2.8 MAG jumper! The drone will hold GPS position terribly and fly away or toilet-bowl. For Pixhawk: forgetting to connect the safety switch—Pixhawk will refuse to arm.",
-        test: "GPS LED flashes blue (satellite 3D lock). In Mission Planner, compass rotates smoothly as you spin the airframe by hand.",
+        title: "GPS Mast, APM MAG Jumper & Telemetry",
+        phase: "Phase 5: Navigation & Radio",
+        actions: [
+          { num: 1, title: "RAISE 12cm GPS MAST 📡", desc: "Mount GPS puck on folding mast 12cm above frame to escape 60A PDB magnetic interference!" },
+          { num: 2, title: "ARROW POINTS FORWARD ▲", desc: "Arrow stamped on GPS puck must point forward, exactly matching flight controller." },
+          { num: 3, title: "APM 2.8: REMOVE MAG JUMPER ⚠️", desc: "PULL OUT MAG JUMPER! Disables internal compass so external mast compass works without clash!" }
+        ],
+        pitfall: "Leaving MAG jumper in on APM 2.8 causes dual compass clash, leading to 'toilet-bowling' flyaways in GPS mode!",
+        deepdive: "Magnetic compass (magnetometer) reads Earth's weak 0.5 Gauss field. 60A DC current generates massive distortion. Pixhawk requires safety switch press to arm.",
         highlightParts: ['gps', 'safety', 'telem', 'fc']
       },
       {
         step: 10,
-        title: "Multimeter Continuity Check, First Power-Up & Propeller Rule",
-        phase: "Phase 6: Verification, Calibration & Flight Readiness",
-        instructions: `You have completed mechanical assembly and wiring! Before connecting your LiPo battery, you MUST execute the bench safety protocol:<br><br>
-        1. <strong>Multimeter Continuity Beep Test:</strong> Set your digital multimeter to continuity/resistance mode. Touch the red probe to XT60 (+) and black probe to XT60 (-).<br>
-        • <strong>Pass:</strong> It may emit a quick half-second chirp while capacitors charge, then display infinite resistance / Open Loop (OL).<br>
-        • <strong>FAIL:</strong> If it produces a continuous solid beep, <strong>DO NOT PLUG IN THE BATTERY</strong>! You have a direct solder short.<br><br>
-        2. <strong>The Smoke Stopper Test:</strong> Connect an inline current limiter (Smoke Stopper polyfuse) between the LiPo battery and drone for first boot. If everything is wired properly, the LED stays green and the ESCs play their musical boot chimes.<br><br>
-        3. <strong>Mission Planner Calibrations (USB Connected):</strong><br>
-        • Accel Calibration (Level, Left, Right, Nose Down, Nose Up, Back).<br>
-        • Compass Live Calibration (rotate drone in all 3 axes until spherical points fill).<br>
-        • Radio Calibration & Failsafe configuration.<br>
-        • ESC Throttle Endpoint Calibration.<br><br>
-        <strong>THE GOLDEN RULE: PROPELLERS STAY OFF!</strong> Never install propellers inside the classroom or on the workbench. Propellers are installed ONLY at the flying field right before takeoff! CW props (silver nut) on Motors 3 & 4; CCW props (black nut) on Motors 1 & 2.`,
-        tools: "• Digital Multimeter, Smoke Stopper (Automotive bulb or solid-state polyfuse), 3S 11.1V LiPo Battery, USB Cable, PC with Mission Planner",
-        pitfall: "Connecting propellers on the workbench! If the flight controller arms or throttle blips unexpectedly, 10-inch carbon-nylon blades can inflict severe lacerations. Keep props in the bag until at the field.",
-        test: "Smoke stopper passes green. All 4 ESCs chime musical boot tones. Mission Planner shows artificial horizon level and GPS 3D Fix.",
+        title: "Multimeter Continuity, Smoke Stopper & Props",
+        phase: "Phase 6: Safety & Calibration",
+        actions: [
+          { num: 1, title: "MULTIMETER BEEP TEST 📟", desc: "Touch XT60 (+) and (-). Quick chirp is OK; CONTINUOUS BEEP = STOP! DO NOT PLUG BATTERY!" },
+          { num: 2, title: "SMOKE STOPPER TEST 🟢", desc: "Connect inline polyfuse before battery. LED must stay solid green with musical ESC boot chimes." },
+          { num: 3, title: "ZERO TOLERANCE: PROPS OFF! 🚫", desc: "Propellers stay in bag on the bench! Mount ONLY right before takeoff outside in the field!" }
+        ],
+        pitfall: "NEVER attach propellers inside the classroom or during bench testing! Spinning blades cause severe injuries.",
+        deepdive: "Complete Mission Planner accelerometer, compass, radio, and ESC throttle endpoint calibration before flight. Install CW props (silver nut) and CCW props (black nut).",
         highlightParts: ['props', 'power', 'fc']
       }
     ];
@@ -5253,8 +5250,8 @@ class DroneSimulations {
       stepsData.forEach((s) => {
         const btn = document.createElement('button');
         btn.className = `step-pill-btn ${s.step === currentStep ? 'active' : ''} ${completedSteps.has(s.step) ? 'completed' : ''}`;
-        btn.textContent = `Step ${s.step}`;
-        btn.title = s.title;
+        btn.textContent = `${s.step}`;
+        btn.title = `Step ${s.step}: ${s.title}`;
         btn.addEventListener('click', () => {
           goToStep(s.step);
         });
@@ -5262,21 +5259,40 @@ class DroneSimulations {
       });
     };
 
-    // Update UI Content for Current Step
+    // Update UI Content for Current Step (Visual First)
     const updateStepUI = () => {
       const s = stepsData[currentStep - 1];
-      stepBadge.textContent = `STEP ${s.step} OF 10`;
+      stepBadge.textContent = `STEP ${s.step}/10`;
       stepTitleHeader.textContent = s.title;
       phaseBadge.textContent = s.phase;
-      fcBadge.textContent = `Controller: ${selectedFC === 'pixhawk' ? 'Pixhawk 2.4.8' : 'APM 2.8'}`;
+      fcBadge.textContent = selectedFC === 'pixhawk' ? 'Pixhawk 2.4.8' : 'APM 2.8';
       stepHeading.textContent = `${s.step}. ${s.title}`;
-      stepInstructions.innerHTML = s.instructions;
-      stepTools.textContent = s.tools;
       stepPitfall.textContent = s.pitfall;
-      stepTest.textContent = s.test;
+      stepDeepDive.textContent = s.deepdive;
+
+      // Populate 3 visual micro-actions
+      microActionsContainer.innerHTML = '';
+      s.actions.forEach(act => {
+        const item = document.createElement('div');
+        item.className = 'asm-action-item';
+        item.innerHTML = `
+          <div class="asm-action-num">${act.num}</div>
+          <div class="asm-action-body">
+            <div class="asm-action-title">${act.title}</div>
+            <div class="asm-action-desc">${act.desc}</div>
+          </div>
+        `;
+        microActionsContainer.appendChild(item);
+      });
+
+      // Update verify button state
+      const isVerified = verifiedSteps.has(currentStep);
+      btnVerify.classList.toggle('verified', isVerified);
+      verifyIcon.textContent = isVerified ? '✅' : '⬜';
+      verifyText.textContent = isVerified ? 'Step Verified! Tap to Reset' : 'Tap to Verify Step Completion';
 
       btnPrev.disabled = currentStep === 1;
-      btnNext.textContent = currentStep === 10 ? "Finish Checklist ✓" : "Next Step →";
+      btnNext.textContent = currentStep === 10 ? "Complete ✓" : "Next →";
 
       renderStepPills();
       updatePartDetails(selectedPart);
@@ -5295,10 +5311,10 @@ class DroneSimulations {
       }
 
       partDetails.innerHTML = `
-        <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 4px; font-size: 13px;">${p.title}</div>
-        <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">${p.specs}</div>
-        <div style="margin-bottom: 6px;"><strong>Wiring / Role:</strong> ${p.wiring}</div>
-        <div style="color: #b45309; background: #fefce8; padding: 6px 8px; border-radius: 4px; border: 1px solid #fef08a;"><strong>Pro-Tip / Pitfall:</strong> ${p.tips}</div>
+        <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 2px; font-size: 12.5px;">${p.title}</div>
+        <div style="font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); margin-bottom: 4px;">${p.specs}</div>
+        <div style="margin-bottom: 4px; font-size: 11.5px;"><strong>Role:</strong> ${p.wiring}</div>
+        <div style="color: #b45309; background: #fefce8; padding: 4px 6px; border-radius: 4px; border: 1px solid #fef08a; font-size: 11px;"><strong>⚠️ Gotcha:</strong> ${p.tips}</div>
       `;
     };
 
@@ -5328,28 +5344,12 @@ class DroneSimulations {
       viewMode = 'airframe';
       btnViewAirframe.classList.add('active');
       btnViewPinout.classList.remove('active');
-      btnToggleViewTop.textContent = "Switch to FC Pinout View";
     });
 
     btnViewPinout.addEventListener('click', () => {
       viewMode = 'pinout';
       btnViewPinout.classList.add('active');
       btnViewAirframe.classList.remove('active');
-      btnToggleViewTop.textContent = "Switch to Airframe Blueprint";
-    });
-
-    btnToggleViewTop.addEventListener('click', () => {
-      if (viewMode === 'airframe') {
-        viewMode = 'pinout';
-        btnViewPinout.classList.add('active');
-        btnViewAirframe.classList.remove('active');
-        btnToggleViewTop.textContent = "Switch to Airframe Blueprint";
-      } else {
-        viewMode = 'airframe';
-        btnViewAirframe.classList.add('active');
-        btnViewPinout.classList.remove('active');
-        btnToggleViewTop.textContent = "Switch to FC Pinout View";
-      }
     });
 
     btnPrev.addEventListener('click', () => {
@@ -5360,10 +5360,13 @@ class DroneSimulations {
       if (currentStep < 10) goToStep(currentStep + 1);
     });
 
-    btnResetStep.addEventListener('click', () => {
-      completedSteps.clear();
-      completedSteps.add(1);
-      goToStep(1);
+    btnVerify.addEventListener('click', () => {
+      if (verifiedSteps.has(currentStep)) {
+        verifiedSteps.delete(currentStep);
+      } else {
+        verifiedSteps.add(currentStep);
+      }
+      updateStepUI();
     });
 
     chipBtns.forEach(btn => {
@@ -5389,9 +5392,8 @@ class DroneSimulations {
       const clickX = (e.clientX - rect.left) * scaleX;
       const clickY = (e.clientY - rect.top) * scaleY;
 
-      // Click detection based on viewMode
+      // Click detection on components
       if (viewMode === 'airframe') {
-        // Center FC area
         if (clickX >= 420 && clickX <= 520 && clickY >= 280 && clickY <= 380) {
           updatePartDetails('fc');
         } else if (clickX >= 400 && clickX <= 540 && clickY >= 480 && clickY <= 630) {
@@ -5400,11 +5402,11 @@ class DroneSimulations {
           updatePartDetails('motors');
         } else if (Math.hypot(clickX - 618, clickY - 478) < 45 || Math.hypot(clickX - 322, clickY - 478) < 45) {
           updatePartDetails('motors');
-        } else if (Math.hypot(clickX - 240, clickY - 240) < 35) {
+        } else if (Math.hypot(clickX - 220, clickY - 220) < 35) {
           updatePartDetails('gps');
         } else if (clickX >= 440 && clickX <= 500 && clickY >= 420 && clickY <= 470) {
           updatePartDetails('rx');
-        } else if (Math.hypot(clickX - 570, clickY - 335) < 30) {
+        } else if (Math.hypot(clickX - 580, clickY - 335) < 30) {
           updatePartDetails('safety');
         }
       }
@@ -5415,18 +5417,19 @@ class DroneSimulations {
     updateStepUI();
 
     // =========================================================================
-    // CANVAS RENDERING ENGINE (Strictly Zero Gradients!)
+    // CANVAS RENDERING ENGINE (Crisp White Detailed Technical Schematic)
+    // Strictly Zero Gradients!
     // =========================================================================
 
-    const drawBlueprintBackground = (w, h, title, sub) => {
-      // Solid dark slate background
-      ctx.fillStyle = "#090d16";
+    const drawWhiteBlueprintBackground = (w, h, title, sub) => {
+      // 1. Crisp Pure White Background
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, w, h);
 
-      // Technical blueprint grid
-      ctx.strokeStyle = "#162032";
+      // 2. Soft Engineering Grid (Light Grey / Faint Slate)
+      ctx.strokeStyle = "#f1f5f9";
       ctx.lineWidth = 1;
-      const gridSize = 30;
+      const gridSize = 20;
       for (let x = 0; x < w; x += gridSize) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -5440,108 +5443,144 @@ class DroneSimulations {
         ctx.stroke();
       }
 
-      // Outer Technical Border
-      ctx.strokeStyle = "#27272a";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(12, 12, w - 24, h - 24);
+      // Major Grid Lines every 60px
+      ctx.strokeStyle = "#e2e8f0";
+      for (let x = 0; x < w; x += 60) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 60) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
 
-      // Corner Crosshairs
-      const drawCross = (cx, cy) => {
-        ctx.strokeStyle = "#52525b";
-        ctx.lineWidth = 1;
+      // 3. Technical Border
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(10, 10, w - 20, h - 20);
+
+      // Corner Precision Alignment Marks
+      const drawTick = (cx, cy) => {
+        ctx.strokeStyle = "#0f172a";
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy);
         ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8);
         ctx.stroke();
       };
-      drawCross(20, 20);
-      drawCross(w - 20, 20);
-      drawCross(20, h - 20);
-      drawCross(w - 20, h - 20);
+      drawTick(18, 18);
+      drawTick(w - 18, 18);
+      drawTick(18, h - 18);
+      drawTick(w - 18, h - 18);
 
-      // Technical Title Block (Bottom-Right)
-      const tbW = 270;
-      const tbH = 50;
-      const tbX = w - tbW - 16;
-      const tbY = h - tbH - 16;
+      // 4. White Technical Title Block (Bottom Right)
+      const tbW = 280;
+      const tbH = 44;
+      const tbX = w - tbW - 14;
+      const tbY = h - tbH - 14;
 
-      ctx.fillStyle = "#0f172a";
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(tbX, tbY, tbW, tbH);
-      ctx.strokeStyle = "#334155";
+      ctx.strokeStyle = "#94a3b8";
       ctx.lineWidth = 1;
       ctx.strokeRect(tbX, tbY, tbW, tbH);
 
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "9px 'JetBrains Mono', monospace";
-      ctx.fillText("SYSTEM: " + title, tbX + 10, tbY + 16);
-      ctx.fillText("CONFIG: " + sub, tbX + 10, tbY + 30);
-      ctx.fillText("CAD SPEC: ZERO-GRADIENT ARDUCOPTER V2.8/3.2", tbX + 10, tbY + 44);
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+      ctx.fillText(title, tbX + 10, tbY + 16);
+      ctx.font = "8.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#475569";
+      ctx.fillText(sub, tbX + 10, tbY + 30);
     };
 
-    // Render Full Airframe Blueprint View
+    // Render Full Airframe View (White & Detailed)
     const renderAirframeView = (w, h) => {
-      drawBlueprintBackground(
+      drawWhiteBlueprintBackground(
         w, h,
-        `F450 QUADCOPTER (${selectedFC === 'pixhawk' ? 'PIXHAWK 2.4.8' : 'APM 2.8'})`,
-        `STEP ${currentStep}: ${stepsData[currentStep - 1].title.toUpperCase().slice(0, 32)}`
+        `F450 ARDUCOPTER (${selectedFC === 'pixhawk' ? 'PIXHAWK 2.4.8' : 'APM 2.8'})`,
+        `STEP ${currentStep}/10 • ${stepsData[currentStep - 1].title.toUpperCase().slice(0, 30)}`
       );
 
       const cx = 470;
       const cy = 330;
       const armLength = 210;
-      const cos45 = Math.SQRT1_2;
-      const sin45 = Math.SQRT1_2;
 
-      // Active highlighting flags
       const isStep = (s) => currentStep === s;
       const highlightAll = currentStep >= 10;
 
       // 1. Heading Reference Arrow (Front / Nose)
-      ctx.fillStyle = "#38bdf8";
+      ctx.fillStyle = "#0284c7";
       ctx.beginPath();
-      ctx.moveTo(cx, 40);
-      ctx.lineTo(cx - 10, 60);
-      ctx.lineTo(cx + 10, 60);
+      ctx.moveTo(cx, 32);
+      ctx.lineTo(cx - 10, 52);
+      ctx.lineTo(cx + 10, 52);
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#e0f2fe";
+      ctx.fillStyle = "#0369a1";
       ctx.font = "bold 11px var(--font-sans)";
       ctx.textAlign = "center";
-      ctx.fillText("▲ FORWARD / NOSE (HEADING)", cx, 74);
+      ctx.fillText("▲ FRONT NOSE (FORWARD HEADING)", cx, 66);
       ctx.textAlign = "left";
 
-      // 2. F450 4 Arms
-      // Arm coordinates:
-      // M1 (FR): 45 deg, M2 (RL): 225 deg, M3 (FL): 315 deg, M4 (RR): 135 deg
+      // 2. F450 4 Detailed Molded Arms
       const arms = [
-        { id: 1, name: "Motor 1 (FR)", angle: -Math.PI / 4, color: "#ef4444", spin: "CCW", nut: "Black Nut", armColor: "#ef4444" },
-        { id: 2, name: "Motor 2 (RL)", angle: 3 * Math.PI / 4, color: "#e4e4e7", spin: "CCW", nut: "Black Nut", armColor: "#e4e4e7" },
-        { id: 3, name: "Motor 3 (FL)", angle: -3 * Math.PI / 4, color: "#ef4444", spin: "CW", nut: "Silver Nut", armColor: "#ef4444" },
-        { id: 4, name: "Motor 4 (RR)", angle: Math.PI / 4, color: "#e4e4e7", spin: "CW", nut: "Silver Nut", armColor: "#e4e4e7" },
+        { id: 1, name: "Motor 1 (FR)", angle: -Math.PI / 4, spin: "CCW", nut: "Black Nut", armFill: "#ef4444", armBorder: "#b91c1c", isFront: true },
+        { id: 2, name: "Motor 2 (RL)", angle: 3 * Math.PI / 4, spin: "CCW", nut: "Black Nut", armFill: "#f8fafc", armBorder: "#475569", isFront: false },
+        { id: 3, name: "Motor 3 (FL)", angle: -3 * Math.PI / 4, spin: "CW", nut: "Silver Nut", armFill: "#ef4444", armBorder: "#b91c1c", isFront: true },
+        { id: 4, name: "Motor 4 (RR)", angle: Math.PI / 4, spin: "CW", nut: "Silver Nut", armFill: "#f8fafc", armBorder: "#475569", isFront: false },
       ];
 
       arms.forEach(a => {
         const mx = cx + armLength * Math.cos(a.angle);
         const my = cy + armLength * Math.sin(a.angle);
 
-        // Draw Frame Arm
+        // Detailed Molded Arm with Structural Ribs
         ctx.save();
-        ctx.strokeStyle = (isStep(1) || isStep(3) || highlightAll) ? a.armColor : "#3f3f46";
-        ctx.lineWidth = 14;
-        ctx.lineCap = "round";
+        ctx.strokeStyle = a.armBorder;
+        ctx.fillStyle = a.armFill;
+        ctx.lineWidth = 2;
+
+        // Draw contoured arm beam
+        ctx.translate(cx, cy);
+        ctx.rotate(a.angle);
+
+        // Arm Body Contour
         ctx.beginPath();
-        ctx.moveTo(cx + 40 * Math.cos(a.angle), cy + 40 * Math.sin(a.angle));
-        ctx.lineTo(mx, my);
+        ctx.moveTo(45, -14);
+        ctx.lineTo(armLength - 24, -10);
+        ctx.lineTo(armLength - 24, 10);
+        ctx.lineTo(45, 14);
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
 
-        // Arm Center Skeleton line
-        ctx.strokeStyle = "#18181b";
-        ctx.lineWidth = 2;
+        // Structural Truss Cutouts
+        ctx.fillStyle = a.isFront ? "#fee2e2" : "#f1f5f9";
+        for (let tr = 65; tr < armLength - 40; tr += 30) {
+          ctx.beginPath();
+          ctx.moveTo(tr, -5);
+          ctx.lineTo(tr + 18, 0);
+          ctx.lineTo(tr, 5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        // Circular Motor Mount Pad at Arm Tip
+        ctx.fillStyle = a.isFront ? "#dc2626" : "#e2e8f0";
+        ctx.beginPath();
+        ctx.arc(armLength, 0, 26, 0, Math.PI * 2);
+        ctx.fill();
         ctx.stroke();
+
         ctx.restore();
 
-        // ESC Mounted on Arm (Midway)
+        // 3. ESC Mounted on Arm
         const escX = cx + (armLength * 0.48) * Math.cos(a.angle);
         const escY = cy + (armLength * 0.48) * Math.sin(a.angle);
 
@@ -5549,48 +5588,58 @@ class DroneSimulations {
         ctx.translate(escX, escY);
         ctx.rotate(a.angle);
 
-        // ESC Box
-        ctx.fillStyle = (isStep(2) || isStep(4) || isStep(7) || highlightAll) ? "#1e293b" : "#18181b";
-        ctx.fillRect(-22, -12, 44, 24);
-        ctx.strokeStyle = (isStep(2) || isStep(4) || isStep(7) || highlightAll) ? "#38bdf8" : "#3f3f46";
+        // ESC Body (Dark Sleek Case)
+        ctx.fillStyle = (isStep(2) || isStep(4) || isStep(7) || highlightAll) ? "#1e293b" : "#475569";
+        ctx.fillRect(-22, -13, 44, 26);
+        ctx.strokeStyle = (isStep(2) || isStep(4) || isStep(7) || highlightAll) ? "#0284c7" : "#334155";
         ctx.lineWidth = 1.5;
-        ctx.strokeRect(-22, -12, 44, 24);
+        ctx.strokeRect(-22, -13, 44, 26);
 
-        ctx.fillStyle = "#94a3b8";
-        ctx.font = "8px 'JetBrains Mono', monospace";
+        // Aluminum Heatsink Stripe
+        ctx.fillStyle = "#cbd5e1";
+        ctx.fillRect(-16, -10, 32, 5);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 8px 'JetBrains Mono', monospace";
         ctx.textAlign = "center";
-        ctx.fillText(`ESC ${a.id}`, 0, 3);
+        ctx.fillText(`ESC ${a.id}`, 0, 6);
         ctx.restore();
 
-        // DC Power Wires from ESC to PDB Center
-        ctx.strokeStyle = (isStep(2) || highlightAll) ? "#ef4444" : "#52525b";
-        ctx.lineWidth = 2;
+        // Heavy DC Power Wires from ESC to PDB (Red & Black)
+        ctx.strokeStyle = (isStep(2) || highlightAll) ? "#dc2626" : "#64748b";
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.moveTo(escX - 8 * Math.cos(a.angle), escY - 8 * Math.sin(a.angle));
-        ctx.lineTo(cx + 35 * Math.cos(a.angle) - 4, cy + 35 * Math.sin(a.angle));
+        ctx.moveTo(escX - 8 * Math.cos(a.angle), escY - 8 * Math.sin(a.angle) - 3);
+        ctx.lineTo(cx + 36 * Math.cos(a.angle), cy + 36 * Math.sin(a.angle) - 3);
         ctx.stroke();
 
-        ctx.strokeStyle = (isStep(2) || highlightAll) ? "#18181b" : "#27272a";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = (isStep(2) || highlightAll) ? "#0f172a" : "#475569";
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.moveTo(escX - 8 * Math.cos(a.angle), escY - 8 * Math.sin(a.angle) + 4);
-        ctx.lineTo(cx + 35 * Math.cos(a.angle) + 4, cy + 35 * Math.sin(a.angle));
+        ctx.moveTo(escX - 8 * Math.cos(a.angle), escY - 8 * Math.sin(a.angle) + 3);
+        ctx.lineTo(cx + 36 * Math.cos(a.angle), cy + 36 * Math.sin(a.angle) + 3);
         ctx.stroke();
 
-        // 3 Motor Phase Wires from ESC to Motor
-        const pColors = (isStep(4) || highlightAll) ? ["#3b82f6", "#eab308", "#ef4444"] : ["#3f3f46", "#3f3f46", "#3f3f46"];
+        // 3 Phase Wires from ESC to Motor (Blue, Yellow, Red)
+        const pColors = (isStep(4) || highlightAll) ? ["#2563eb", "#ca8a04", "#dc2626"] : ["#94a3b8", "#94a3b8", "#94a3b8"];
         for (let i = -1; i <= 1; i++) {
           ctx.strokeStyle = pColors[i + 1];
-          ctx.lineWidth = 1.5;
+          ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.moveTo(escX + 16 * Math.cos(a.angle) + i * 2, escY + 16 * Math.sin(a.angle));
-          ctx.lineTo(mx - 14 * Math.cos(a.angle) + i * 2, my - 14 * Math.sin(a.angle));
+          ctx.moveTo(escX + 16 * Math.cos(a.angle) + i * 3, escY + 16 * Math.sin(a.angle) + i * 3);
+          ctx.lineTo(mx - 15 * Math.cos(a.angle) + i * 3, my - 15 * Math.sin(a.angle) + i * 3);
           ctx.stroke();
+
+          // Gold 3.5mm bullet connector dot
+          ctx.fillStyle = "#eab308";
+          ctx.beginPath();
+          ctx.arc(escX + 22 * Math.cos(a.angle) + i * 3, escY + 22 * Math.sin(a.angle) + i * 3, 2.5, 0, Math.PI * 2);
+          ctx.fill();
         }
 
-        // ESC Servo Signal Lead to Flight Controller
+        // ESC Servo Control Wire to FC
         if (isStep(7) || highlightAll) {
-          ctx.strokeStyle = "#f59e0b"; // Signal wire
+          ctx.strokeStyle = "#f59e0b"; // Orange Signal wire
           ctx.lineWidth = 1.5;
           ctx.setLineDash([4, 3]);
           ctx.beginPath();
@@ -5600,79 +5649,75 @@ class DroneSimulations {
           ctx.setLineDash([]);
         }
 
-        // Brushless Motor Bell
-        ctx.fillStyle = (isStep(3) || isStep(4) || isStep(10) || highlightAll) ? "#1e293b" : "#18181b";
+        // 4. Brushless Motor Bell & Stator Coils
+        ctx.fillStyle = "#0f172a";
         ctx.beginPath();
-        ctx.arc(mx, my, 22, 0, Math.PI * 2);
+        ctx.arc(mx, my, 23, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = (isStep(3) || isStep(4) || isStep(10) || highlightAll) ? "#e2e8f0" : "#52525b";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = (isStep(3) || isStep(4) || isStep(10) || highlightAll) ? "#0284c7" : "#64748b";
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        // Stator Coils inside Motor
-        ctx.strokeStyle = "#b45309"; // Copper coils
+        // Realistic Copper Stator Coils inside
+        ctx.strokeStyle = "#b45309";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(mx, my, 14, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Center Threaded Shaft & Nut
+        ctx.fillStyle = a.spin === "CCW" ? "#09090b" : "#e2e8f0";
+        ctx.beginPath();
+        ctx.arc(mx, my, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#475569";
         ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(mx, my, 13, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Center Nut (Black for CCW, Silver for CW)
-        ctx.fillStyle = a.spin === "CCW" ? "#09090b" : "#cbd5e1";
-        ctx.beginPath();
-        ctx.arc(mx, my, 5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#52525b";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // Rotation Spin Direction Arrow
+        // Direction Spin Arrow
         ctx.save();
         ctx.translate(mx, my);
-        ctx.strokeStyle = (isStep(4) || isStep(10) || highlightAll) ? (a.spin === "CCW" ? "#38bdf8" : "#ec4899") : "#52525b";
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = a.spin === "CCW" ? "#0284c7" : "#db2777";
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         if (a.spin === "CCW") {
-          // Counter-Clockwise Arrow
-          ctx.arc(0, 0, 30, -Math.PI * 0.8, Math.PI * 0.4);
+          ctx.arc(0, 0, 31, -Math.PI * 0.8, Math.PI * 0.4);
           ctx.stroke();
-          // Arrowhead
           ctx.fillStyle = ctx.strokeStyle;
           ctx.beginPath();
-          ctx.moveTo(30 * Math.cos(-Math.PI * 0.8), 30 * Math.sin(-Math.PI * 0.8));
-          ctx.lineTo(30 * Math.cos(-Math.PI * 0.8) + 6, 30 * Math.sin(-Math.PI * 0.8) + 2);
-          ctx.lineTo(30 * Math.cos(-Math.PI * 0.8) - 1, 30 * Math.sin(-Math.PI * 0.8) + 6);
+          ctx.moveTo(31 * Math.cos(-Math.PI * 0.8), 31 * Math.sin(-Math.PI * 0.8));
+          ctx.lineTo(31 * Math.cos(-Math.PI * 0.8) + 6, 31 * Math.sin(-Math.PI * 0.8) + 3);
+          ctx.lineTo(31 * Math.cos(-Math.PI * 0.8) - 1, 31 * Math.sin(-Math.PI * 0.8) + 7);
           ctx.closePath();
           ctx.fill();
         } else {
-          // Clockwise Arrow
-          ctx.arc(0, 0, 30, -Math.PI * 0.2, Math.PI * 1.0);
+          ctx.arc(0, 0, 31, -Math.PI * 0.2, Math.PI * 1.0);
           ctx.stroke();
           ctx.fillStyle = ctx.strokeStyle;
           ctx.beginPath();
-          ctx.moveTo(30 * Math.cos(-Math.PI * 0.2), 30 * Math.sin(-Math.PI * 0.2));
-          ctx.lineTo(30 * Math.cos(-Math.PI * 0.2) - 6, 30 * Math.sin(-Math.PI * 0.2) + 2);
-          ctx.lineTo(30 * Math.cos(-Math.PI * 0.2) + 1, 30 * Math.sin(-Math.PI * 0.2) + 6);
+          ctx.moveTo(31 * Math.cos(-Math.PI * 0.2), 31 * Math.sin(-Math.PI * 0.2));
+          ctx.lineTo(31 * Math.cos(-Math.PI * 0.2) - 6, 31 * Math.sin(-Math.PI * 0.2) + 3);
+          ctx.lineTo(31 * Math.cos(-Math.PI * 0.2) + 1, 31 * Math.sin(-Math.PI * 0.2) + 7);
           ctx.closePath();
           ctx.fill();
         }
         ctx.restore();
 
-        // Motor Labels
-        ctx.fillStyle = "#f8fafc";
-        ctx.font = "bold 10px var(--font-sans)";
+        // Motor Text Labels (High Contrast Dark Slate)
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 11px var(--font-sans)";
         ctx.textAlign = "center";
         ctx.fillText(a.name, mx, my + 44);
-        ctx.fillStyle = a.spin === "CCW" ? "#38bdf8" : "#f472b6";
-        ctx.font = "9px 'JetBrains Mono', monospace";
-        ctx.fillText(`${a.spin} • ${a.nut}`, mx, my + 56);
+        ctx.fillStyle = a.spin === "CCW" ? "#0369a1" : "#be185d";
+        ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+        ctx.fillText(`${a.spin} • ${a.nut}`, mx, my + 57);
         ctx.textAlign = "left";
       });
 
-      // 3. Central PDB & Airframe Plates
-      ctx.fillStyle = (isStep(1) || isStep(2) || highlightAll) ? "#18181b" : "#0f172a";
+      // 5. Central PDB Bottom Plate with Gold Solder Pads
+      ctx.fillStyle = "#1e293b"; // Dark matte fiberglass plate
       ctx.beginPath();
-      // Octagonal center plate
-      const pr = 65;
+      const pr = 66;
       for (let i = 0; i < 8; i++) {
         const ang = (i * Math.PI) / 4;
         const px = cx + pr * Math.cos(ang);
@@ -5682,156 +5727,169 @@ class DroneSimulations {
       }
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = (isStep(1) || isStep(2) || highlightAll) ? "#eab308" : "#334155";
+      ctx.strokeStyle = "#475569";
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // PDB Copper Traces
-      ctx.strokeStyle = (isStep(2) || highlightAll) ? "#ef4444" : "#475569";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 48, 0, Math.PI * 2);
-      ctx.stroke();
+      // Shiny Gold Copper Solder Pads on PDB
+      for (let i = 0; i < 4; i++) {
+        const ang = (i * Math.PI) / 2 + Math.PI / 4;
+        const padX = cx + 46 * Math.cos(ang);
+        const padY = cy + 46 * Math.sin(ang);
 
-      ctx.strokeStyle = (isStep(2) || highlightAll) ? "#09090b" : "#334155";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 38, 0, Math.PI * 2);
-      ctx.stroke();
+        // Positive Pad (Gold with red +)
+        ctx.fillStyle = "#eab308";
+        ctx.beginPath();
+        ctx.arc(padX - 4, padY, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#ca8a04";
+        ctx.stroke();
 
-      // 4. Central Flight Controller
+        // Negative Pad (Gold with black -)
+        ctx.fillStyle = "#eab308";
+        ctx.beginPath();
+        ctx.arc(padX + 4, padY, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // 6. Central Flight Controller (Vibration-Damped Mount)
       const fcW = 76;
       const fcH = 88;
       const fcX = cx - fcW / 2;
       const fcY = cy - fcH / 2;
 
-      // Anti-vibration rubber bobbins at 4 corners
+      // Anti-vibration blue silicone bobbins at corners
       [
-        [-fcW / 2, -fcH / 2], [fcW / 2, -fcH / 2],
-        [-fcW / 2, fcH / 2], [fcW / 2, fcH / 2]
+        [-fcW / 2 - 2, -fcH / 2 - 2], [fcW / 2 + 2, -fcH / 2 - 2],
+        [-fcW / 2 - 2, fcH / 2 + 2], [fcW / 2 + 2, fcH / 2 + 2]
       ].forEach(([dx, dy]) => {
-        ctx.fillStyle = "#3b82f6";
+        ctx.fillStyle = "#0284c7";
         ctx.beginPath();
-        ctx.arc(cx + dx, cy + dy, 5, 0, Math.PI * 2);
+        ctx.arc(cx + dx, cy + dy, 6, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = "#0369a1";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
       });
 
       // FC Casing
-      ctx.fillStyle = (isStep(5) || isStep(6) || isStep(7) || isStep(8) || isStep(9) || highlightAll) ? "#09090b" : "#18181b";
+      ctx.fillStyle = "#09090b";
       ctx.fillRect(fcX, fcY, fcW, fcH);
-      ctx.strokeStyle = (isStep(5) || isStep(6) || isStep(7) || isStep(8) || isStep(9) || highlightAll) ? "#38bdf8" : "#52525b";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = (isStep(5) || isStep(6) || isStep(7) || isStep(8) || isStep(9) || highlightAll) ? "#0284c7" : "#52525b";
+      ctx.lineWidth = 2.5;
       ctx.strokeRect(fcX, fcY, fcW, fcH);
 
       // FC White Heading Arrow
-      ctx.fillStyle = "#f8fafc";
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.moveTo(cx, fcY + 8);
-      ctx.lineTo(cx - 7, fcY + 22);
-      ctx.lineTo(cx + 7, fcY + 22);
+      ctx.lineTo(cx - 8, fcY + 22);
+      ctx.lineTo(cx + 8, fcY + 22);
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#94a3b8";
+      ctx.fillStyle = "#ffffff";
       ctx.font = "bold 9px var(--font-sans)";
       ctx.textAlign = "center";
       ctx.fillText(selectedFC === 'pixhawk' ? "PIXHAWK" : "APM 2.8", cx, fcY + 36);
       ctx.font = "7.5px 'JetBrains Mono', monospace";
-      ctx.fillText(selectedFC === 'pixhawk' ? "2.4.8 32-BIT" : "ARDUPILOT", cx, fcY + 48);
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText(selectedFC === 'pixhawk' ? "2.4.8 ARM" : "ARDUPILOT", cx, fcY + 47);
 
       // Port labels on FC body
       if (selectedFC === 'pixhawk') {
-        ctx.fillStyle = isStep(6) ? "#10b981" : "#475569";
+        ctx.fillStyle = isStep(6) ? "#10b981" : "#334155";
         ctx.fillRect(fcX + 6, cy + 14, 24, 7);
         ctx.fillStyle = "#ffffff";
         ctx.font = "6px monospace";
         ctx.fillText("POWER", fcX + 18, cy + 20);
 
-        ctx.fillStyle = isStep(7) ? "#f59e0b" : "#475569";
+        ctx.fillStyle = isStep(7) ? "#f59e0b" : "#334155";
         ctx.fillRect(fcX + fcW - 28, cy + 14, 22, 7);
         ctx.fillStyle = "#ffffff";
         ctx.fillText("OUT 1-4", fcX + fcW - 17, cy + 20);
 
-        ctx.fillStyle = isStep(8) ? "#38bdf8" : "#475569";
+        ctx.fillStyle = isStep(8) ? "#38bdf8" : "#334155";
         ctx.fillRect(fcX + 6, cy + 26, 24, 7);
         ctx.fillStyle = "#ffffff";
         ctx.fillText("RC IN", fcX + 18, cy + 32);
       } else {
         // APM 2.8
-        ctx.fillStyle = isStep(6) ? "#10b981" : "#475569";
+        ctx.fillStyle = isStep(6) ? "#10b981" : "#334155";
         ctx.fillRect(fcX + 6, cy + 12, 18, 7);
         ctx.fillStyle = "#ffffff";
         ctx.font = "6px monospace";
         ctx.fillText("PM", fcX + 15, cy + 18);
 
         // JP1 Jumper callout
-        ctx.fillStyle = isStep(6) ? "#ef4444" : "#eab308";
+        ctx.fillStyle = "#dc2626";
         ctx.fillRect(fcX + fcW - 22, cy + 12, 16, 7);
-        ctx.fillStyle = "#000000";
+        ctx.fillStyle = "#ffffff";
         ctx.fillText("JP1", fcX + fcW - 14, cy + 18);
 
         // MAG Jumper callout
-        ctx.fillStyle = isStep(9) ? "#ec4899" : "#64748b";
+        ctx.fillStyle = "#db2777";
         ctx.fillRect(fcX + fcW - 22, cy + 24, 16, 7);
         ctx.fillStyle = "#ffffff";
         ctx.fillText("MAG", fcX + fcW - 14, cy + 30);
       }
       ctx.textAlign = "left";
 
-      // 5. Power Module & Battery at Rear
+      // 7. Power Module & Battery at Rear
       const pmX = cx - 35;
       const pmY = cy + 155;
       const batX = cx - 50;
       const batY = cy + 215;
 
       // LiPo Battery
-      ctx.fillStyle = (isStep(2) || isStep(6) || isStep(10) || highlightAll) ? "#1e293b" : "#0f172a";
-      ctx.fillRect(batX, batY, 100, 48);
-      ctx.strokeStyle = (isStep(2) || isStep(6) || isStep(10) || highlightAll) ? "#e2e8f0" : "#334155";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(batX, batY, 100, 48);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(batX, batY, 100, 46);
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(batX, batY, 100, 46);
 
-      ctx.fillStyle = "#f8fafc";
-      ctx.font = "bold 10px var(--font-sans)";
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 9.5px var(--font-sans)";
       ctx.textAlign = "center";
-      ctx.fillText("LiPo Battery (3S / 4S)", cx, batY + 20);
+      ctx.fillText("LiPo Battery (3S / 4S)", cx, batY + 18);
       ctx.fillStyle = "#38bdf8";
-      ctx.font = "9px 'JetBrains Mono', monospace";
-      ctx.fillText("11.1V – 14.8V • XT60", cx, batY + 36);
+      ctx.font = "bold 8.5px 'JetBrains Mono', monospace";
+      ctx.fillText("11.1V – 14.8V • XT60", cx, batY + 34);
 
       // 3DR Power Module
-      ctx.fillStyle = (isStep(2) || isStep(6) || highlightAll) ? "#0284c7" : "#075985";
+      ctx.fillStyle = "#0284c7";
       ctx.fillRect(pmX, pmY, 70, 32);
-      ctx.strokeStyle = "#38bdf8";
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = "#0369a1";
+      ctx.lineWidth = 1.5;
       ctx.strokeRect(pmX, pmY, 70, 32);
 
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 9px var(--font-sans)";
+      ctx.font = "bold 8.5px var(--font-sans)";
       ctx.fillText("3DR POWER MODULE", cx, pmY + 14);
-      ctx.font = "8px 'JetBrains Mono', monospace";
+      ctx.font = "7.5px 'JetBrains Mono', monospace";
       ctx.fillText("5.3V Clean DC / 90A", cx, pmY + 25);
 
       // Heavy Battery Leads between Battery and Power Module
-      ctx.strokeStyle = "#ef4444";
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 3.5;
       ctx.beginPath();
       ctx.moveTo(cx - 10, batY); ctx.lineTo(cx - 10, pmY + 32);
       ctx.stroke();
 
-      ctx.strokeStyle = "#09090b";
+      ctx.strokeStyle = "#0f172a";
       ctx.beginPath();
       ctx.moveTo(cx + 10, batY); ctx.lineTo(cx + 10, pmY + 32);
       ctx.stroke();
 
       // Heavy Leads from Power Module to PDB Bottom Plate
-      ctx.strokeStyle = (isStep(2) || highlightAll) ? "#ef4444" : "#475569";
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = (isStep(2) || highlightAll) ? "#dc2626" : "#64748b";
+      ctx.lineWidth = 3.5;
       ctx.beginPath();
       ctx.moveTo(cx - 12, pmY); ctx.lineTo(cx - 12, cy + 62);
       ctx.stroke();
 
-      ctx.strokeStyle = (isStep(2) || highlightAll) ? "#09090b" : "#334155";
+      ctx.strokeStyle = (isStep(2) || highlightAll) ? "#0f172a" : "#64748b";
       ctx.beginPath();
       ctx.moveTo(cx + 12, pmY); ctx.lineTo(cx + 12, cy + 62);
       ctx.stroke();
@@ -5839,42 +5897,42 @@ class DroneSimulations {
       // 6-Pin Ribbon Cable to FC POWER / PM Port
       if (isStep(6) || highlightAll) {
         ctx.strokeStyle = "#10b981";
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(cx - 20, pmY);
         ctx.lineTo(cx - 20, cy + 44);
         ctx.stroke();
 
-        ctx.fillStyle = "#10b981";
-        ctx.font = "8px 'JetBrains Mono', monospace";
-        ctx.fillText("6-PIN 5.3V", cx - 74, pmY - 20);
+        ctx.fillStyle = "#059669";
+        ctx.font = "bold 8.5px 'JetBrains Mono', monospace";
+        ctx.fillText("6-PIN 5.3V DC", cx - 82, pmY - 18);
       }
 
-      // 6. Elevated GPS & Compass Mast (Left Side)
+      // 8. Elevated GPS & Compass Mast (Left Side)
       const mastBaseX = cx - 110;
       const mastBaseY = cy;
       const puckX = 220;
       const puckY = 220;
 
       // Mast Elevation Stem
-      ctx.strokeStyle = (isStep(9) || highlightAll) ? "#94a3b8" : "#475569";
+      ctx.strokeStyle = "#64748b";
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(mastBaseX, mastBaseY);
       ctx.lineTo(puckX, puckY);
       ctx.stroke();
 
-      // GPS Puck
-      ctx.fillStyle = (isStep(9) || highlightAll) ? "#1e293b" : "#0f172a";
+      // GPS Puck (White Dome)
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath();
       ctx.arc(puckX, puckY, 26, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = (isStep(9) || highlightAll) ? "#38bdf8" : "#475569";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#0284c7";
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // GPS Forward Arrow
-      ctx.fillStyle = "#38bdf8";
+      // Forward Arrow on GPS Puck
+      ctx.fillStyle = "#0284c7";
       ctx.beginPath();
       ctx.moveTo(puckX, puckY - 14);
       ctx.lineTo(puckX - 5, puckY - 4);
@@ -5882,56 +5940,56 @@ class DroneSimulations {
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#f8fafc";
+      ctx.fillStyle = "#0f172a";
       ctx.font = "bold 8px var(--font-sans)";
       ctx.fillText("NEO-M8N GPS", puckX, puckY + 8);
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "7px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#64748b";
+      ctx.font = "bold 7px 'JetBrains Mono', monospace";
       ctx.fillText("+ COMPASS", puckX, puckY + 18);
 
-      // GPS Mast Cables to FC
+      // GPS Cables to FC
       if (isStep(9) || highlightAll) {
-        // Serial GPS (6-pin / 5-pin)
-        ctx.strokeStyle = "#38bdf8";
-        ctx.lineWidth = 1.5;
+        // Serial GPS
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(puckX + 16, puckY + 10);
         ctx.quadraticCurveTo(cx - 70, cy - 40, cx - fcW / 2, cy - 10);
         ctx.stroke();
 
-        // I2C Compass (4-pin)
-        ctx.strokeStyle = "#ec4899";
-        ctx.lineWidth = 1.5;
+        // I2C Compass
+        ctx.strokeStyle = "#db2777";
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(puckX + 16, puckY + 16);
         ctx.quadraticCurveTo(cx - 65, cy - 25, cx - fcW / 2, cy);
         ctx.stroke();
 
-        // Mast height annotation
-        ctx.fillStyle = "#38bdf8";
-        ctx.font = "9px 'JetBrains Mono', monospace";
-        ctx.fillText("12cm Elevated Mast (Isolates PDB Mag Noise)", puckX - 10, puckY + 42);
+        // Mast Height Annotation
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 9px 'JetBrains Mono', monospace";
+        ctx.fillText("12cm Elevated Mast (Isolates 60A PDB Noise)", puckX - 10, puckY + 42);
       }
 
-      // 7. Radio Receiver (FlySky FS-iA6B)
+      // 9. Radio Receiver (FlySky FS-iA6B)
       const rxX = cx + 80;
       const rxY = cy + 110;
 
-      ctx.fillStyle = (isStep(8) || highlightAll) ? "#1e293b" : "#0f172a";
+      ctx.fillStyle = "#0f172a";
       ctx.fillRect(rxX, rxY, 56, 32);
-      ctx.strokeStyle = (isStep(8) || highlightAll) ? "#10b981" : "#475569";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = (isStep(8) || highlightAll) ? "#10b981" : "#64748b";
+      ctx.lineWidth = 2;
       ctx.strokeRect(rxX, rxY, 56, 32);
 
-      ctx.fillStyle = "#f8fafc";
+      ctx.fillStyle = "#ffffff";
       ctx.font = "bold 8px var(--font-sans)";
       ctx.fillText("RC RECEIVER", rxX + 28, rxY + 12);
-      ctx.fillStyle = "#10b981";
-      ctx.font = "7px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#34d399";
+      ctx.font = "bold 7px 'JetBrains Mono', monospace";
       ctx.fillText("FS-iA6B", rxX + 28, rxY + 22);
 
       // Dual 90-degree Antennas
-      ctx.strokeStyle = "#94a3b8";
+      ctx.strokeStyle = "#475569";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(rxX + 48, rxY + 16);
@@ -5940,27 +5998,27 @@ class DroneSimulations {
       ctx.lineTo(rxX + 90, rxY + 50);
       ctx.stroke();
 
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "8px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#475569";
+      ctx.font = "bold 8px 'JetBrains Mono', monospace";
       ctx.fillText("90° V-Antenna", rxX + 94, rxY + 20);
 
       // RX Signal Lead to FC RC IN / INPUTS
       if (isStep(8) || highlightAll) {
         ctx.strokeStyle = "#10b981";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
         ctx.moveTo(rxX, rxY + 16);
         ctx.lineTo(cx + fcW / 2, cy + 24);
         ctx.stroke();
       }
 
-      // 8. Pixhawk Specifics: Safety Switch & Buzzer
+      // 10. Pixhawk Specifics: Safety Switch & Buzzer
       if (selectedFC === 'pixhawk') {
         const swX = cx + 110;
         const swY = cy - 20;
 
-        // Safety Switch
-        ctx.fillStyle = (isStep(9) || highlightAll) ? "#b91c1c" : "#450a0a";
+        // Safety Switch Button
+        ctx.fillStyle = (isStep(9) || highlightAll) ? "#dc2626" : "#991b1b";
         ctx.beginPath();
         ctx.arc(swX, swY, 14, 0, Math.PI * 2);
         ctx.fill();
@@ -5969,27 +6027,27 @@ class DroneSimulations {
         ctx.stroke();
 
         ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 6px var(--font-sans)";
+        ctx.font = "bold 6.5px var(--font-sans)";
         ctx.fillText("SAFETY", swX, swY + 2);
 
         // Buzzer
         const bzX = swX;
         const bzY = cy + 25;
-        ctx.fillStyle = (isStep(9) || highlightAll) ? "#18181b" : "#09090b";
+        ctx.fillStyle = "#0f172a";
         ctx.beginPath();
         ctx.arc(bzX, bzY, 12, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = "#94a3b8";
+        ctx.strokeStyle = "#64748b";
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        ctx.fillStyle = "#94a3b8";
+        ctx.fillStyle = "#cbd5e1";
         ctx.font = "bold 6px var(--font-sans)";
         ctx.fillText("BUZZER", bzX, bzY + 2);
 
         if (isStep(9) || highlightAll) {
-          ctx.strokeStyle = "#ef4444";
-          ctx.lineWidth = 1;
+          ctx.strokeStyle = "#dc2626";
+          ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(swX - 14, swY); ctx.lineTo(cx + fcW / 2, cy - 10);
           ctx.moveTo(bzX - 12, bzY); ctx.lineTo(cx + fcW / 2, cy + 5);
@@ -5997,98 +6055,97 @@ class DroneSimulations {
         }
       }
 
-      // 9. Telemetry Air Radio
+      // 11. Telemetry Air Radio
       const telX = cx - 140;
       const telY = cy + 100;
 
-      ctx.fillStyle = (isStep(9) || highlightAll) ? "#1e293b" : "#0f172a";
+      ctx.fillStyle = "#0f172a";
       ctx.fillRect(telX, telY, 44, 26);
-      ctx.strokeStyle = (isStep(9) || highlightAll) ? "#a855f7" : "#475569";
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = (isStep(9) || highlightAll) ? "#9333ea" : "#64748b";
+      ctx.lineWidth = 1.5;
       ctx.strokeRect(telX, telY, 44, 26);
 
       ctx.fillStyle = "#ffffff";
-      ctx.font = "7px 'JetBrains Mono', monospace";
-      ctx.fillText("TELEM", telX + 22, telY + 12);
+      ctx.font = "bold 7px 'JetBrains Mono', monospace";
+      ctx.fillText("TELEM", telX + 22, telY + 11);
       ctx.fillText("433/915", telX + 22, telY + 20);
 
       // Duck Antenna
-      ctx.strokeStyle = "#09090b";
+      ctx.strokeStyle = "#0f172a";
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(telX, telY + 13);
-      ctx.lineTo(telX - 25, telY + 13);
+      ctx.lineTo(telX - 22, telY + 13);
       ctx.stroke();
 
       if (isStep(9) || highlightAll) {
-        ctx.strokeStyle = "#a855f7";
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "#9333ea";
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(telX + 44, telY + 13);
         ctx.lineTo(cx - fcW / 2, cy + 18);
         ctx.stroke();
       }
 
-      // 10. Step 10 Pre-Power Safety Callout
+      // 12. Step 10 Pre-Power Safety Callout (White Card)
       if (isStep(10)) {
-        ctx.fillStyle = "rgba(15, 23, 42, 0.95)";
-        ctx.fillRect(160, 480, 240, 90);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(140, 490, 270, 88);
         ctx.strokeStyle = "#10b981";
         ctx.lineWidth = 2;
-        ctx.strokeRect(160, 480, 240, 90);
+        ctx.strokeRect(140, 490, 270, 88);
 
-        ctx.fillStyle = "#10b981";
+        ctx.fillStyle = "#059669";
         ctx.font = "bold 11px var(--font-sans)";
-        ctx.fillText("SMOKE STOPPER BENCH CHECK", 172, 502);
-        ctx.fillStyle = "#e2e8f0";
-        ctx.font = "9px 'JetBrains Mono', monospace";
-        ctx.fillText("1. Multimeter Continuity on XT60: NO BEEP", 172, 520);
-        ctx.fillText("2. Inline Polyfuse: GREEN (No short)", 172, 536);
-        ctx.fillText("3. PROPELLERS STRICTLY OFF ON BENCH!", 172, 552);
+        ctx.fillText("PRE-POWER SAFETY ROUTINE", 152, 510);
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+        ctx.fillText("1. Multimeter Continuity on XT60: NO BEEP", 152, 528);
+        ctx.fillText("2. Smoke Stopper Polyfuse: GREEN LED", 152, 544);
+        ctx.fillText("3. PROPELLERS REMAIN STRICTLY OFF!", 152, 560);
       }
     };
 
-    // Render FC Pinout Close-Up View
+    // Render FC Pinout Close-Up View (White & Detailed)
     const renderPinoutView = (w, h) => {
-      drawBlueprintBackground(
+      drawWhiteBlueprintBackground(
         w, h,
         `${selectedFC === 'pixhawk' ? 'PIXHAWK 2.4.8 (32-BIT)' : 'APM 2.8 (ARDUPILOT MEGA)'} PINOUT SCHEMATIC`,
-        "DEEP DIVE PORT HEADERS & JUMPER ASSIGNMENTS"
+        "PORT HEADERS, PIN NUMBERING & WIRE COLORS"
       );
 
       const px = 140;
-      const py = 60;
+      const py = 50;
       const pw = 660;
-      const ph = 540;
+      const ph = 560;
 
-      // Board Case
-      ctx.fillStyle = "#0c1322";
+      // Board Case (Crisp Light Tech Board)
+      ctx.fillStyle = "#f8fafc";
       ctx.fillRect(px, py, pw, ph);
-      ctx.strokeStyle = "#38bdf8";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#0284c7";
+      ctx.lineWidth = 2.5;
       ctx.strokeRect(px, py, pw, ph);
 
       // Heading Arrow on Board
-      ctx.fillStyle = "#f8fafc";
+      ctx.fillStyle = "#0284c7";
       ctx.beginPath();
       ctx.moveTo(px + pw / 2, py + 12);
-      ctx.lineTo(px + pw / 2 - 12, py + 34);
-      ctx.lineTo(px + pw / 2 + 12, py + 34);
+      ctx.lineTo(px + pw / 2 - 12, py + 30);
+      ctx.lineTo(px + pw / 2 + 12, py + 30);
       ctx.closePath();
       ctx.fill();
 
-      ctx.fillStyle = "#f8fafc";
+      ctx.fillStyle = "#0f172a";
       ctx.font = "bold 15px var(--font-sans)";
       ctx.textAlign = "center";
-      ctx.fillText(selectedFC === 'pixhawk' ? "PIXHAWK 2.4.8 FLIGHT CONTROLLER PINOUTS" : "APM 2.8 (ARDUPILOT MEGA) PINOUTS & JUMPERS", px + pw / 2, py + 54);
-      ctx.font = "11px 'JetBrains Mono', monospace";
-      ctx.fillStyle = "#38bdf8";
-      ctx.fillText("▲ FORWARD FACING NOSE DIRECTION ▲", px + pw / 2, py + 70);
+      ctx.fillText(selectedFC === 'pixhawk' ? "PIXHAWK 2.4.8 FLIGHT CONTROLLER PINOUTS" : "APM 2.8 (ARDUPILOT MEGA) PINOUTS & JUMPERS", px + pw / 2, py + 48);
+      ctx.font = "bold 10px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#0284c7";
+      ctx.fillText("▲ FORWARD FACING NOSE DIRECTION ▲", px + pw / 2, py + 62);
 
       if (selectedFC === 'pixhawk') {
-        // PIXHAWK 2.4.8 PORTS BREAKDOWN
         const drawPortBlock = (bx, by, bw, bh, title, pins, color) => {
-          ctx.fillStyle = "#182234";
+          ctx.fillStyle = "#ffffff";
           ctx.fillRect(bx, by, bw, bh);
           ctx.strokeStyle = color;
           ctx.lineWidth = 1.5;
@@ -6099,46 +6156,46 @@ class DroneSimulations {
           ctx.textAlign = "left";
           ctx.fillText(title, bx + 10, by + 18);
 
-          ctx.font = "9px 'JetBrains Mono', monospace";
-          ctx.fillStyle = "#e2e8f0";
+          ctx.font = "9.5px 'JetBrains Mono', monospace";
+          ctx.fillStyle = "#1e293b";
           pins.forEach((p, idx) => {
             ctx.fillText(p, bx + 10, by + 34 + idx * 14);
           });
         };
 
         // Left Column Ports
-        drawPortBlock(px + 24, py + 90, 185, 120, "POWER PORT (6-Pin)", [
+        drawPortBlock(px + 24, py + 80, 185, 120, "POWER PORT (6-Pin)", [
           "Pin 1: VCC (+5.3V Clean)",
           "Pin 2: VCC (+5.3V Clean)",
           "Pin 3: Current Sense (0-3.3V)",
           "Pin 4: Voltage Sense (0-3.3V)",
           "Pin 5: GND (Ground)",
           "Pin 6: GND (Ground)"
-        ], "#10b981");
+        ], "#059669");
 
-        drawPortBlock(px + 24, py + 225, 185, 120, "GPS PORT (6-Pin DF13)", [
+        drawPortBlock(px + 24, py + 215, 185, 120, "GPS PORT (6-Pin DF13)", [
           "Pin 1: VCC (+5.0V)",
           "Pin 2: TX (Telemetry Data Out)",
           "Pin 3: RX (Data In to Pixhawk)",
           "Pin 4: I2C SCL (Compass Clock)",
           "Pin 5: I2C SDA (Compass Data)",
           "Pin 6: GND (Ground)"
-        ], "#38bdf8");
+        ], "#0284c7");
 
-        drawPortBlock(px + 24, py + 360, 185, 95, "I2C PORT (4-Pin DF13)", [
+        drawPortBlock(px + 24, py + 350, 185, 95, "I2C PORT (4-Pin DF13)", [
           "Pin 1: VCC (+5.0V)",
           "Pin 2: SCL (I2C Clock)",
           "Pin 3: SDA (I2C Data)",
           "Pin 4: GND (Ground)"
-        ], "#ec4899");
+        ], "#db2777");
 
-        drawPortBlock(px + 24, py + 470, 185, 55, "TELEM 1 (6-Pin)", [
+        drawPortBlock(px + 24, py + 460, 185, 65, "TELEM 1 (6-Pin)", [
           "VCC, TX, RX, CTS, RTS, GND",
           "Connects 433/915MHz Air Radio"
-        ], "#a855f7");
+        ], "#7c3aed");
 
-        // Right Column: Output & RC IN Rail
-        drawPortBlock(px + 230, py + 90, 220, 200, "MAIN OUT 1–8 (ESC Servo Rail)", [
+        // Middle Column: Output & RC IN Rail
+        drawPortBlock(px + 230, py + 80, 220, 200, "MAIN OUT 1–8 (ESC Servo Rail)", [
           "PIN ORIENTATION (Top to Bottom):",
           "• TOP ROW: GND (Black / Brown)",
           "• MIDDLE ROW: +5V Power (Red)",
@@ -6149,35 +6206,35 @@ class DroneSimulations {
           "• OUT 3: Motor 3 (Front-Left, CW)",
           "• OUT 4: Motor 4 (Rear-Right, CW)",
           "• OUT 5–8: Gimbals / Servos / Parachute"
-        ], "#f59e0b");
+        ], "#d97706");
 
-        drawPortBlock(px + 230, py + 305, 220, 110, "RC IN PORT (Single Digital Wire)", [
+        drawPortBlock(px + 230, py + 295, 220, 110, "RC IN PORT (Single Digital Wire)", [
           "• Single 3-Pin Cable carries ALL channels!",
           "• Compatible: PPM, SBUS, i-Bus, DSM",
           "• FlySky FS-iA6B: Set to PPM in TX menu",
           "• FrSky / ELRS: Connect SBUS/CRSF",
           "• DO NOT plug into SPKT/DSM port!"
-        ], "#10b981");
+        ], "#059669");
 
-        drawPortBlock(px + 230, py + 430, 220, 95, "SAFETY SWITCH & BUZZER", [
+        drawPortBlock(px + 230, py + 420, 220, 105, "SAFETY SWITCH & BUZZER", [
           "• SWITCH (3-Pin): Push-button + Red LED",
           "  Hold 2 seconds to unlock arming.",
           "• BUZZER (2-Pin): Arming & warning chimes."
-        ], "#ef4444");
+        ], "#dc2626");
 
-        // Center / Right Info Box
-        ctx.fillStyle = "#111827";
-        ctx.fillRect(px + 470, py + 90, 165, 435);
-        ctx.strokeStyle = "#374151";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(px + 470, py + 90, 165, 435);
+        // Right Column: Summary Card
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(px + 470, py + 80, 165, 445);
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(px + 470, py + 80, 165, 445);
 
-        ctx.fillStyle = "#38bdf8";
+        ctx.fillStyle = "#0284c7";
         ctx.font = "bold 11px var(--font-sans)";
-        ctx.fillText("GOLDEN PIXHAWK RULES", px + 480, py + 115);
+        ctx.fillText("GOLDEN PIXHAWK RULES", px + 480, py + 105);
 
-        ctx.font = "9.5px 'JetBrains Mono', monospace";
-        ctx.fillStyle = "#94a3b8";
+        ctx.font = "9px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#334155";
         const rules = [
           "1. POWER RAIL ISOLATION:",
           "Power Module powers the",
@@ -6200,13 +6257,13 @@ class DroneSimulations {
           "bench calibrations!"
         ];
         rules.forEach((r, idx) => {
-          ctx.fillText(r, px + 480, py + 138 + idx * 16);
+          ctx.fillText(r, px + 480, py + 128 + idx * 16);
         });
 
       } else {
         // APM 2.8 PORTS BREAKDOWN
         const drawPortBlock = (bx, by, bw, bh, title, pins, color) => {
-          ctx.fillStyle = "#182234";
+          ctx.fillStyle = "#ffffff";
           ctx.fillRect(bx, by, bw, bh);
           ctx.strokeStyle = color;
           ctx.lineWidth = 1.5;
@@ -6217,43 +6274,42 @@ class DroneSimulations {
           ctx.textAlign = "left";
           ctx.fillText(title, bx + 10, by + 18);
 
-          ctx.font = "9px 'JetBrains Mono', monospace";
-          ctx.fillStyle = "#e2e8f0";
+          ctx.font = "9.5px 'JetBrains Mono', monospace";
+          ctx.fillStyle = "#1e293b";
           pins.forEach((p, idx) => {
             ctx.fillText(p, bx + 10, by + 34 + idx * 14);
           });
         };
 
         // Left Column: PM, GPS, I2C, Jumpers
-        drawPortBlock(px + 24, py + 90, 195, 110, "PM PORT (Power Module)", [
+        drawPortBlock(px + 24, py + 80, 195, 110, "PM PORT (Power Module)", [
           "Pin 1 & 2: VCC (+5.3V Clean)",
           "Pin 3: Current Analog (0-5V)",
           "Pin 4: Voltage Analog (0-5V)",
           "Pin 5 & 6: GND (Ground)"
-        ], "#10b981");
+        ], "#059669");
 
-        drawPortBlock(px + 24, py + 215, 195, 140, "CRITICAL: JP1 JUMPER", [
-          "• JP1 REMOVED (RECOMMENDED):",
+        drawPortBlock(px + 24, py + 205, 195, 140, "CRITICAL: JP1 JUMPER", [
+          "• JP1 REMOVED (MANDATORY):",
           "  Isolates Power Module from ESC",
           "  5V BECs. Prevents dual voltage",
           "  regulators fighting & burnout!",
           "• JP1 INSTALLED:",
-          "  Connects In & Out rails together.",
           "  Use ONLY if ESCs are OPTO (no BEC)."
-        ], "#ef4444");
+        ], "#dc2626");
 
-        drawPortBlock(px + 24, py + 370, 195, 155, "CRITICAL: MAG COMPASS JUMPER", [
+        drawPortBlock(px + 24, py + 360, 195, 165, "CRITICAL: MAG COMPASS JUMPER", [
           "• MAG JUMPER REMOVED (MANDATORY):",
           "  Disables onboard internal compass.",
           "  Allows external compass on GPS mast",
           "  via I2C port without conflict!",
           "• MAG JUMPER INSTALLED:",
           "  Enables internal compass (suffers",
-          "  from severe PDB electromagnetic noise)."
-        ], "#ec4899");
+          "  from severe PDB magnetic noise)."
+        ], "#db2777");
 
         // Middle Column: INPUTS & OUTPUTS
-        drawPortBlock(px + 235, py + 90, 220, 210, "INPUTS 1–8 (RC Receiver)", [
+        drawPortBlock(px + 235, py + 80, 220, 210, "INPUTS 1–8 (RC Receiver)", [
           "PIN ORIENTATION:",
           "• OUTER EDGE: GND (Black / Brown)",
           "• CENTER ROW: +5V Power (Red)",
@@ -6266,9 +6322,9 @@ class DroneSimulations {
           "• IN 5: Flight Mode Switch (3-pos)",
           "• IN 6: Tuning / Aux channel",
           "• PPM Option: Jumper pin 2&3, signal to 1"
-        ], "#38bdf8");
+        ], "#0284c7");
 
-        drawPortBlock(px + 235, py + 315, 220, 210, "OUTPUTS 1–8 (Motor ESCs)", [
+        drawPortBlock(px + 235, py + 305, 220, 220, "OUTPUTS 1–8 (Motor ESCs)", [
           "PIN ORIENTATION:",
           "• OUTER EDGE: GND (Black / Brown)",
           "• CENTER ROW: +5V (Disconnected if no JP1)",
@@ -6279,21 +6335,21 @@ class DroneSimulations {
           "• OUT 3: Motor 3 (Front-Left, CW)",
           "• OUT 4: Motor 4 (Rear-Right, CW)",
           "• OUT 5–8: Aux / Camera Tilt"
-        ], "#f59e0b");
+        ], "#d97706");
 
-        // Right Column: GPS, I2C & Firmware Info
-        ctx.fillStyle = "#111827";
-        ctx.fillRect(px + 470, py + 90, 165, 435);
-        ctx.strokeStyle = "#374151";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(px + 470, py + 90, 165, 435);
+        // Right Column: APM Gotchas
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(px + 470, py + 80, 165, 445);
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(px + 470, py + 80, 165, 445);
 
-        ctx.fillStyle = "#38bdf8";
+        ctx.fillStyle = "#0284c7";
         ctx.font = "bold 11px var(--font-sans)";
-        ctx.fillText("APM 2.8 GOTCHAS", px + 480, py + 115);
+        ctx.fillText("APM 2.8 GOTCHAS", px + 480, py + 105);
 
         ctx.font = "9px 'JetBrains Mono', monospace";
-        ctx.fillStyle = "#94a3b8";
+        ctx.fillStyle = "#334155";
         const apmNotes = [
           "1. ARDUCOPTER 3.2.1:",
           "APM 2.8 is 8-bit AVR.",
@@ -6316,7 +6372,7 @@ class DroneSimulations {
           "Props strictly off on bench!"
         ];
         apmNotes.forEach((n, idx) => {
-          ctx.fillText(n, px + 480, py + 138 + idx * 16);
+          ctx.fillText(n, px + 480, py + 128 + idx * 16);
         });
       }
     };

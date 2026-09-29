@@ -763,7 +763,10 @@
       <div class="sim-suite-container">
         <!-- Sidebar Navigation -->
         <aside class="sim-sidebar">
-          <h3>Simulation Tools</h3>
+          <div class="sim-sidebar-header">
+            <h3>Simulation Tools</h3>
+            <button id="btn-collapse-sidebar" class="sidebar-collapse-btn" title="Collapse Sidebar" aria-label="Collapse Sidebar">◀</button>
+          </div>
           <button class="sim-tab-btn active" data-sim-target="sim-flight-physics">1. 3D Flight Physics & Motors</button>
           <button class="sim-tab-btn" data-sim-target="sim-thrust-calc">2. Thrust-to-Weight Calculator</button>
           <button class="sim-tab-btn" data-sim-target="sim-lipo-monitor">3. LiPo Battery Curve & Safety</button>
@@ -782,6 +785,7 @@
 
         <!-- Viewport -->
         <div class="sim-viewport">
+          <button id="btn-expand-sidebar" class="sidebar-expand-btn" style="display: none;">▶ Show Simulations List (14)</button>
 
           <!-- 1. FLIGHT PHYSICS -->
           <div class="sim-panel active" id="sim-flight-physics">
@@ -1903,116 +1907,91 @@
 
           <!-- 14. HARDWARE ASSEMBLY & WIRING BLUEPRINT (PIXHAWK & APM 2.8) -->
           <div class="sim-panel" id="sim-hardware-assembly">
-            <div class="sim-panel-header">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
-                <div>
-                  <h3>14. Drone Hardware Assembly &amp; Wiring Blueprint (Pixhawk &amp; APM 2.8)</h3>
-                  <p>Interactive step-by-step physical assembly guide and wiring schematic for absolute beginners. Follow along from bare F450 frame, motor and ESC soldering, to flight controller pinouts, receiver binding, and pre-power safety checks.</p>
+            <!-- Compact Unified Header (Saved 200px vertical space) -->
+            <div class="asm-unified-header">
+              <div class="asm-header-top">
+                <div class="asm-step-badge-group">
+                  <span id="asm-step-badge" class="asm-step-pill-badge">STEP 1/10</span>
+                  <h3 id="asm-step-title-header" class="asm-step-main-title">Frame Inspection &amp; Bottom Plate PDB</h3>
                 </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <button class="btn-secondary" id="btn-asm-toggle-view" style="font-size: 13px; padding: 8px 14px;">Switch to FC Pinout View</button>
-                  <button class="btn-secondary" id="btn-asm-reset-step" style="font-size: 13px; padding: 8px 14px;">Reset to Step 1</button>
+
+                <div class="asm-header-actions">
+                  <!-- Flight Controller Switcher -->
+                  <div class="compact-toggle" title="Select Flight Controller">
+                    <button class="switch-btn active" id="btn-fc-pixhawk">Pixhawk 2.4.8</button>
+                    <button class="switch-btn" id="btn-fc-apm">APM 2.8</button>
+                  </div>
+                  <!-- View Switcher -->
+                  <div class="compact-toggle" title="Select View">
+                    <button class="switch-btn active" id="btn-view-airframe">Airframe</button>
+                    <button class="switch-btn" id="btn-view-pinout">Pinouts</button>
+                  </div>
+                  <!-- Step Prev / Next Buttons -->
+                  <div class="asm-nav-btn-group">
+                    <button class="btn-secondary compact-btn" id="btn-asm-prev">← Prev</button>
+                    <button class="btn-primary compact-btn" id="btn-asm-next">Next →</button>
+                  </div>
                 </div>
               </div>
+
+              <!-- Slim 1-Line Step Pills (1 to 10) -->
+              <div id="asm-step-pills" class="asm-step-pills-slim"></div>
             </div>
 
-            <!-- Controller Selection & View Mode Bar -->
-            <div style="background-color: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <span style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Flight Controller:</span>
-                <div class="switch-toggle-row" style="margin: 0;">
-                  <button class="switch-btn active" id="btn-fc-pixhawk">Pixhawk 2.4.8 (32-Bit ARM)</button>
-                  <button class="switch-btn" id="btn-fc-apm">APM 2.8 (ArduPilot Classic)</button>
-                </div>
-              </div>
-              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                <span style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Blueprint View:</span>
-                <div class="switch-toggle-row" style="margin: 0;">
-                  <button class="switch-btn active" id="btn-view-airframe">Full Airframe Blueprint</button>
-                  <button class="switch-btn" id="btn-view-pinout">FC Pinout Close-Up</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Step Progress Indicator -->
-            <div style="background-color: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 20px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <span id="asm-step-badge" style="background-color: var(--primary); color: var(--primary-contrast); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-pill); font-family: var(--font-mono);">STEP 1 OF 10</span>
-                  <span id="asm-step-title-header" style="font-weight: 700; color: var(--text-primary); font-size: 15px;">Frame Inspection &amp; Bottom Plate PDB Preparation</span>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                  <button class="btn-secondary" id="btn-asm-prev" style="padding: 6px 12px; font-size: 13px;">← Previous Step</button>
-                  <button class="btn-primary" id="btn-asm-next" style="padding: 6px 14px; font-size: 13px;">Next Step →</button>
+            <!-- Main Layout: Big Clean White Technical Canvas (Left) + Visual Micro-Steps (Right) -->
+            <div class="sim-grid-layout" style="grid-template-columns: 1.35fr 1fr; gap: 16px; align-items: start;">
+              <!-- White Technical Blueprint Canvas Box -->
+              <div class="sim-canvas-box" style="padding: 0; overflow: hidden; background: #ffffff; border: 1px solid var(--border-medium); border-radius: var(--radius-lg); position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <canvas id="canvas-hardware-assembly" width="940" height="660" style="display: block; width: 100%; height: auto; cursor: crosshair; background: #ffffff;"></canvas>
+                <div id="asm-canvas-hint" style="position: absolute; bottom: 10px; left: 14px; font-size: 11px; color: #475569; font-family: var(--font-mono); pointer-events: none; background: rgba(255, 255, 255, 0.92); padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                  Interactive Schematic • Click any component to inspect specs &amp; pinouts
                 </div>
               </div>
 
-              <!-- Step Buttons 1 to 10 Container -->
-              <div id="asm-step-pills" style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px;"></div>
-            </div>
-
-            <!-- Main Layout: Big Blueprint Canvas (Left) + Step Guidance & Gotchas (Right) -->
-            <div class="sim-grid-layout" style="grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start;">
-              <!-- Blueprint Canvas Box -->
-              <div class="sim-canvas-box" style="padding: 0; overflow: hidden; background: #090d16; border: 1px solid #27272a; border-radius: var(--radius-lg); position: relative;">
-                <canvas id="canvas-hardware-assembly" width="940" height="660" style="display: block; width: 100%; height: auto; cursor: crosshair;"></canvas>
-                <div id="asm-canvas-hint" style="position: absolute; bottom: 12px; left: 16px; font-size: 11px; color: #a1a1aa; font-family: var(--font-mono); pointer-events: none; background: rgba(9, 13, 22, 0.85); padding: 4px 10px; border-radius: 4px; border: 1px solid #27272a;">
-                  Interactive Blueprint • Click any highlighted component to inspect wiring pinouts &amp; instructions
-                </div>
-              </div>
-
-              <!-- Step Guide & Verification Card -->
-              <div class="sim-controls-card" style="padding: 20px;">
-                <!-- Step Phase Tag -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                  <span id="asm-phase-badge" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: var(--bg-page); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-subtle);">Phase: Mechanical Foundation</span>
-                  <span id="asm-fc-badge" style="font-size: 11px; font-weight: 700; color: #0284c7; background: #f0f9ff; padding: 3px 8px; border-radius: 4px; border: 1px solid #bae6fd;">Mode: Pixhawk 2.4.8</span>
+              <!-- Visual-First Student Micro-Step Card -->
+              <div class="sim-controls-card" style="padding: 16px;">
+                <!-- Step Phase & Controller Badges -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span id="asm-phase-badge" style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: var(--bg-page); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">Mechanical Base</span>
+                  <span id="asm-fc-badge" style="font-size: 10.5px; font-weight: 700; color: #0284c7; background: #f0f9ff; padding: 2px 6px; border-radius: 4px; border: 1px solid #bae6fd;">Pixhawk 2.4.8</span>
                 </div>
 
                 <!-- Step Title -->
-                <h4 id="asm-step-heading" style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 12px; line-height: 1.35;">
-                  1. Frame Inspection &amp; Bottom Plate PDB Preparation
+                <h4 id="asm-step-heading" style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-bottom: 10px; line-height: 1.3;">
+                  1. Frame Inspection &amp; Bottom Plate PDB
                 </h4>
 
-                <!-- What to do (Plain English) -->
-                <div style="margin-bottom: 16px;">
-                  <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px;">What to Do (Literal Zero Instructions):</div>
-                  <div id="asm-step-instructions" style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">
-                    Inspect the F450 frame kit. You have two main fiberglass plates: Top Plate and Bottom Plate. The Bottom Plate has integrated gold/tin copper traces with + and - pads acting as your Power Distribution Board (PDB).<br><br>
-                    <strong>Arm Color Orientation:</strong> Mount the two <strong>RED arms to the FRONT</strong> (facing forward) and the two <strong>WHITE or BLACK arms to the REAR</strong>. This visual color contrast is vital so you can distinguish the drone's heading line-of-sight while flying.<br><br>
-                    Use 16x M2.5 socket head screws from underneath to secure the 4 arms into the brass threaded inserts of the bottom plate. Do not install the top plate yet!
+                <!-- Visual 3-Action Micro-List (Kids Friendly) -->
+                <div id="asm-micro-actions" class="asm-micro-actions-list">
+                  <!-- Dynamically populated 3 punchy action items -->
+                </div>
+
+                <!-- Danger / Fatal Pitfall Box -->
+                <div class="asm-danger-box">
+                  <div class="asm-danger-icon">🚫</div>
+                  <div id="asm-step-pitfall" class="asm-danger-text">
+                    Never install arms upside down! Snug tight only into brass inserts.
                   </div>
                 </div>
 
-                <!-- Tools & Components -->
-                <div style="background-color: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;">
-                  <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px;">Parts &amp; Tools for this Step:</div>
-                  <div id="asm-step-tools" style="font-size: 12.5px; color: var(--text-primary); font-family: var(--font-mono);">
-                    • F450 Bottom Plate, 2x Red Arms (Front), 2x White/Black Arms (Rear), 16x M2.5 Screws, 2.0mm Hex Driver
-                  </div>
+                <!-- Gamified Verification Button -->
+                <div class="asm-verify-box">
+                  <button id="btn-asm-verify" class="asm-verify-btn">
+                    <span id="asm-verify-icon">⬜</span>
+                    <span id="asm-verify-text">Tap to Verify Step Completion</span>
+                  </button>
                 </div>
 
-                <!-- Critical Beginner Pitfall / Trap -->
-                <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;">
-                  <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #b91c1c; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    Critical Beginner Pitfall:
+                <!-- Optional Deep Dive Specs Accordion (Hidden by default for non-readers) -->
+                <details class="asm-deepdive-details">
+                  <summary class="asm-deepdive-summary">
+                    <span>📘 Instructor Notes &amp; Deep-Dive Details</span>
+                    <span style="font-size: 10px;">▼</span>
+                  </summary>
+                  <div id="asm-step-deepdive" class="asm-deepdive-content">
+                    Detailed instructions will appear here.
                   </div>
-                  <div id="asm-step-pitfall" style="font-size: 12.5px; color: #991b1b; line-height: 1.5;">
-                    Never install arms upside down! The motor mounting holes must face upward and the lower landing gear tabs curve downward. Tighten screws snugly; do not over-torque into brass threads.
-                  </div>
-                </div>
-
-                <!-- Verification Checkpoint -->
-                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 20px;">
-                  <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #166534; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    Checkpoint Test Before Proceeding:
-                  </div>
-                  <div id="asm-step-test" style="font-size: 12.5px; color: #14532d; line-height: 1.5;">
-                    Frame stands flat on its four legs with zero wobble. Red arms are pointing forward (10 o'clock and 2 o'clock).
-                  </div>
-                </div>
+                </details>
 
                 <!-- Interactive Hardware Component Inspector Drawer -->
                 <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px;">
