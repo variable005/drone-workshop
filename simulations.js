@@ -19,6 +19,8 @@ class DroneSimulations {
     this.initTroubleshootingSim();
     this.initRfLinkSim();
     this.initRadioBlueprintSim();
+    this.initGravityThrustSim();
+    this.initPropAeroSim();
   }
 
   initEventListeners() {
@@ -2763,6 +2765,1317 @@ class DroneSimulations {
     };
 
     render();
+  }
+
+  // =========================================================================
+  // 11. GRAVITY VS THRUST DYNAMICS & ALTITUDE ACCELERATION SIMULATOR
+  // =========================================================================
+  initGravityThrustSim() {
+    const canvas = document.getElementById('canvas-gravity-thrust');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const envSelect = document.getElementById('gt-environment');
+    const thrustSlider = document.getElementById('gt-thrust-slider');
+    const thrustVal = document.getElementById('gt-thrust-val');
+    const massSlider = document.getElementById('gt-mass-slider');
+    const massVal = document.getElementById('gt-mass-val');
+    const modeManualBtn = document.getElementById('gt-mode-manual');
+    const modeAltHoldBtn = document.getElementById('gt-mode-althold');
+    const targetAltGroup = document.getElementById('gt-target-alt-group');
+    const targetAltSlider = document.getElementById('gt-target-alt-slider');
+    const targetAltVal = document.getElementById('gt-target-alt-val');
+
+    const btnHover = document.getElementById('gt-btn-hover');
+    const btnDrop = document.getElementById('gt-btn-drop');
+    const btnGust = document.getElementById('gt-btn-gust');
+    const btnFail = document.getElementById('gt-btn-fail');
+    const btnCut = document.getElementById('gt-btn-cut');
+    const btnReset = document.getElementById('gt-btn-reset');
+
+    const teleAlt = document.getElementById('gt-tele-alt');
+    const teleVz = document.getElementById('gt-tele-vz');
+    const teleAz = document.getElementById('gt-tele-az');
+    const teleThrust = document.getElementById('gt-tele-thrust');
+    const teleWeight = document.getElementById('gt-tele-weight');
+    const teleDrag = document.getElementById('gt-tele-drag');
+    const teleFnet = document.getElementById('gt-tele-fnet');
+    const teleTwr = document.getElementById('gt-tele-twr');
+    const statusEl = document.getElementById('gt-status');
+
+    // Environments dictionary
+    const envs = {
+      earth: { name: 'Earth Surface', g: 9.81, rho: 1.225, groundCol: '#16a34a', skyTone: '#f4f4f5' },
+      moon: { name: 'Moon Surface', g: 1.62, rho: 0.0, groundCol: '#71717a', skyTone: '#18181b' },
+      mars: { name: 'Mars Surface', g: 3.72, rho: 0.020, groundCol: '#b45309', skyTone: '#fef3c7' },
+      jupiter: { name: 'Jupiter Cloud Tops', g: 24.79, rho: 1.300, groundCol: '#92400e', skyTone: '#ffedd5' },
+      orbit: { name: 'Deep Space / Microgravity', g: 0.0, rho: 0.0, groundCol: '#3f3f46', skyTone: '#09090b' }
+    };
+
+    let env = envs.earth;
+    let mass = 1.0; // kg
+    let thrustInput = 9.81; // N
+    let effectiveThrust = 9.81;
+    let mode = 'manual'; // 'manual' | 'althold'
+    let targetAlt = 10.0; // m
+    let motorFailed = false;
+
+    // Dynamics state
+    let alt = 0.0; // m
+    let vz = 0.0; // m/s
+    let az = 0.0; // m/s²
+    let gust = 0.0; // m/s downward wind
+    let fnet = 0.0;
+    let dragForce = 0.0;
+    let weight = mass * env.g;
+
+    // PID controller states
+    let pidIntegral = 0;
+    let pidPrevError = 0;
+
+    // Visuals
+    let propPhase = 0;
+    let altHistory = []; // { alt, time }
+    let lastTime = performance.now();
+    let hardLandingTimer = 0;
+
+    const updateControlsUI = () => {
+      if (thrustVal) {
+        const gf = (thrustInput / (env.g || 9.81) * 1000).toFixed(0);
+        thrustVal.textContent = `${thrustInput.toFixed(2)} N (${gf} g)`;
+      }
+      if (massVal) {
+        massVal.textContent = `${(mass * 1000).toFixed(0)} g (${mass.toFixed(2)} kg)`;
+      }
+      if (targetAltVal) {
+        targetAltVal.textContent = `${targetAlt.toFixed(1)} m`;
+      }
+    };
+
+    if (envSelect) {
+      envSelect.addEventListener('change', (e) => {
+        env = envs[e.target.value] || envs.earth;
+        if (mode === 'althold') {
+          pidIntegral = 0;
+        }
+        if (statusEl) {
+          statusEl.textContent = `Environment switched to ${env.name} (Gravity = ${env.g.toFixed(2)} m/s², Density = ${env.rho.toFixed(3)} kg/m³).`;
+        }
+      });
+    }
+
+    if (thrustSlider) {
+      thrustSlider.addEventListener('input', (e) => {
+        if (mode === 'manual') {
+          thrustInput = parseFloat(e.target.value);
+          updateControlsUI();
+        }
+      });
+    }
+
+    if (massSlider) {
+      massSlider.addEventListener('input', (e) => {
+        mass = parseFloat(e.target.value) / 1000.0;
+        updateControlsUI();
+      });
+    }
+
+    if (modeManualBtn && modeAltHoldBtn) {
+      modeManualBtn.addEventListener('click', () => {
+        mode = 'manual';
+        modeManualBtn.classList.add('active');
+        modeAltHoldBtn.classList.remove('active');
+        if (targetAltGroup) targetAltGroup.style.display = 'none';
+        if (thrustSlider) thrustSlider.disabled = false;
+        if (statusEl) statusEl.textContent = 'Autopilot set to Manual Throttle. Use the thrust slider directly to control vertical climb and descent.';
+      });
+      modeAltHoldBtn.addEventListener('click', () => {
+        mode = 'althold';
+        modeAltHoldBtn.classList.add('active');
+        modeManualBtn.classList.remove('active');
+        if (targetAltGroup) targetAltGroup.style.display = 'flex';
+        pidIntegral = 0;
+        pidPrevError = targetAlt - alt;
+        if (statusEl) statusEl.textContent = `Barometric Altitude Hold PID engaged. Autopilot will modulate motor thrust to maintain ${targetAlt.toFixed(1)}m.`;
+      });
+    }
+
+    if (targetAltSlider) {
+      targetAltSlider.addEventListener('input', (e) => {
+        targetAlt = parseFloat(e.target.value);
+        updateControlsUI();
+      });
+    }
+
+    if (btnHover) {
+      btnHover.addEventListener('click', () => {
+        thrustInput = Math.min(35.0, mass * env.g);
+        if (thrustSlider) thrustSlider.value = thrustInput.toFixed(1);
+        updateControlsUI();
+        if (statusEl) statusEl.textContent = `Hover thrust matched: T = m·g = ${thrustInput.toFixed(2)} N. Net vertical force is zero.`;
+      });
+    }
+
+    if (btnDrop) {
+      btnDrop.addEventListener('click', () => {
+        if (mass > 0.5) {
+          mass = Math.max(0.4, mass - 0.4);
+          if (massSlider) massSlider.value = (mass * 1000).toFixed(0);
+          updateControlsUI();
+          if (statusEl) statusEl.textContent = 'Payload released (-400g)! Mass dropped suddenly. Excess thrust causes upward acceleration ballooning.';
+        }
+      });
+    }
+
+    if (btnGust) {
+      btnGust.addEventListener('click', () => {
+        gust = -4.5;
+        if (statusEl) statusEl.textContent = 'Severe wind microburst applied (-4.5 m/s downdraft)! Aerodynamic drag transient induced.';
+      });
+    }
+
+    if (btnFail) {
+      btnFail.addEventListener('click', () => {
+        motorFailed = !motorFailed;
+        btnFail.textContent = motorFailed ? 'Restore Motor 4 (+25%)' : 'Fail Motor 4 (-25%)';
+        btnFail.style.backgroundColor = motorFailed ? '#dc2626' : '';
+        btnFail.style.color = motorFailed ? '#ffffff' : 'var(--danger)';
+        if (statusEl) {
+          statusEl.textContent = motorFailed
+            ? 'WARNING: Motor 4 failure simulated! 25% thrust loss. Total thrust may be insufficient to maintain altitude.'
+            : 'Motor 4 restored to 100% operation. Full thrust authority regained.';
+        }
+      });
+    }
+
+    if (btnCut) {
+      btnCut.addEventListener('click', () => {
+        thrustInput = 0;
+        if (thrustSlider) thrustSlider.value = 0;
+        updateControlsUI();
+        if (statusEl) statusEl.textContent = 'Throttle cut to 0 N! Drone is in freefall governed only by gravity and aerodynamic drag.';
+      });
+    }
+
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        alt = 0;
+        vz = 0;
+        az = 0;
+        gust = 0;
+        motorFailed = false;
+        if (btnFail) {
+          btnFail.textContent = 'Fail Motor 4 (-25%)';
+          btnFail.style.backgroundColor = '';
+          btnFail.style.color = 'var(--danger)';
+        }
+        thrustInput = Math.min(35.0, mass * env.g);
+        if (thrustSlider) thrustSlider.value = thrustInput.toFixed(1);
+        updateControlsUI();
+        if (statusEl) statusEl.textContent = 'Launch Pad reset: Drone resting on pad ready for liftoff.';
+      });
+    }
+
+    // Set initial values
+    updateControlsUI();
+
+    // Physics & Render Loop
+    const stepPhysics = (dt) => {
+      // 1. Calculate effective thrust
+      if (mode === 'althold') {
+        const error = targetAlt - alt;
+        const hoverThrust = mass * env.g;
+        pidIntegral += error * dt;
+        pidIntegral = Math.max(-10.0, Math.min(10.0, pidIntegral));
+        const derivative = (error - pidPrevError) / (dt || 0.016);
+        pidPrevError = error;
+
+        // PID Gains tuned for smooth vertical control
+        const Kp = 4.5;
+        const Ki = 1.0;
+        const Kd = 3.2;
+        const pidOut = hoverThrust + (Kp * error) + (Ki * pidIntegral) + (Kd * derivative);
+        thrustInput = Math.max(0.0, Math.min(35.0, pidOut));
+        if (thrustSlider) thrustSlider.value = thrustInput.toFixed(1);
+        updateControlsUI();
+      }
+
+      effectiveThrust = motorFailed ? thrustInput * 0.75 : thrustInput;
+      weight = mass * env.g;
+
+      // Relative air velocity including gust
+      const airVz = vz - gust;
+      const cd = 1.05;
+      const area = 0.045; // m² front equivalent cross section
+      const dragMag = 0.5 * env.rho * (airVz * airVz) * cd * area;
+      dragForce = -Math.sign(airVz) * dragMag;
+
+      fnet = effectiveThrust - weight + dragForce;
+
+      if (alt <= 0.001) {
+        // On Ground Pad
+        if (fnet <= 0) {
+          alt = 0.0;
+          vz = 0.0;
+          az = 0.0;
+          fnet = 0.0;
+        } else {
+          // Liftoff
+          az = fnet / mass;
+          vz += az * dt;
+          alt += vz * dt;
+        }
+      } else {
+        // Airborne
+        az = fnet / mass;
+        vz += az * dt;
+        alt += vz * dt;
+
+        if (alt <= 0.0) {
+          // Touchdown
+          if (vz < -5.0) {
+            hardLandingTimer = 1.5;
+            if (statusEl) statusEl.textContent = `HARD IMPACT TOUCHDOWN! Impact speed was ${(Math.abs(vz) * 3.6).toFixed(1)} km/h. Check landing gear integrity!`;
+          }
+          alt = 0.0;
+          vz = 0.0;
+          az = 0.0;
+          fnet = 0.0;
+        } else if (alt >= 25.0) {
+          // Ceiling clamp
+          alt = 25.0;
+          vz = Math.min(0, vz);
+        }
+      }
+
+      // Decay wind gust
+      gust *= Math.pow(0.5, dt / 0.5);
+
+      if (hardLandingTimer > 0) {
+        hardLandingTimer -= dt;
+      }
+
+      // Propeller spin blur rate
+      propPhase += (effectiveThrust / 10.0 + 0.2) * 40 * dt;
+
+      // History trace
+      altHistory.push(alt);
+      if (altHistory.length > 140) altHistory.shift();
+    };
+
+    const updateTelemetryDOM = () => {
+      if (teleAlt) teleAlt.textContent = `${alt.toFixed(2)} m`;
+      if (teleVz) {
+        const sign = vz >= 0.01 ? '+' : '';
+        teleVz.textContent = `${sign}${vz.toFixed(2)} m/s (${(vz * 3.6).toFixed(1)} km/h)`;
+        teleVz.style.color = Math.abs(vz) < 0.05 ? 'var(--text-primary)' : (vz > 0 ? '#16a34a' : '#dc2626');
+      }
+      if (teleAz) {
+        const sign = az >= 0.01 ? '+' : '';
+        const gVal = (az / (env.g || 9.81)).toFixed(2);
+        teleAz.textContent = `${sign}${az.toFixed(2)} m/s² (${sign}${gVal} G)`;
+      }
+      if (teleThrust) {
+        const gf = ((effectiveThrust / (env.g || 9.81)) * 1000).toFixed(0);
+        teleThrust.textContent = `${effectiveThrust.toFixed(2)} N (${gf} gf)`;
+      }
+      if (teleWeight) teleWeight.textContent = `${weight.toFixed(2)} N`;
+      if (teleDrag) teleDrag.textContent = `${Math.abs(dragForce).toFixed(2)} N`;
+      if (teleFnet) {
+        const sign = fnet >= 0.01 ? '+' : '';
+        const label = Math.abs(fnet) < 0.05 ? 'Balanced (Hover)' : (fnet > 0 ? 'Net Upward' : 'Net Downward');
+        teleFnet.textContent = `${sign}${fnet.toFixed(2)} N (${label})`;
+        teleFnet.style.color = Math.abs(fnet) < 0.05 ? 'var(--text-primary)' : (fnet > 0 ? '#16a34a' : '#dc2626');
+      }
+      if (teleTwr) {
+        const twr = weight > 0.001 ? (effectiveThrust / weight) : 99.9;
+        teleTwr.textContent = `${twr.toFixed(2)} : 1`;
+        teleTwr.style.color = twr >= 1.0 ? '#16a34a' : '#dc2626';
+      }
+    };
+
+    // Main Draw Function
+    const render = (timestamp) => {
+      const dt = Math.min((timestamp - lastTime) / 1000.0, 0.05);
+      lastTime = timestamp;
+
+      stepPhysics(dt);
+      updateTelemetryDOM();
+
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // Blueprint Canvas Background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+
+      // Subtle Background Grid (0 Gradients!)
+      ctx.strokeStyle = "#f4f4f5";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 25) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 25) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      // Visual Coordinates
+      const groundY = 420;
+      const topY = 60;
+      const maxAlt = 25.0; // meters
+
+      // Left Altitude Scale / Ruler
+      const rulerX = 55;
+      ctx.strokeStyle = "#71717a";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(rulerX, topY);
+      ctx.lineTo(rulerX, groundY);
+      ctx.stroke();
+
+      for (let m = 0; m <= maxAlt; m += 1) {
+        const y = groundY - (m / maxAlt) * (groundY - topY);
+        const isMajor = (m % 5 === 0);
+        ctx.strokeStyle = isMajor ? "#18181b" : "#a1a1aa";
+        ctx.lineWidth = isMajor ? 1.5 : 1;
+        ctx.beginPath();
+        ctx.moveTo(rulerX - (isMajor ? 10 : 5), y);
+        ctx.lineTo(rulerX + (isMajor ? 10 : 5), y);
+        ctx.stroke();
+
+        if (isMajor) {
+          ctx.fillStyle = "#18181b";
+          ctx.font = "bold 10px monospace";
+          ctx.textAlign = "right";
+          ctx.fillText(`${m}m`, rulerX - 14, y + 3.5);
+        }
+      }
+
+      // Target Altitude Guide (If Alt Hold)
+      if (mode === 'althold') {
+        const targetY = groundY - (targetAlt / maxAlt) * (groundY - topY);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(rulerX + 10, targetY);
+        ctx.lineTo(580, targetY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 9.5px monospace";
+        ctx.textAlign = "left";
+        ctx.fillText(`TARGET ALT: ${targetAlt.toFixed(1)}m`, rulerX + 20, targetY - 5);
+      }
+
+      // Current Altitude Needle on Ruler
+      const curY = groundY - (alt / maxAlt) * (groundY - topY);
+      ctx.fillStyle = "#18181b";
+      ctx.beginPath();
+      ctx.moveTo(rulerX + 12, curY);
+      ctx.lineTo(rulerX + 22, curY - 5);
+      ctx.lineTo(rulerX + 22, curY + 5);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#18181b";
+      ctx.fillRect(rulerX + 22, curY - 9, 44, 18);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(`${alt.toFixed(1)}m`, rulerX + 44, curY + 3.5);
+
+      // Ground Surface / Launch Pad
+      const padLeft = 140;
+      const padRight = 550;
+      const padW = padRight - padLeft;
+
+      // Environment soil strip
+      ctx.fillStyle = env.groundCol;
+      ctx.fillRect(padLeft - 30, groundY + 14, padW + 60, 4);
+
+      // Solid Concrete Launch Pad
+      ctx.fillStyle = "#e4e4e7";
+      ctx.fillRect(padLeft, groundY, padW, 14);
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(padLeft, groundY, padW, 14);
+
+      // Caution stripes on launch pad
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 2.5;
+      for (let s = padLeft + 15; s < padRight; s += 24) {
+        ctx.beginPath();
+        ctx.moveTo(s, groundY + 13);
+        ctx.lineTo(s + 10, groundY + 1);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(`LAUNCH PAD 01 • [ ${env.name.toUpperCase()} ]`, (padLeft + padRight) / 2, groundY + 28);
+
+      // Drone Shadow on Pad
+      const droneX = 345;
+      const droneY = curY;
+      const shadowW = Math.max(14, 110 - (alt * 4.2));
+      const shadowAlpha = Math.max(0.08, 0.45 - (alt / 30.0));
+      ctx.fillStyle = `rgba(24, 24, 27, ${shadowAlpha})`;
+      ctx.beginPath();
+      ctx.ellipse(droneX, groundY + 2, shadowW / 2, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Drone Quadcopter Frame
+      ctx.save();
+      ctx.translate(droneX, droneY);
+
+      // Landing skids
+      ctx.strokeStyle = "#52525b";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-28, 4);
+      ctx.lineTo(-34, 14);
+      ctx.lineTo(-20, 14);
+      ctx.moveTo(28, 4);
+      ctx.lineTo(34, 14);
+      ctx.lineTo(20, 14);
+      ctx.stroke();
+
+      // Carbon Fiber Arms
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-52, -2);
+      ctx.lineTo(52, -2);
+      ctx.stroke();
+
+      // Center Fuselage & FC Stack
+      ctx.fillStyle = "#27272a";
+      ctx.fillRect(-22, -9, 44, 15);
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-22, -9, 44, 15);
+
+      // Flight Controller Status LED
+      if (motorFailed) {
+        ctx.fillStyle = (Math.floor(timestamp / 150) % 2 === 0) ? "#dc2626" : "#71717a";
+      } else {
+        ctx.fillStyle = (mode === 'althold') ? "#0284c7" : "#16a34a";
+      }
+      ctx.beginPath();
+      ctx.arc(0, -2, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Motors and Propellers
+      const motorOffsets = [-50, -20, 20, 50];
+      motorOffsets.forEach((mx, idx) => {
+        const isDamaged = motorFailed && idx === 3;
+        // Motor bell
+        ctx.fillStyle = isDamaged ? "#dc2626" : "#52525b";
+        ctx.fillRect(mx - 5, -8, 10, 7);
+
+        // Spinning Prop blur ellipse
+        const propW = 28;
+        const propAlpha = Math.min(0.85, 0.15 + (effectiveThrust / 40.0));
+        ctx.strokeStyle = isDamaged ? "rgba(220, 38, 38, 0.4)" : `rgba(24, 24, 27, ${propAlpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(mx, -9, propW / 2, 2.5, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Prop blade line
+        const angle = propPhase * (idx % 2 === 0 ? 1 : -1);
+        ctx.strokeStyle = isDamaged ? "#dc2626" : "#18181b";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(mx - Math.cos(angle) * (propW / 2), -9 - Math.sin(angle) * 1.5);
+        ctx.lineTo(mx + Math.cos(angle) * (propW / 2), -9 + Math.sin(angle) * 1.5);
+        ctx.stroke();
+
+        if (isDamaged) {
+          // Smoke puff particles
+          ctx.fillStyle = "rgba(220, 38, 38, 0.6)";
+          ctx.beginPath();
+          ctx.arc(mx + Math.sin(timestamp * 0.02) * 4, -16 - (timestamp % 20) * 0.5, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // Cargo Payload (If Mass > 0.6kg)
+      if (mass >= 0.8) {
+        ctx.fillStyle = "#f59e0b";
+        ctx.fillRect(-12, 6, 24, 10);
+        ctx.strokeStyle = "#18181b";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(-12, 6, 24, 10);
+        ctx.fillStyle = "#18181b";
+        ctx.font = "bold 6.5px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("CARGO", 0, 14);
+      }
+
+      // =====================================================================
+      // FREE-BODY DIAGRAM (FBD) FORCE VECTORS
+      // =====================================================================
+      const scaleN = 3.2; // pixels per Newton
+
+      // 1. Upward Thrust Vector (Green)
+      const tLen = Math.min(130, effectiveThrust * scaleN);
+      if (tLen > 2) {
+        ctx.strokeStyle = "#16a34a";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -10);
+        ctx.lineTo(0, -10 - tLen);
+        ctx.stroke();
+
+        // Arrowhead
+        ctx.fillStyle = "#16a34a";
+        ctx.beginPath();
+        ctx.moveTo(0, -10 - tLen - 6);
+        ctx.lineTo(-5, -10 - tLen + 2);
+        ctx.lineTo(5, -10 - tLen + 2);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#16a34a";
+        ctx.font = "bold 10px monospace";
+        ctx.textAlign = "right";
+        ctx.fillText(`+T: ${effectiveThrust.toFixed(1)} N`, -8, -10 - tLen / 2);
+      }
+
+      // 2. Downward Weight Vector (Red)
+      const wLen = Math.min(130, weight * scaleN);
+      if (wLen > 2) {
+        ctx.strokeStyle = "#dc2626";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, 10);
+        ctx.lineTo(0, 10 + wLen);
+        ctx.stroke();
+
+        // Arrowhead
+        ctx.fillStyle = "#dc2626";
+        ctx.beginPath();
+        ctx.moveTo(0, 10 + wLen + 6);
+        ctx.lineTo(-5, 10 + wLen - 2);
+        ctx.lineTo(5, 10 + wLen - 2);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#dc2626";
+        ctx.font = "bold 10px monospace";
+        ctx.textAlign = "right";
+        ctx.fillText(`-W: ${weight.toFixed(1)} N`, -8, 10 + wLen / 2 + 3);
+      }
+
+      // 3. Aerodynamic Drag Vector (Cyan/Blue)
+      if (Math.abs(dragForce) > 0.1 && alt > 0.05) {
+        const dLen = Math.min(60, Math.abs(dragForce) * scaleN * 2);
+        const dragDir = Math.sign(dragForce); // positive is upward, negative is downward
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(18, 0);
+        ctx.lineTo(18, -dragDir * dLen);
+        ctx.stroke();
+
+        ctx.fillStyle = "#0284c7";
+        ctx.beginPath();
+        ctx.moveTo(18, -dragDir * (dLen + 5));
+        ctx.lineTo(14, -dragDir * (dLen - 2));
+        ctx.lineTo(22, -dragDir * (dLen - 2));
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "left";
+        ctx.fillText(`Fd: ${Math.abs(dragForce).toFixed(1)} N`, 24, -dragDir * (dLen / 2));
+      }
+
+      // 4. Net Resultant Force Vector (Gold/Dark)
+      const fnetLen = Math.min(90, Math.abs(fnet) * scaleN);
+      if (fnetLen > 3 && alt > 0.02) {
+        const fnetDir = Math.sign(fnet); // +1 up, -1 down
+        ctx.strokeStyle = "#d97706";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(70, 0);
+        ctx.lineTo(70, -fnetDir * fnetLen);
+        ctx.stroke();
+
+        ctx.fillStyle = "#d97706";
+        ctx.beginPath();
+        ctx.moveTo(70, -fnetDir * (fnetLen + 6));
+        ctx.lineTo(65, -fnetDir * (fnetLen - 2));
+        ctx.lineTo(75, -fnetDir * (fnetLen - 2));
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.font = "bold 9.5px monospace";
+        ctx.textAlign = "left";
+        ctx.fillText(`F_net: ${fnet > 0 ? '+' : ''}${fnet.toFixed(1)} N`, 78, -fnetDir * (fnetLen / 2));
+      } else if (alt > 0.02) {
+        // Equilibrium icon
+        ctx.strokeStyle = "#16a34a";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(70, 0, 7, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "#16a34a";
+        ctx.beginPath();
+        ctx.arc(70, 0, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("F_net = 0 [Hover]", 82, 3);
+      }
+
+      ctx.restore();
+
+      // Right Side Mini Chart: Rolling Altitude vs Time
+      const chartX = 610;
+      const chartY = 35;
+      const chartW = 165;
+      const chartH = 120;
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(chartX, chartY, chartW, chartH);
+      ctx.strokeStyle = "#e4e4e7";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(chartX, chartY, chartW, chartH);
+
+      ctx.fillStyle = "#71717a";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("ALTITUDE PROFILE [h(t)]", chartX + 6, chartY + 12);
+      ctx.textAlign = "right";
+      ctx.fillText("25m", chartX + chartW - 5, chartY + 24);
+      ctx.fillText("0m", chartX + chartW - 5, chartY + chartH - 4);
+
+      // Plot trace
+      if (altHistory.length > 1) {
+        ctx.strokeStyle = "#18181b";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = 0; i < altHistory.length; i++) {
+          const px = chartX + (i / 140.0) * chartW;
+          const py = (chartY + chartH - 6) - (altHistory[i] / maxAlt) * (chartH - 24);
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+      }
+
+      // Right Side Telemetry Badge Box
+      const hudX = 610;
+      const hudY = 175;
+      const hudW = 165;
+      const hudH = 230;
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(hudX, hudY, hudW, hudH);
+      ctx.strokeStyle = "#e4e4e7";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(hudX, hudY, hudW, hudH);
+
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 9.5px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("DYNAMIC FLIGHT STATUS", hudX + 8, hudY + 18);
+
+      let statusBadge = "ON LAUNCH PAD";
+      let statusColor = "#71717a";
+      if (alt <= 0.01) {
+        statusBadge = "ON LAUNCH PAD";
+        statusColor = "#71717a";
+      } else if (Math.abs(vz) < 0.25 && Math.abs(az) < 0.15) {
+        statusBadge = "EQUILIBRIUM HOVER";
+        statusColor = "#16a34a";
+      } else if (vz > 0.2 && az > 0.1) {
+        statusBadge = "POWERED CLIMB (+a)";
+        statusColor = "#16a34a";
+      } else if (vz > 0.2 && az <= 0.1) {
+        statusBadge = "DECELERATING ASCENT";
+        statusColor = "#d97706";
+      } else if (vz < -0.2 && az < -0.1) {
+        statusBadge = "ACCELERATING DESCENT";
+        statusColor = "#dc2626";
+      } else if (vz < -0.2 && Math.abs(az) <= 0.1) {
+        statusBadge = "TERMINAL VELOCITY";
+        statusColor = "#dc2626";
+      }
+
+      ctx.fillStyle = statusColor;
+      ctx.fillRect(hudX + 8, hudY + 28, hudW - 16, 20);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(statusBadge, hudX + hudW / 2, hudY + 41.5);
+
+      // Telemetry Lines in HUD
+      ctx.fillStyle = "#52525b";
+      ctx.font = "9px monospace";
+      ctx.textAlign = "left";
+
+      const lines = [
+        `Alt:    ${alt.toFixed(2)} m`,
+        `Speed:  ${vz.toFixed(2)} m/s`,
+        `Accel:  ${az.toFixed(2)} m/s²`,
+        `Thrust: ${effectiveThrust.toFixed(2)} N`,
+        `Weight: ${weight.toFixed(2)} N`,
+        `TWR:    ${(weight > 0.01 ? effectiveThrust / weight : 99).toFixed(2)} : 1`,
+        `Grav:   ${env.g.toFixed(2)} m/s²`,
+        `Air ρ:  ${env.rho.toFixed(3)} kg/m³`
+      ];
+
+      lines.forEach((txt, idx) => {
+        ctx.fillText(txt, hudX + 10, hudY + 70 + (idx * 18));
+      });
+
+      requestAnimationFrame(render);
+    };
+
+    requestAnimationFrame(render);
+  }
+
+  // =========================================================================
+  // 12. PROPELLER AERODYNAMICS & GROUND EFFECT LAB
+  // =========================================================================
+  initPropAeroSim() {
+    const canvas = document.getElementById('canvas-prop-aero');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const diamSlider = document.getElementById('pa-diam-slider');
+    const diamVal = document.getElementById('pa-diam-val');
+    const pitchSlider = document.getElementById('pa-pitch-slider');
+    const pitchVal = document.getElementById('pa-pitch-val');
+    const btnB2 = document.getElementById('pa-blades-2');
+    const btnB3 = document.getElementById('pa-blades-3');
+    const btnB4 = document.getElementById('pa-blades-4');
+    const rpmSlider = document.getElementById('pa-rpm-slider');
+    const rpmVal = document.getElementById('pa-rpm-val');
+    const heightSlider = document.getElementById('pa-height-slider');
+    const heightVal = document.getElementById('pa-height-val');
+
+    const teleSingleThrust = document.getElementById('pa-tele-single-thrust');
+    const teleQuadThrust = document.getElementById('pa-tele-quad-thrust');
+    const teleIge = document.getElementById('pa-tele-ige');
+    const teleExitVel = document.getElementById('pa-tele-exit-vel');
+    const teleTipSpeed = document.getElementById('pa-tele-tip-speed');
+    const telePower = document.getElementById('pa-tele-power');
+    const telePropCode = document.getElementById('pa-tele-propcode');
+    const statusEl = document.getElementById('pa-status');
+
+    let diam = 5.0; // inches
+    let pitch = 4.3; // inches
+    let blades = 3;
+    let rpm = 18500;
+    let height = 0.80; // meters
+
+    let animPhase = 0;
+
+    const updateControlsUI = () => {
+      if (diamVal) diamVal.textContent = `${diam.toFixed(1)} inches (${(diam * 25.4).toFixed(0)} mm)`;
+      if (pitchVal) pitchVal.textContent = `${pitch.toFixed(1)} inches / rev`;
+      if (rpmVal) rpmVal.textContent = `${rpm.toLocaleString()} RPM`;
+      const ratio = (height / (diam * 0.0254)).toFixed(1);
+      if (heightVal) heightVal.textContent = `${height.toFixed(2)} m (${ratio} D)`;
+    };
+
+    if (diamSlider) {
+      diamSlider.addEventListener('input', (e) => {
+        diam = parseFloat(e.target.value);
+        updateControlsUI();
+      });
+    }
+
+    if (pitchSlider) {
+      pitchSlider.addEventListener('input', (e) => {
+        pitch = parseFloat(e.target.value);
+        updateControlsUI();
+      });
+    }
+
+    const setBlades = (count) => {
+      blades = count;
+      if (btnB2) btnB2.classList.toggle('active', count === 2);
+      if (btnB3) btnB3.classList.toggle('active', count === 3);
+      if (btnB4) btnB4.classList.toggle('active', count === 4);
+      updateControlsUI();
+    };
+
+    if (btnB2) btnB2.addEventListener('click', () => setBlades(2));
+    if (btnB3) btnB3.addEventListener('click', () => setBlades(3));
+    if (btnB4) btnB4.addEventListener('click', () => setBlades(4));
+
+    if (rpmSlider) {
+      rpmSlider.addEventListener('input', (e) => {
+        rpm = parseInt(e.target.value);
+        updateControlsUI();
+      });
+    }
+
+    if (heightSlider) {
+      heightSlider.addEventListener('input', (e) => {
+        height = parseFloat(e.target.value);
+        updateControlsUI();
+      });
+    }
+
+    updateControlsUI();
+
+    const render = () => {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+
+      // Technical Grid
+      ctx.strokeStyle = "#f4f4f5";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 25) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 25) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      // Aerodynamic Physics Calculations
+      const rho = 1.225; // kg/m³
+      const Dm = diam * 0.0254; // meters
+      const Rm = Dm / 2.0;
+      const Area = Math.PI * Rm * Rm;
+      const n = rpm / 60.0; // rev/s
+
+      // Tip Speed & Mach
+      const tipSpeed = 2.0 * Math.PI * n * Rm; // m/s
+      const mach = tipSpeed / 343.0;
+
+      // Pitch angle at 75% radius: theta = atan(P / (pi * 0.75 * D))
+      const thetaRad = Math.atan(pitch / (Math.PI * 0.75 * diam));
+      const thetaDeg = (thetaRad * 180.0) / Math.PI;
+
+      // Thrust Coefficient & Out of Ground Thrust
+      const Ct = 0.038 * Math.pow(pitch / diam, 0.85) * Math.pow(blades / 2.0, 0.65);
+      const thrustOGE_N = Ct * rho * (n * n) * Math.pow(Dm, 4);
+
+      // Cheeseman-Bennett In-Ground Effect Model:
+      // T_IGE / T_OGE = 1 / [1 - (R / (4*h))^2]
+      const rOver4h = Rm / (4.0 * Math.max(0.04, height));
+      const igeRatio = 1.0 / (1.0 - Math.min(0.24, rOver4h * rOver4h));
+      const thrustIGE_N = thrustOGE_N * igeRatio;
+      const singleThrustGf = (thrustIGE_N / 9.81) * 1000.0;
+      const quadThrustGf = singleThrustGf * 4.0;
+      const quadThrustN = thrustIGE_N * 4.0;
+
+      // Exit slipstream velocity: v_exit = sqrt(2 * T / (rho * Area))
+      const exitVel = Area > 0.001 ? Math.sqrt((2.0 * thrustIGE_N) / (rho * Area)) : 0;
+      const exitVelKmh = exitVel * 3.6;
+
+      // Mechanical shaft power: Cp * rho * n^3 * D^5
+      const Cp = 0.042 * Math.pow(pitch / diam, 1.1) * Math.pow(blades / 2.0, 0.75);
+      const powerWatts = Cp * rho * Math.pow(n, 3) * Math.pow(Dm, 5);
+
+      // Propeller Code format (e.g. 5043)
+      const dCode = Math.floor(diam * 10).toString().padStart(2, '0');
+      const pCode = Math.floor(pitch * 10).toString().padStart(2, '0');
+      const propCode = `${dCode}${pCode} (${diam}x${pitch}x${blades})`;
+
+      // Update Telemetry Elements
+      if (teleSingleThrust) teleSingleThrust.textContent = `${singleThrustGf.toFixed(0)} gf (${thrustIGE_N.toFixed(2)} N)`;
+      if (teleQuadThrust) teleQuadThrust.textContent = `${quadThrustGf.toFixed(0)} gf (${quadThrustN.toFixed(2)} N)`;
+      if (teleIge) {
+        const pct = ((igeRatio - 1.0) * 100).toFixed(1);
+        teleIge.textContent = `${igeRatio.toFixed(2)}x (+${pct}% Cushion Boost)`;
+        teleIge.style.color = igeRatio > 1.05 ? '#16a34a' : 'var(--text-primary)';
+      }
+      if (teleExitVel) teleExitVel.textContent = `${exitVelKmh.toFixed(1)} km/h (${exitVel.toFixed(1)} m/s)`;
+      if (teleTipSpeed) {
+        teleTipSpeed.textContent = `${tipSpeed.toFixed(0)} m/s (Mach ${mach.toFixed(2)})`;
+        teleTipSpeed.style.color = mach >= 0.75 ? '#dc2626' : (mach >= 0.6 ? '#d97706' : '#16a34a');
+      }
+      if (telePower) telePower.textContent = `${powerWatts.toFixed(0)} W / motor (${(powerWatts * 4).toFixed(0)} W Total)`;
+      if (telePropCode) telePropCode.textContent = propCode;
+
+      if (statusEl) {
+        const inGround = height <= Dm;
+        if (mach >= 0.75) {
+          statusEl.textContent = `CRITICAL WARNING: Blade tip speed (Mach ${mach.toFixed(2)}) exceeds compressibility threshold! Violent shockwave noise, severe drag rise, and motor overheating occurring.`;
+        } else if (inGround) {
+          statusEl.textContent = `IN-GROUND EFFECT ACTIVE: Hover height (${height.toFixed(2)}m) is within 1 rotor diameter (${Dm.toFixed(2)}m). Ground restricts downwash expansion, creating a high-pressure air cushion (+${((igeRatio - 1) * 100).toFixed(1)}% lift).`;
+        } else {
+          statusEl.textContent = `OUT-OF-GROUND FLIGHT: Clean freestream downwash with undisturbed tip vortex roll-up. Propeller generating ${singleThrustGf.toFixed(0)}g thrust per motor at ${rpm.toLocaleString()} RPM.`;
+        }
+      }
+
+      // Visual Geometry
+      const groundY = 410;
+      const maxH = 2.5; // meters
+      const propY = groundY - (height / maxH) * (groundY - 110);
+      const propCenterX = 310;
+      const propR_px = Math.max(50, Math.min(180, (diam / 15.0) * 160 + 30));
+
+      // 1. Draw Solid Ground Plane
+      ctx.fillStyle = "#e4e4e7";
+      ctx.fillRect(40, groundY, 540, 16);
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(40, groundY, 540, 16);
+
+      // Ground cross hatching
+      ctx.strokeStyle = "#a1a1aa";
+      ctx.lineWidth = 1;
+      for (let gx = 45; gx < 575; gx += 16) {
+        ctx.beginPath();
+        ctx.moveTo(gx, groundY + 16);
+        ctx.lineTo(gx + 12, groundY);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("SOLID GROUND SURFACE • DOWNWASH IMPINGEMENT BOUNDARY", propCenterX, groundY + 30);
+
+      // 2. In-Ground Effect Air Cushion Stagnation Bubble
+      if (igeRatio > 1.02) {
+        const cushionH = groundY - propY;
+        const cushionW = propR_px * 2.4;
+        const cushionAlpha = Math.min(0.35, (igeRatio - 1.0) * 1.5);
+
+        ctx.fillStyle = `rgba(22, 163, 74, ${cushionAlpha})`;
+        ctx.fillRect(propCenterX - cushionW / 2, propY + 12, cushionW, cushionH - 12);
+        ctx.strokeStyle = "#16a34a";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(propCenterX - cushionW / 2, propY + 12, cushionW, cushionH - 12);
+
+        ctx.fillStyle = "#16a34a";
+        ctx.font = "bold 9.5px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(`HIGH-PRESSURE AIR CUSHION [ +${((igeRatio - 1) * 100).toFixed(1)}% LIFT BOOST ]`, propCenterX, (propY + groundY) / 2);
+
+        // Outward radial wall jet exhaust arrows along the ground
+        const arrowY = groundY - 6;
+        ctx.strokeStyle = "#16a34a";
+        ctx.lineWidth = 2;
+        // Left exhaust arrow
+        ctx.beginPath();
+        ctx.moveTo(propCenterX - propR_px, arrowY);
+        ctx.lineTo(propCenterX - cushionW / 2 - 25, arrowY);
+        ctx.stroke();
+        ctx.fillStyle = "#16a34a";
+        ctx.beginPath();
+        ctx.moveTo(propCenterX - cushionW / 2 - 32, arrowY);
+        ctx.lineTo(propCenterX - cushionW / 2 - 22, arrowY - 4);
+        ctx.lineTo(propCenterX - cushionW / 2 - 22, arrowY + 4);
+        ctx.closePath();
+        ctx.fill();
+
+        // Right exhaust arrow
+        ctx.beginPath();
+        ctx.moveTo(propCenterX + propR_px, arrowY);
+        ctx.lineTo(propCenterX + cushionW / 2 + 25, arrowY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(propCenterX + cushionW / 2 + 32, arrowY);
+        ctx.lineTo(propCenterX + cushionW / 2 + 22, arrowY - 4);
+        ctx.lineTo(propCenterX + cushionW / 2 + 22, arrowY + 4);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // 3. Dynamic Streamlines (Downwash Slipstream)
+      animPhase = (animPhase + (exitVel * 0.05 + 0.5)) % 60;
+      ctx.strokeStyle = "#0284c7";
+      ctx.lineWidth = 1;
+
+      const numLines = 9;
+      for (let l = 0; l < numLines; l++) {
+        const frac = (l / (numLines - 1)) * 2 - 1; // -1 to +1
+        const startX = propCenterX + frac * (propR_px * 1.3);
+        const midX = propCenterX + frac * propR_px;
+        let endX = propCenterX + frac * (propR_px * (igeRatio > 1.05 ? 1.6 : 0.85));
+
+        ctx.beginPath();
+        ctx.moveTo(startX, propY - 60);
+        ctx.quadraticCurveTo(midX, propY, endX, groundY);
+        ctx.stroke();
+
+        // Animated particles along streamline
+        const pFrac = ((animPhase + l * 8) % 60) / 60.0;
+        let px, py;
+        if (pFrac < 0.35) {
+          const t = pFrac / 0.35;
+          px = startX + (midX - startX) * t;
+          py = (propY - 60) + (60) * t;
+        } else {
+          const t = (pFrac - 0.35) / 0.65;
+          px = midX + (endX - midX) * t;
+          py = propY + (groundY - propY) * t;
+        }
+
+        ctx.fillStyle = (pFrac < 0.35) ? "#0284c7" : (igeRatio > 1.05 ? "#16a34a" : "#0284c7");
+        ctx.beginPath();
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 4. Blade Tip Vortices (Left & Right)
+      const drawVortex = (cx, cy, dir) => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        const squashed = igeRatio > 1.05;
+        const vScaleY = squashed ? 0.45 : 1.0;
+        ctx.strokeStyle = squashed ? "#71717a" : "#0284c7";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let a = 0; a < Math.PI * 3.5; a += 0.2) {
+          const r = 3 + a * 2.5;
+          const vx = Math.cos(a * dir + animPhase * 0.1) * r;
+          const vy = Math.sin(a * dir + animPhase * 0.1) * r * vScaleY + a * 2;
+          if (a === 0) ctx.moveTo(vx, vy);
+          else ctx.lineTo(vx, vy);
+        }
+        ctx.stroke();
+        ctx.restore();
+      };
+
+      drawVortex(propCenterX - propR_px, propY + 12, 1);
+      drawVortex(propCenterX + propR_px, propY + 12, -1);
+
+      // Label for Tip Vortices
+      ctx.fillStyle = igeRatio > 1.05 ? "#71717a" : "#0284c7";
+      ctx.font = "bold 8.5px monospace";
+      ctx.textAlign = "right";
+      ctx.fillText(igeRatio > 1.05 ? "[VORTEX SUPPRESSED]" : "TIP VORTEX", propCenterX - propR_px - 8, propY + 22);
+
+      // 5. Propeller Disc & Hub
+      ctx.fillStyle = "#18181b";
+      ctx.fillRect(propCenterX - 14, propY - 12, 28, 24); // Motor body
+
+      // Rotating propeller disk
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(propCenterX - propR_px, propY);
+      ctx.lineTo(propCenterX + propR_px, propY);
+      ctx.stroke();
+
+      // Blade Hub Spinner
+      ctx.fillStyle = "#52525b";
+      ctx.beginPath();
+      ctx.arc(propCenterX, propY, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Blade Tip markers with pitch angle representation
+      [-propR_px, propR_px].forEach(tx => {
+        ctx.fillStyle = "#dc2626";
+        ctx.beginPath();
+        ctx.arc(propCenterX + tx, propY, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 6. Height Ruler / Dimension Line
+      const dimX = 80;
+      ctx.strokeStyle = (height <= Dm) ? "#16a34a" : "#18181b";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(dimX, propY);
+      ctx.lineTo(dimX, groundY);
+      ctx.stroke();
+
+      // Dimension Arrowheads
+      ctx.fillStyle = (height <= Dm) ? "#16a34a" : "#18181b";
+      ctx.beginPath();
+      ctx.moveTo(dimX, propY);
+      ctx.lineTo(dimX - 4, propY + 8);
+      ctx.lineTo(dimX + 4, propY + 8);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(dimX, groundY);
+      ctx.lineTo(dimX - 4, groundY - 8);
+      ctx.lineTo(dimX + 4, groundY - 8);
+      ctx.closePath();
+      ctx.fill();
+
+      // Dimension Tag
+      ctx.font = "bold 9.5px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(`h = ${height.toFixed(2)}m (${(height / Dm).toFixed(1)} D)`, dimX + 8, (propY + groundY) / 2);
+
+      // 7. Right Side Box 1: Airfoil Cross-Section & Pitch Angle θ
+      const foilX = 600;
+      const foilY = 35;
+      const foilW = 175;
+      const foilH = 170;
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(foilX, foilY, foilW, foilH);
+      ctx.strokeStyle = "#e4e4e7";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(foilX, foilY, foilW, foilH);
+
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 9.5px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("BLADE AIRFOIL & PITCH θ", foilX + 8, foilY + 16);
+
+      // Draw angled airfoil inside this box
+      const cxFoil = foilX + foilW / 2;
+      const cyFoil = foilY + 85;
+      const chordLen = 80;
+
+      ctx.save();
+      ctx.translate(cxFoil, cyFoil);
+      ctx.rotate(-thetaRad); // pitch tilt
+
+      // Airfoil teardrop camber
+      ctx.fillStyle = "#27272a";
+      ctx.beginPath();
+      ctx.moveTo(-chordLen / 2, 0); // Leading edge
+      ctx.bezierCurveTo(-chordLen / 2 + 10, -18, chordLen / 2 - 20, -12, chordLen / 2, 0); // Upper camber
+      ctx.bezierCurveTo(chordLen / 2 - 20, 4, -chordLen / 2 + 10, 4, -chordLen / 2, 0); // Lower camber
+      ctx.closePath();
+      ctx.fill();
+
+      // Chord line
+      ctx.strokeStyle = "#71717a";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 2]);
+      ctx.beginPath();
+      ctx.moveTo(-chordLen / 2 - 10, 0);
+      ctx.lineTo(chordLen / 2 + 15, 0);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Suction Lift Arrows (Upper camber)
+      ctx.strokeStyle = "#0284c7";
+      ctx.lineWidth = 1.5;
+      [-15, 0, 15].forEach(ax => {
+        ctx.beginPath();
+        ctx.moveTo(ax, -12);
+        ctx.lineTo(ax, -26);
+        ctx.stroke();
+        ctx.fillStyle = "#0284c7";
+        ctx.beginPath();
+        ctx.moveTo(ax, -30);
+        ctx.lineTo(ax - 3, -24);
+        ctx.lineTo(ax + 3, -24);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      ctx.restore();
+
+      // Horizontal reference line for pitch angle
+      ctx.strokeStyle = "#a1a1aa";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cxFoil - chordLen / 2 - 10, cyFoil);
+      ctx.lineTo(cxFoil + chordLen / 2 + 20, cyFoil);
+      ctx.stroke();
+
+      // Pitch angle label
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(`PITCH ANGLE: θ = ${thetaDeg.toFixed(1)}°`, cxFoil, foilY + 140);
+      ctx.font = "8.5px monospace";
+      ctx.fillStyle = "#52525b";
+      ctx.fillText(`Theoretical Advance: ${pitch.toFixed(1)}" / rev`, cxFoil, foilY + 155);
+
+      // 8. Right Side Box 2: Blade Tip Mach Speedometer
+      const machX = 600;
+      const machY = 220;
+      const machW = 175;
+      const machH = 185;
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(machX, machY, machW, machH);
+      ctx.strokeStyle = "#e4e4e7";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(machX, machY, machW, machH);
+
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 9.5px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("TIP SPEED & MACH NUMBER", machX + 8, machY + 16);
+
+      // Gauge Bar
+      const barX = machX + 12;
+      const barY = machY + 36;
+      const barW = machW - 24;
+      const barH = 14;
+
+      // Color segments: Green (<0.6), Amber (0.6-0.75), Red (>0.75)
+      ctx.fillStyle = "#e4e4e7";
+      ctx.fillRect(barX, barY, barW, barH);
+
+      const machFill = Math.min(1.0, mach / 1.0);
+      const fillW = barW * machFill;
+
+      let machCol = "#16a34a";
+      if (mach >= 0.75) machCol = "#dc2626";
+      else if (mach >= 0.6) machCol = "#d97706";
+
+      ctx.fillStyle = machCol;
+      ctx.fillRect(barX, barY, fillW, barH);
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(barX, barY, barW, barH);
+
+      // Threshold markers
+      const m6X = barX + barW * 0.6;
+      const m75X = barX + barW * 0.75;
+      ctx.strokeStyle = "#18181b";
+      ctx.beginPath();
+      ctx.moveTo(m6X, barY - 2); ctx.lineTo(m6X, barY + barH + 2);
+      ctx.moveTo(m75X, barY - 2); ctx.lineTo(m75X, barY + barH + 2);
+      ctx.stroke();
+
+      ctx.fillStyle = "#52525b";
+      ctx.font = "8px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("0.6M", m6X, barY + barH + 11);
+      ctx.fillText("0.75M", m75X, barY + barH + 11);
+
+      // Telemetry Summary in Box
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 11px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(`V_tip: ${tipSpeed.toFixed(0)} m/s`, barX, machY + 80);
+      ctx.fillText(`Mach:  ${mach.toFixed(2)}`, barX, machY + 98);
+
+      ctx.font = "9px monospace";
+      ctx.fillStyle = "#52525b";
+      ctx.fillText(`1x Motor: ${singleThrustGf.toFixed(0)} gf`, barX, machY + 120);
+      ctx.fillText(`4x Quad:  ${(quadThrustGf / 1000).toFixed(2)} kgf`, barX, machY + 136);
+      ctx.fillText(`Power:    ${powerWatts.toFixed(0)} W / motor`, barX, machY + 152);
+      ctx.fillText(`Downwash: ${exitVelKmh.toFixed(0)} km/h`, barX, machY + 168);
+
+      requestAnimationFrame(render);
+    };
+
+    requestAnimationFrame(render);
   }
 }
 

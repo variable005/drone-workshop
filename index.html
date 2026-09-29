@@ -40,7 +40,7 @@
       <button class="nav-tab-btn" data-tab="tab-day2">Day 2: Assembly & Wiring</button>
       <button class="nav-tab-btn" data-tab="tab-day3">Day 3: Sensors & PID Control</button>
       <button class="nav-tab-btn" data-tab="tab-day4">Day 4: Missions & Safety</button>
-      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (10)</button>
+      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (12)</button>
       <button class="nav-tab-btn" data-tab="tab-slides">Slide Deck Mode</button>
       <button class="nav-tab-btn" data-tab="tab-quizzes">Topic Quizzes (12)</button>
     </nav>
@@ -248,7 +248,11 @@
               </div>
               <div class="media-caption">Aerodynamic forces in balance allow steady surveying over vast landscapes.</div>
               <div class="sim-launch-card">
-                <p>Test your understanding of forces with the Day 1 Topic 1 quiz:</p>
+                <p>Interactive Physics Labs for Forces, Gravity, and Aerodynamics:</p>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                  <button class="btn-secondary" data-open-sim="sim-gravity-thrust">11. Gravity vs Thrust Lab</button>
+                  <button class="btn-secondary" data-open-sim="sim-prop-aero">12. Propeller & Ground Effect Lab</button>
+                </div>
                 <button class="btn-secondary" data-quiz-topic="d1-t1">Take Topic 1 Quiz</button>
               </div>
             </div>
@@ -766,6 +770,8 @@
           <button class="sim-tab-btn" data-sim-target="sim-troubleshooting">8. Diagnostic Fault Matrix</button>
           <button class="sim-tab-btn" data-sim-target="sim-rf-link">9. RF Link Budget & Antennas</button>
           <button class="sim-tab-btn" data-sim-target="sim-radio-controller">10. Transmitter Blueprint & Switches</button>
+          <button class="sim-tab-btn" data-sim-target="sim-gravity-thrust">11. Gravity, Thrust & Altitude Dynamics</button>
+          <button class="sim-tab-btn" data-sim-target="sim-prop-aero">12. Propeller Aerodynamics & Ground Effect</button>
         </aside>
 
         <!-- Viewport -->
@@ -1443,6 +1449,280 @@
                     <strong>Chemistry:</strong> Dual cylindrical 18650 or 21700 Lithium-Ion cells connected in series (2S1P).<br>
                     <strong>Voltage Scale:</strong> 8.4V Fully Charged (4.20V/cell) • 7.4V Nominal Operating (3.70V/cell) • 6.8V Low Battery Acoustic Alarm • 6.4V Critical Shutdown.<br>
                     <strong>Connection &amp; Charging:</strong> Internal 2-pin JST-XH power harness feeding onboard buck-boost regulator and USB-C 2A Fast Charge circuit. Delivers 8+ hours of continuous flight operation.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 11. GRAVITY, THRUST & ALTITUDE DYNAMICS LAB -->
+          <div class="sim-panel" id="sim-gravity-thrust">
+            <div class="sim-panel-header">
+              <h3>11. Real-Time Gravity vs. Thrust Dynamics & Altitude Acceleration Lab</h3>
+              <p>Analyze Newton's Second Law (F_net = m·a), live vertical Free-Body Diagrams (FBD), hover equilibrium, aerodynamic drag, and planetary flight across Earth, Moon, Mars, and Jupiter.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box">
+                <canvas id="canvas-gravity-thrust" width="800" height="480"></canvas>
+                <div class="status-callout" id="gt-status" style="margin: 12px;">
+                  System Initialized: Drone resting on Earth Launch Pad. Adjust Total Motor Thrust or Mass to observe vertical acceleration.
+                </div>
+              </div>
+              <div class="sim-controls-card">
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Planetary Gravitational Field</span>
+                  </div>
+                  <select class="control-select" id="gt-environment">
+                    <option value="earth" selected>Earth Surface (g = 9.81 m/s², Standard Atmosphere)</option>
+                    <option value="moon">Moon Surface (g = 1.62 m/s², Vacuum / Zero Drag)</option>
+                    <option value="mars">Mars Surface (g = 3.72 m/s², 1% Atmosphere / Ingenuity Mode)</option>
+                    <option value="jupiter">Jupiter Cloud Tops (g = 24.79 m/s², High Gravity & Dense Atmosphere)</option>
+                    <option value="orbit">Deep Space / Microgravity (g = 0.00 m/s², Pure Thrust Acceleration)</option>
+                  </select>
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Total Motor Thrust (T)</span>
+                    <span id="gt-thrust-val">9.81 N (1,000 g)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="gt-thrust-slider" min="0" max="35" step="0.1" value="9.8">
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Drone Mass (m)</span>
+                    <span id="gt-mass-val">1,000 g (1.00 kg)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="gt-mass-slider" min="400" max="2500" step="25" value="1000">
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Flight Autopilot Mode</span>
+                  </div>
+                  <div class="switch-toggle-row">
+                    <button class="switch-btn active" id="gt-mode-manual">Manual Throttle</button>
+                    <button class="switch-btn" id="gt-mode-althold">Baro Altitude Hold (PID)</button>
+                  </div>
+                </div>
+
+                <div class="control-group" id="gt-target-alt-group" style="display: none;">
+                  <div class="control-label">
+                    <span>Target Altitude (Setpoint)</span>
+                    <span id="gt-target-alt-val">10.0 m</span>
+                  </div>
+                  <input type="range" class="control-slider" id="gt-target-alt-slider" min="1" max="25" step="0.5" value="10.0">
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label"><span>Dynamic Test Scenarios</span></div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button class="btn-secondary" id="gt-btn-hover" style="font-size: 11.5px; padding: 7px 10px;">Set Hover Thrust (T = mg)</button>
+                    <button class="btn-secondary" id="gt-btn-drop" style="font-size: 11.5px; padding: 7px 10px;">Drop 400g Cargo</button>
+                    <button class="btn-secondary" id="gt-btn-gust" style="font-size: 11.5px; padding: 7px 10px;">Wind Gust (-4 m/s)</button>
+                    <button class="btn-secondary" id="gt-btn-fail" style="font-size: 11.5px; padding: 7px 10px; color: var(--danger); border-color: var(--danger);">Fail Motor 4 (-25%)</button>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+                    <button class="btn-secondary" id="gt-btn-cut" style="font-size: 11.5px; padding: 7px 10px;">Kill Throttle (T = 0)</button>
+                    <button class="btn-secondary" id="gt-btn-reset" style="font-size: 11.5px; padding: 7px 10px;">Reset Launch Pad</button>
+                  </div>
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label"><span>Real-Time Flight Telemetry</span></div>
+                  <table class="readout-table">
+                    <tr>
+                      <td>Altitude (h)</td>
+                      <td id="gt-tele-alt">0.00 m</td>
+                    </tr>
+                    <tr>
+                      <td>Vertical Speed (v_z)</td>
+                      <td id="gt-tele-vz">0.00 m/s (0.0 km/h)</td>
+                    </tr>
+                    <tr>
+                      <td>Vertical Acceleration (a_z)</td>
+                      <td id="gt-tele-az">0.00 m/s² (0.00 G)</td>
+                    </tr>
+                    <tr>
+                      <td>Total Thrust Force (T)</td>
+                      <td id="gt-tele-thrust">9.81 N (1,000 gf)</td>
+                    </tr>
+                    <tr>
+                      <td>Downward Weight (W = mg)</td>
+                      <td id="gt-tele-weight">9.81 N</td>
+                    </tr>
+                    <tr>
+                      <td>Aerodynamic Drag (F_d)</td>
+                      <td id="gt-tele-drag">0.00 N</td>
+                    </tr>
+                    <tr>
+                      <td>Net Resultant Force (F_net)</td>
+                      <td id="gt-tele-fnet">0.00 N (Balanced)</td>
+                    </tr>
+                    <tr>
+                      <td>Thrust-to-Weight Ratio (TWR)</td>
+                      <td id="gt-tele-twr">1.00 : 1</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Theory Cards -->
+            <div style="margin-top: 32px;">
+              <h4 style="font-size: 16px; margin-bottom: 16px; color: var(--text-primary); font-weight: 700;">Gravity &amp; Thrust Physics Principles</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                <div class="glossary-card">
+                  <div class="glossary-term">Newton's 2nd Law &amp; Hover Equilibrium</div>
+                  <div class="glossary-desc">
+                    <strong>Vertical Equation:</strong> $\Sigma F_z = T - mg - \text{sign}(v_z) F_{\text{drag}} = m \cdot a_z$<br>
+                    <strong>Steady Hover (a = 0, v = 0):</strong> Requires Total Motor Thrust $T$ to exactly equal Gravitational Weight $W = mg$. If $T > mg$, the craft accelerates upward; if $T < mg$, it decelerates or descends.
+                  </div>
+                </div>
+                <div class="glossary-card">
+                  <div class="glossary-term">Terminal Velocity &amp; Aerodynamic Drag</div>
+                  <div class="glossary-desc">
+                    <strong>Quadratic Drag:</strong> $F_d = \frac{1}{2} \rho v_z^2 C_d A$. In unpowered descent, atmospheric drag opposes gravity until $F_d = mg$, stabilizing downward speed at terminal velocity. On the Moon ($\rho = 0$), drag is zero and freefall continuously accelerates.
+                  </div>
+                </div>
+                <div class="glossary-card">
+                  <div class="glossary-term">Cargo Drop &amp; Inertial Perturbations</div>
+                  <div class="glossary-desc">
+                    <strong>Delivery Ballooning:</strong> Dropping a 400g payload without instantly reducing throttle causes a sudden drop in mass. The excess thrust instantly produces a positive acceleration spike ($a = (T - m_{\text{new}}g)/m_{\text{new}}$), requiring rapid FC PID anti-ballooning compensation.
+                  </div>
+                </div>
+                <div class="glossary-card">
+                  <div class="glossary-term">Planetary Flight &amp; Mars Ingenuity Physics</div>
+                  <div class="glossary-desc">
+                    <strong>Mars Challenge:</strong> Mars gravity is only $0.38\text{G}$ ($3.72\text{ m/s}^2$), but atmospheric density is only $1\%$ of Earth ($\approx 0.020\text{ kg/m}^3$). Because aerodynamic thrust scales with air density ($\rho$), rotors must spin at 2,400+ RPM with wide blades to overcome gravity.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 12. PROPELLER AERODYNAMICS & GROUND EFFECT LAB -->
+          <div class="sim-panel" id="sim-prop-aero">
+            <div class="sim-panel-header">
+              <h3>12. Propeller Aerodynamics, Blade Pitch & In-Ground Effect (IGE) Lab</h3>
+              <p>Explore blade momentum theory, diameter vs. pitch trade-offs, tip vortices, Bernoulli pressure differentials, and In-Ground Effect (IGE) cushion dynamics when hovering near surfaces.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box">
+                <canvas id="canvas-prop-aero" width="800" height="460"></canvas>
+                <div class="status-callout" id="pa-status" style="margin: 12px;">
+                  Propeller Model: 5043 (5.0" Diameter × 4.3" Pitch). Steady airflow stream with clean tip vortices and nominal out-of-ground flight.
+                </div>
+              </div>
+              <div class="sim-controls-card">
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Propeller Diameter (D)</span>
+                    <span id="pa-diam-val">5.0 inches (127 mm)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="pa-diam-slider" min="3.0" max="15.0" step="0.5" value="5.0">
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Propeller Pitch (P)</span>
+                    <span id="pa-pitch-val">4.3 inches / rev</span>
+                  </div>
+                  <input type="range" class="control-slider" id="pa-pitch-slider" min="2.0" max="8.0" step="0.1" value="4.3">
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Blade Count</span>
+                  </div>
+                  <div class="switch-toggle-row">
+                    <button class="switch-btn" id="pa-blades-2">2-Blade</button>
+                    <button class="switch-btn active" id="pa-blades-3">3-Blade (Tri-Blade)</button>
+                    <button class="switch-btn" id="pa-blades-4">4-Blade</button>
+                  </div>
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Motor Speed (RPM)</span>
+                    <span id="pa-rpm-val">18,500 RPM</span>
+                  </div>
+                  <input type="range" class="control-slider" id="pa-rpm-slider" min="0" max="35000" step="250" value="18500">
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Height Above Ground (h)</span>
+                    <span id="pa-height-val">0.80 m (6.3 D)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="pa-height-slider" min="0.05" max="2.50" step="0.05" value="0.80">
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label"><span>Aero &amp; Ground Effect Telemetry</span></div>
+                  <table class="readout-table">
+                    <tr>
+                      <td>Single Motor Thrust</td>
+                      <td id="pa-tele-single-thrust">725 g (7.11 N)</td>
+                    </tr>
+                    <tr>
+                      <td>Quadcopter Total (4x)</td>
+                      <td id="pa-tele-quad-thrust">2,900 g (28.45 N)</td>
+                    </tr>
+                    <tr>
+                      <td>Ground Effect Factor</td>
+                      <td id="pa-tele-ige">1.00x (Out of Ground Effect)</td>
+                    </tr>
+                    <tr>
+                      <td>Downwash Slipstream Speed</td>
+                      <td id="pa-tele-exit-vel">84.2 km/h (23.4 m/s)</td>
+                    </tr>
+                    <tr>
+                      <td>Propeller Blade Tip Speed</td>
+                      <td id="pa-tele-tip-speed">123 m/s (Mach 0.36 • Subsonic)</td>
+                    </tr>
+                    <tr>
+                      <td>Mechanical Shaft Power</td>
+                      <td id="pa-tele-power">142 W per motor (568 W total)</td>
+                    </tr>
+                    <tr>
+                      <td>Propeller Code Equivalent</td>
+                      <td id="pa-tele-propcode">5043 (5x4.3x3)</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Theory Cards -->
+            <div style="margin-top: 32px;">
+              <h4 style="font-size: 16px; margin-bottom: 16px; color: var(--text-primary); font-weight: 700;">Aerodynamic &amp; Ground Effect Principles</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                <div class="glossary-card">
+                  <div class="glossary-term">Propeller Code Nomenclature &amp; Pitch</div>
+                  <div class="glossary-desc">
+                    <strong>Format (e.g. 5043):</strong> First two digits denote diameter in inches (5.0"), second two denote pitch in inches (4.3"). Pitch represents the theoretical linear distance the prop moves forward in one full 360° revolution without slippage. Higher pitch yields higher top airspeed; lower pitch provides crisper throttle response and cooler motors.
+                  </div>
+                </div>
+                <div class="glossary-card">
+                  <div class="glossary-term">In-Ground Effect (IGE) Cushion Physics</div>
+                  <div class="glossary-desc">
+                    <strong>Cheeseman-Bennett Relation:</strong> $\frac{T_{\text{IGE}}}{T_{\text{OGE}}} = \frac{1}{1 - \left(\frac{R}{4h}\right)^2}$.<br>
+                    When operating within one rotor diameter of a solid surface ($h < D$), the ground impedes downward slipstream expansion. Stagnation pressure builds beneath the blades and tip vortices are suppressed, reducing induced drag and boosting effective thrust by 10% to 25% with zero extra electrical current.
+                  </div>
+                </div>
+                <div class="glossary-card">
+                  <div class="glossary-term">Tip Speed &amp; Compressibility Limit</div>
+                  <div class="glossary-desc">
+                    <strong>Tip Velocity:</strong> $v_{\text{tip}} = \omega \cdot R = \frac{2\pi \cdot \text{RPM}}{60} \cdot \frac{D \cdot 0.0254}{2}$. If tip speed exceeds Mach 0.75 ($\approx 255\text{ m/s}$), localized shockwaves form at the blade tips, causing severe boundary layer separation, loud acoustic noise, and extreme motor current draw with no extra lift.
+                  </div>
+                </div>
+                <div class="glossary-card">
+                  <div class="glossary-term">Blade Count: 2-Blade vs. 3-Blade vs. 4-Blade</div>
+                  <div class="glossary-desc">
+                    <strong>Aerodynamic Trade-Off:</strong> 2-blade props provide the highest pure aerodynamic efficiency because each blade passes through cleaner air. 3-blade props offer superior low-end grip, smoother cornering authority, and compact disc diameter. 4-blade props maximize braking and heavy-lift thrust at the cost of higher electrical load.
                   </div>
                 </div>
               </div>
