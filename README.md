@@ -31,7 +31,7 @@ Built with semantic HTML5, Vanilla CSS, Canvas-based physics simulations, projec
 
 ---
 
-## Interactive Simulations Suite (8 Tools)
+## Interactive Simulations Suite (14 Tools)
 
 1. **3D Flight Physics & Motor Torque**: Real-time control of Throttle, Pitch, Roll, and Yaw showing individual motor RPMs, thrust arrows, and reactive torque cancellation.
 2. **Thrust-to-Weight Ratio Calculator**: Input frame weight, motor type, and battery cells to calculate hover throttle % and flight suitability.
@@ -41,6 +41,12 @@ Built with semantic HTML5, Vanilla CSS, Canvas-based physics simulations, projec
 6. **Sensor Fusion Visualizer**: Side-by-side comparison of raw noisy Accelerometer, drifting Gyroscope, and rock-solid filtered angle.
 7. **Autonomous Waypoint Mission Simulator**: Clickable waypoint map with autonomous drone flight and radio loss RTL failsafe triggers.
 8. **Diagnostic Fault Matrix**: Step-by-step interactive resolution checklist for the 5 most common drone build problems.
+9. **RF Link Budget & Antennas**: Link margin, Friis path loss, dipole donut radiation pattern, and ExpressLRS LoRa sensitivity.
+10. **Radio Controller Blueprint & Switches**: Mode 2 gimbals, AETR channel mapping, and safety switches.
+11. **Gravity, Thrust & Altitude Dynamics**: Dynamic vertical climb vs gravity physics simulator.
+12. **Propeller Aerodynamics & Ground Effect**: Rotor wash cushion and pitch angle airflow.
+13. **ESC & 3-Phase BLDC Commutation**: 6-MOSFET H-bridge inverter, 6-step trapezoidal sequence, and sensorless Back-EMF zero-crossing detection.
+14. **Hardware Assembly & Wiring Blueprint (Pixhawk & APM 2.8)**: Complete step-by-step physical drone assembly guide with dual controller toggle, PDB soldering, motor direction rules, jumper settings, and pre-power safety checks.
 
 ---
 

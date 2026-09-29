@@ -40,7 +40,7 @@
       <button class="nav-tab-btn" data-tab="tab-day2">Day 2: Assembly & Wiring</button>
       <button class="nav-tab-btn" data-tab="tab-day3">Day 3: Sensors & PID Control</button>
       <button class="nav-tab-btn" data-tab="tab-day4">Day 4: Missions & Safety</button>
-      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (13)</button>
+      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (14)</button>
       <button class="nav-tab-btn" data-tab="tab-slides">Slide Deck Mode</button>
       <button class="nav-tab-btn" data-tab="tab-quizzes">Topic Quizzes (12)</button>
     </nav>
@@ -464,8 +464,9 @@
               </div>
               <div class="media-caption">Soldering power cables onto high-current circuit distribution boards.</div>
               <div class="sim-launch-card">
-                <p>Test ESC 3-phase motor commutation and safe wiring:</p>
+                <p>Interactive hardware assembly &amp; wiring guides:</p>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button class="btn-primary" data-open-sim="sim-hardware-assembly">Open Complete Assembly &amp; Wiring Blueprint (Pixhawk &amp; APM 2.8)</button>
                   <button class="btn-secondary" data-open-sim="sim-esc-commutation">Open ESC &amp; BLDC Motor Lab</button>
                   <button class="btn-secondary" data-open-sim="sim-wiring-test">Open Wiring Simulator</button>
                 </div>
@@ -776,6 +777,7 @@
           <button class="sim-tab-btn" data-sim-target="sim-gravity-thrust">11. Gravity, Thrust & Altitude Dynamics</button>
           <button class="sim-tab-btn" data-sim-target="sim-prop-aero">12. Propeller Aerodynamics & Ground Effect</button>
           <button class="sim-tab-btn" data-sim-target="sim-esc-commutation">13. ESC &amp; 3-Phase BLDC Commutation</button>
+          <button class="sim-tab-btn" data-sim-target="sim-hardware-assembly">14. Hardware Assembly &amp; Wiring Blueprint (Pixhawk &amp; APM 2.8)</button>
         </aside>
 
         <!-- Viewport -->
@@ -1893,6 +1895,199 @@
                   <div class="glossary-term">DShot Digital Protocol vs. Legacy Analog PWM</div>
                   <div class="glossary-desc">
                     <strong>Digital Noise Immunity:</strong> Analog PWM (1000–2000µs) suffers from electrical ground loop noise and requires manual throttle calibration. Modern DShot transmits digital 16-bit serial frames directly from STM32 timer DMA at 600,000 baud ($600\text{ kbps}$) with an embedded 4-bit CRC checksum. Corrupted packets are rejected, eliminating motor stutter.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 14. HARDWARE ASSEMBLY & WIRING BLUEPRINT (PIXHAWK & APM 2.8) -->
+          <div class="sim-panel" id="sim-hardware-assembly">
+            <div class="sim-panel-header">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+                <div>
+                  <h3>14. Drone Hardware Assembly &amp; Wiring Blueprint (Pixhawk &amp; APM 2.8)</h3>
+                  <p>Interactive step-by-step physical assembly guide and wiring schematic for absolute beginners. Follow along from bare F450 frame, motor and ESC soldering, to flight controller pinouts, receiver binding, and pre-power safety checks.</p>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button class="btn-secondary" id="btn-asm-toggle-view" style="font-size: 13px; padding: 8px 14px;">Switch to FC Pinout View</button>
+                  <button class="btn-secondary" id="btn-asm-reset-step" style="font-size: 13px; padding: 8px 14px;">Reset to Step 1</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Controller Selection & View Mode Bar -->
+            <div style="background-color: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Flight Controller:</span>
+                <div class="switch-toggle-row" style="margin: 0;">
+                  <button class="switch-btn active" id="btn-fc-pixhawk">Pixhawk 2.4.8 (32-Bit ARM)</button>
+                  <button class="switch-btn" id="btn-fc-apm">APM 2.8 (ArduPilot Classic)</button>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Blueprint View:</span>
+                <div class="switch-toggle-row" style="margin: 0;">
+                  <button class="switch-btn active" id="btn-view-airframe">Full Airframe Blueprint</button>
+                  <button class="switch-btn" id="btn-view-pinout">FC Pinout Close-Up</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step Progress Indicator -->
+            <div style="background-color: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span id="asm-step-badge" style="background-color: var(--primary); color: var(--primary-contrast); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-pill); font-family: var(--font-mono);">STEP 1 OF 10</span>
+                  <span id="asm-step-title-header" style="font-weight: 700; color: var(--text-primary); font-size: 15px;">Frame Inspection &amp; Bottom Plate PDB Preparation</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn-secondary" id="btn-asm-prev" style="padding: 6px 12px; font-size: 13px;">← Previous Step</button>
+                  <button class="btn-primary" id="btn-asm-next" style="padding: 6px 14px; font-size: 13px;">Next Step →</button>
+                </div>
+              </div>
+
+              <!-- Step Buttons 1 to 10 Container -->
+              <div id="asm-step-pills" style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px;"></div>
+            </div>
+
+            <!-- Main Layout: Big Blueprint Canvas (Left) + Step Guidance & Gotchas (Right) -->
+            <div class="sim-grid-layout" style="grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start;">
+              <!-- Blueprint Canvas Box -->
+              <div class="sim-canvas-box" style="padding: 0; overflow: hidden; background: #090d16; border: 1px solid #27272a; border-radius: var(--radius-lg); position: relative;">
+                <canvas id="canvas-hardware-assembly" width="940" height="660" style="display: block; width: 100%; height: auto; cursor: crosshair;"></canvas>
+                <div id="asm-canvas-hint" style="position: absolute; bottom: 12px; left: 16px; font-size: 11px; color: #a1a1aa; font-family: var(--font-mono); pointer-events: none; background: rgba(9, 13, 22, 0.85); padding: 4px 10px; border-radius: 4px; border: 1px solid #27272a;">
+                  Interactive Blueprint • Click any highlighted component to inspect wiring pinouts &amp; instructions
+                </div>
+              </div>
+
+              <!-- Step Guide & Verification Card -->
+              <div class="sim-controls-card" style="padding: 20px;">
+                <!-- Step Phase Tag -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                  <span id="asm-phase-badge" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: var(--bg-page); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-subtle);">Phase: Mechanical Foundation</span>
+                  <span id="asm-fc-badge" style="font-size: 11px; font-weight: 700; color: #0284c7; background: #f0f9ff; padding: 3px 8px; border-radius: 4px; border: 1px solid #bae6fd;">Mode: Pixhawk 2.4.8</span>
+                </div>
+
+                <!-- Step Title -->
+                <h4 id="asm-step-heading" style="font-size: 17px; font-weight: 800; color: var(--text-primary); margin-bottom: 12px; line-height: 1.35;">
+                  1. Frame Inspection &amp; Bottom Plate PDB Preparation
+                </h4>
+
+                <!-- What to do (Plain English) -->
+                <div style="margin-bottom: 16px;">
+                  <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px;">What to Do (Literal Zero Instructions):</div>
+                  <div id="asm-step-instructions" style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.6;">
+                    Inspect the F450 frame kit. You have two main fiberglass plates: Top Plate and Bottom Plate. The Bottom Plate has integrated gold/tin copper traces with + and - pads acting as your Power Distribution Board (PDB).<br><br>
+                    <strong>Arm Color Orientation:</strong> Mount the two <strong>RED arms to the FRONT</strong> (facing forward) and the two <strong>WHITE or BLACK arms to the REAR</strong>. This visual color contrast is vital so you can distinguish the drone's heading line-of-sight while flying.<br><br>
+                    Use 16x M2.5 socket head screws from underneath to secure the 4 arms into the brass threaded inserts of the bottom plate. Do not install the top plate yet!
+                  </div>
+                </div>
+
+                <!-- Tools & Components -->
+                <div style="background-color: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;">
+                  <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px;">Parts &amp; Tools for this Step:</div>
+                  <div id="asm-step-tools" style="font-size: 12.5px; color: var(--text-primary); font-family: var(--font-mono);">
+                    • F450 Bottom Plate, 2x Red Arms (Front), 2x White/Black Arms (Rear), 16x M2.5 Screws, 2.0mm Hex Driver
+                  </div>
+                </div>
+
+                <!-- Critical Beginner Pitfall / Trap -->
+                <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px;">
+                  <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #b91c1c; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Critical Beginner Pitfall:
+                  </div>
+                  <div id="asm-step-pitfall" style="font-size: 12.5px; color: #991b1b; line-height: 1.5;">
+                    Never install arms upside down! The motor mounting holes must face upward and the lower landing gear tabs curve downward. Tighten screws snugly; do not over-torque into brass threads.
+                  </div>
+                </div>
+
+                <!-- Verification Checkpoint -->
+                <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 20px;">
+                  <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #166534; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Checkpoint Test Before Proceeding:
+                  </div>
+                  <div id="asm-step-test" style="font-size: 12.5px; color: #14532d; line-height: 1.5;">
+                    Frame stands flat on its four legs with zero wobble. Red arms are pointing forward (10 o'clock and 2 o'clock).
+                  </div>
+                </div>
+
+                <!-- Interactive Hardware Component Inspector Drawer -->
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px;">
+                  <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px;">Click any component to inspect:</div>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="asm-component-chips">
+                    <button class="chip-btn active" data-part="frame">F450 Frame</button>
+                    <button class="chip-btn" data-part="power">Power Module</button>
+                    <button class="chip-btn" data-part="motors">2212 Motors</button>
+                    <button class="chip-btn" data-part="escs">30A ESCs</button>
+                    <button class="chip-btn" data-part="fc">Flight Controller</button>
+                    <button class="chip-btn" data-part="rx">Radio Receiver</button>
+                    <button class="chip-btn" data-part="gps">GPS &amp; Compass</button>
+                    <button class="chip-btn" data-part="safety">Safety &amp; Buzzer</button>
+                    <button class="chip-btn" data-part="telem">Telemetry Air</button>
+                    <button class="chip-btn" data-part="props">Propellers</button>
+                  </div>
+                  <div id="asm-part-details" style="margin-top: 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.55;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Deep Dive Technical Reference Cards -->
+            <div style="margin-top: 32px;">
+              <h4 style="font-size: 16px; margin-bottom: 16px; color: var(--text-primary); font-weight: 700;">Pixhawk 2.4.8 vs. APM 2.8 Hardware Pinout &amp; Jumper Reference</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
+                <div class="glossary-card">
+                  <div class="glossary-term">Pixhawk 2.4.8 (32-Bit ARM Architecture)</div>
+                  <div class="glossary-desc">
+                    <strong>Port Layout &amp; Safety Switch:</strong> Runs on a powerful 32-bit STM32F4 processor with dual redundant IMUs.
+                    <ul style="margin: 8px 0 0 16px; font-size: 12.5px;">
+                      <li><strong>POWER (6-pin):</strong> 5.3V clean power from 3DR Power module + battery voltage &amp; current analog telemetry.</li>
+                      <li><strong>RC IN:</strong> Single 3-pin cable for PPM or SBUS serial digital receivers (e.g. FlySky FS-iA6B PPM output).</li>
+                      <li><strong>MAIN OUT 1–4:</strong> ESC signal pins (Motor 1 to 4 in ArduCopter Quad-X layout).</li>
+                      <li><strong>SWITCH (Safety Button):</strong> Pixhawk will NOT arm until this red button is pressed and held for 2 seconds (LED turns solid).</li>
+                      <li><strong>GPS &amp; I2C:</strong> 6-pin GPS cable to GPS port + 4-pin Compass cable to I2C port on the elevated mast.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="glossary-card">
+                  <div class="glossary-term">APM 2.8 (ArduPilot Mega 8-Bit Classic)</div>
+                  <div class="glossary-desc">
+                    <strong>Jumper JP1 &amp; MAG Compass Gotchas:</strong> The classic workshop teaching board with Atmel ATmega2560 (runs ArduCopter 3.2.1 max).
+                    <ul style="margin: 8px 0 0 16px; font-size: 12.5px;">
+                      <li><strong>Jumper JP1 Rule:</strong> If your ESCs have 5V BECs (red wire connected), <strong>REMOVE JP1</strong> to prevent dual voltage regulator conflict between the ESCs and the Power Module!</li>
+                      <li><strong>MAG Compass Jumper:</strong> <strong>REMOVE the MAG jumper</strong> next to the GPS port so the internal compass is disabled, allowing the external compass on the GPS mast to steer accurately.</li>
+                      <li><strong>INPUTS 1–8:</strong> Standard 3-pin headers (GND on outer edge, 5V in center, Signal on inner pin). Connect Ch1–Ch6 for Aileron, Elevator, Throttle, Rudder, Flight Mode switch, and Aux.</li>
+                      <li><strong>OUTPUTS 1–4:</strong> Connect ESC servo leads for Motors 1 to 4.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="glossary-card">
+                  <div class="glossary-term">ArduCopter Quad-X Motor Numbering &amp; Spin Direction</div>
+                  <div class="glossary-desc">
+                    <strong>Critical Flight Direction Rule:</strong> ArduCopter motor numbering differs from Betaflight!
+                    <ul style="margin: 8px 0 0 16px; font-size: 12.5px;">
+                      <li><strong>Motor 1 (Front-Right):</strong> Spins <strong>Counter-Clockwise (CCW)</strong> • Black nut / CCW propeller.</li>
+                      <li><strong>Motor 2 (Rear-Left):</strong> Spins <strong>Counter-Clockwise (CCW)</strong> • Black nut / CCW propeller.</li>
+                      <li><strong>Motor 3 (Front-Left):</strong> Spins <strong>Clockwise (CW)</strong> • Silver nut / CW propeller.</li>
+                      <li><strong>Motor 4 (Rear-Right):</strong> Spins <strong>Clockwise (CW)</strong> • Silver nut / CW propeller.</li>
+                      <li><strong>Direction Swap:</strong> Swap any two of the three motor phase wires to reverse rotation instantly.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="glossary-card">
+                  <div class="glossary-term">Elevated GPS Mast &amp; Pre-Power Smoke Stopper Safety</div>
+                  <div class="glossary-desc">
+                    <strong>Why Elevation &amp; Testing Matter:</strong>
+                    <ul style="margin: 8px 0 0 16px; font-size: 12.5px;">
+                      <li><strong>GPS Mast:</strong> A 12cm mast isolates the compass magnetometer from the heavy 60A DC magnetic field generated by the bottom PDB plate. Without elevation, the compass toilet-bowls and spins out of control in Loiter/RTL mode.</li>
+                      <li><strong>Smoke Stopper:</strong> Connect an inline polyfuse or 12V 20W bulb between the LiPo battery and XT60 on first power. If a solder bridge exists, the polyfuse trips safely in milliseconds, saving your $80 flight controller.</li>
+                      <li><strong>Props Off:</strong> Propellers are mounted ONLY after full Mission Planner calibration and right before flight in the field!</li>
+                    </ul>
                   </div>
                 </div>
               </div>

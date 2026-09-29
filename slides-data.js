@@ -194,7 +194,8 @@ const SLIDES_DATA = {
         ],
         image: "https://images.unsplash.com/photo-1579829366248-204fe8413f31?auto=format&fit=crop&w=1000&q=80",
         imageCaption: "Rugged carbon fiber airframe structure with modular arm brackets.",
-        takeaway: "Frame rigidity is critical; arm flex causes false sensor readings and flight oscillations."
+        takeaway: "Frame rigidity is critical; arm flex causes false sensor readings and flight oscillations.",
+        simulationRef: "sim-hardware-assembly"
       },
       {
         id: "d2_s2",
@@ -344,7 +345,8 @@ const SLIDES_DATA = {
         ],
         image: "https://images.unsplash.com/photo-1579829366248-204fe8413f31?auto=format&fit=crop&w=1000&q=80",
         imageCaption: "Hardware assembly validated and ready for firmware configuration.",
-        takeaway: "Mechanical and electrical perfection in the build makes software configuration effortless."
+        takeaway: "Mechanical and electrical perfection in the build makes software configuration effortless.",
+        simulationRef: "sim-hardware-assembly"
       }
     ]
   },
