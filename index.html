@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drone Engineering Workshop | 4-Day Comprehensive Masterclass</title>
+  <meta name="description" content="A complete 4-day, 24-hour hands-on drone workshop covering aerodynamics, electronics, assembly, PID control, autonomous missions, and safety with interactive simulations.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Site Header -->
+  <header class="site-header">
+    <div class="header-top">
+      <div class="brand-group">
+        <div class="brand-icon">UAV</div>
+        <div class="brand-titles">
+          <h1>DRONE WORKSHOP MASTERCLASS</h1>
+          <p>4 Days • 6 Hours / Day (24 Total Hours) • Theory, Assembly, Tuning & Flight</p>
+        </div>
+      </div>
+      <div class="header-tools">
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="global-search-input" placeholder="Search topics, terms, parts...">
+        </div>
+        <div class="progress-pill">
+          <span id="header-progress-text">0/40 Slides • 0/36 Quizzes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-bar" aria-label="Main Workshop Navigation">
+      <button class="nav-tab-btn active" data-tab="tab-overview">Overview</button>
+      <button class="nav-tab-btn" data-tab="tab-day1">Day 1: Physics & Electronics</button>
+      <button class="nav-tab-btn" data-tab="tab-day2">Day 2: Assembly & Wiring</button>
+      <button class="nav-tab-btn" data-tab="tab-day3">Day 3: Sensors & PID Control</button>
+      <button class="nav-tab-btn" data-tab="tab-day4">Day 4: Missions & Safety</button>
+      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (8)</button>
+      <button class="nav-tab-btn" data-tab="tab-slides">Slide Deck Mode</button>
+      <button class="nav-tab-btn" data-tab="tab-quizzes">Topic Quizzes (12)</button>
+    </nav>
+  </header>
+
+  <!-- Main Content Body -->
+  <main class="main-content">
+
+    <!-- ================================================================= -->
+    <!-- TAB: WORKSHOP OVERVIEW -->
+    <!-- ================================================================= -->
+    <section class="tab-pane active" id="tab-overview">
+      <div class="hero-card">
+        <div class="hero-header">
+          <div>
+            <h2>Comprehensive 4-Day Drone Workshop Curriculum</h2>
+            <p>Welcome to the structured masterclass designed for engineering students, technicians, and hobbyists. This course progresses systematically from core aerodynamics and motor physics, through precision soldering and hardware integration, to closed-loop PID attitude control, autonomous waypoint missions, and field aviation law.</p>
+          </div>
+          <button class="btn-primary" data-jump-tab="tab-day1">Begin Day 1 Course</button>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-number">4 Days</div>
+            <div class="stat-label">Full Workshop Duration</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">24 Hours</div>
+            <div class="stat-label">6 Hours / Day Structured Study</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">8 Simulators</div>
+            <div class="stat-label">Interactive Real-Time Tools</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">12 Quizzes</div>
+            <div class="stat-label">Every Day & Topic Evaluated</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">40 Slides</div>
+            <div class="stat-label">Projector-Ready Slide Deck</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Plain-English Glossary -->
+      <div class="hero-card">
+        <h3 style="font-size: 16px; margin-bottom: 12px; font-weight: 700;">Plain-English Drone Terms (Zero Confusing Jargon)</h3>
+        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px;">Technical acronyms can feel overwhelming. Here are the core hardware components defined in plain language:</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
+          <div class="concept-box">
+            <strong>BLDC Motor (Brushless Electric Motor)</strong>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">An electric motor without friction brushes. Uses permanent magnets and computer-pulsed copper coils for high power and long lifespan.</p>
+          </div>
+          <div class="concept-box">
+            <strong>ESC (Electronic Speed Controller)</strong>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">The motor driver. Takes DC power from the battery and rapidly turns the brushless motor at precise speeds commanded by the flight computer.</p>
+          </div>
+          <div class="concept-box">
+            <strong>Flight Controller (FC)</strong>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">The central computer brain. Reads tilt sensors thousands of times per second and adjusts motor speeds to keep the drone level and stable.</p>
+          </div>
+          <div class="concept-box">
+            <strong>IMU (Inertial Measurement Unit)</strong>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">A small sensor chip holding a 3-axis gyroscope (measures rotation speed) and a 3-axis accelerometer (detects which way gravity points).</p>
+          </div>
+          <div class="concept-box">
+            <strong>PID Controller (Balance Algorithm)</strong>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">The math formula inside the autopilot: Proportional (present muscle), Integral (wind drift memory), and Derivative (shock absorber damping).</p>
+          </div>
+          <div class="concept-box">
+            <strong>TWR (Thrust-to-Weight Ratio)</strong>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">The ratio of total motor lift force to drone weight. A minimum 2:1 ratio ensures safe hover at 50% power with plenty of emergency climb margin.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workshop Schedule Grid -->
+      <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">Workshop Schedule (24 Hours)</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+        <div class="hour-block" style="padding: 20px;">
+          <span class="day-badge">Day 1 • 6 Hours</span>
+          <h4 style="font-size: 16px; margin: 8px 0;">Physics, Forces & Electronics</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Hours 1-6: Multirotor aerodynamics, 4 forces, torque balance (CW/CCW), BLDC motor stators, ESC switching, and LiPo battery safety.</p>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-secondary" data-jump-tab="tab-day1">Explore Day 1</button>
+            <button class="btn-secondary" data-open-sim="sim-flight-physics">Flight Simulator</button>
+          </div>
+        </div>
+
+        <div class="hour-block" style="padding: 20px;">
+          <span class="day-badge">Day 2 • 6 Hours</span>
+          <h4 style="font-size: 16px; margin: 8px 0;">Frame Assembly & Power Wiring</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Hours 7-12: Carbon fiber airframes, thrust-to-weight calculations, soldering mastery, power distribution, and smoke stopper testing.</p>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-secondary" data-jump-tab="tab-day2">Explore Day 2</button>
+            <button class="btn-secondary" data-open-sim="sim-wiring-test">Wiring Simulator</button>
+          </div>
+        </div>
+
+        <div class="hour-block" style="padding: 20px;">
+          <span class="day-badge">Day 3 • 6 Hours</span>
+          <h4 style="font-size: 16px; margin: 8px 0;">Sensors, Autopilot & PID Control</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Hours 13-18: IMU architecture, sensor fusion filters, PID loop tuning, software configurators, accelerometer leveling, and radio channel setup.</p>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-secondary" data-jump-tab="tab-day3">Explore Day 3</button>
+            <button class="btn-secondary" data-open-sim="sim-pid-tuner">PID Lab</button>
+          </div>
+        </div>
+
+        <div class="hour-block" style="padding: 20px;">
+          <span class="day-badge">Day 4 • 6 Hours</span>
+          <h4 style="font-size: 16px; margin: 8px 0;">Missions, Diagnostics & Safety</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Hours 19-24: Ground control stations, autonomous waypoints, fail-safe protocols, systematic troubleshooting matrix, and aviation airspace laws.</p>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-secondary" data-jump-tab="tab-day4">Explore Day 4</button>
+            <button class="btn-secondary" data-open-sim="sim-troubleshooting">Diagnostic Matrix</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB: DAY 1 DETAILS -->
+    <!-- ================================================================= -->
+    <section class="tab-pane" id="tab-day1">
+      <div class="day-header-banner">
+        <span class="day-badge">Day 1 • 6 Hours</span>
+        <h2>How Drones Fly, Aerodynamic Forces & Power Electronics</h2>
+        <p>A rigorous introduction to quadcopter physics, torque cancellation, brushless motors, and battery management.</p>
+      </div>
+
+      <div class="hours-container">
+        <!-- Hour 1 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hour 1 of 6</span>
+            <span class="hour-title">Introduction to UAVs & Multirotor Geometry</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Why Multirotors Dominate Robotics</h4>
+              <p>An Unmanned Aerial Vehicle (UAV) is any aircraft piloted without an onboard human pilot. Multirotor aircraft utilize spinning fixed-pitch propellers to generate vertical thrust, enabling Vertical Takeoff and Landing (VTOL) and precision hovering without a runway.</p>
+              <ul class="bullet-list">
+                <li><strong>Multirotor vs. Fixed-Wing:</strong> Fixed-wings use forward speed over airfoils to create lift (highly efficient for long distance). Multirotors generate lift directly from engine thrust (unmatched agility in tight spaces).</li>
+                <li><strong>The Quad-X Configuration:</strong> Four arms spaced symmetrically. Eliminates complex mechanical swashplates, linkages, and servo motors found in traditional helicopters.</li>
+                <li><strong>Center of Gravity (CoG):</strong> The exact physical balance point must sit precisely in the geometric center of the four motors for balanced motor workload.</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Key Insight:</strong> Quadcopters control all pitch, roll, yaw, and altitude exclusively by adjusting the individual RPM of four fixed motors.
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=1000&q=80" alt="Quadcopter in flight">
+              </div>
+              <div class="media-caption">Quadcopter in steady hover demonstrating balanced thrust forces.</div>
+              <div class="sim-launch-card">
+                <p>Launch the interactive physics simulator to see 4-motor flight in real time:</p>
+                <button class="btn-secondary" data-open-sim="sim-flight-physics">Open Flight Simulator</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Hour 2 & 3 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 2 & 3 of 6</span>
+            <span class="hour-title">The 4 Forces of Flight & Propeller Aerodynamics</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Forces in Equilibrium & Airfoil Action</h4>
+              <p>Every drone in flight is governed by the equilibrium of four primary forces: Thrust, Weight, Lift, and Drag.</p>
+              <ul class="bullet-list">
+                <li><strong>1. Thrust:</strong> The net upward mechanical force produced by the propellers pushing air downward.</li>
+                <li><strong>2. Weight (Gravity):</strong> The downward force of mass multiplied by gravitational acceleration (W = m · g).</li>
+                <li><strong>3. Lift:</strong> Aerodynamic pressure differential created across propeller blade airfoils (Bernoulli's principle & Newton's 3rd law).</li>
+                <li><strong>4. Drag:</strong> Atmospheric resistance opposing the motion of the drone frame through the air.</li>
+                <li><strong>Hover State:</strong> When Total Thrust = Total Weight, vertical acceleration is zero and the drone hovers stably.</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Rule of Climb:</strong> Thrust > Weight = Climb. Thrust < Weight = Descent. Thrust = Weight = Constant altitude hover.
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1473968512647-3e447244af8f?auto=format&fit=crop&w=1000&q=80" alt="Aerial drone in flight">
+              </div>
+              <div class="media-caption">Aerodynamic forces in balance allow steady surveying over vast landscapes.</div>
+              <div class="sim-launch-card">
+                <p>Test your understanding of forces with the Day 1 Topic 1 quiz:</p>
+                <button class="btn-secondary" data-quiz-topic="d1-t1">Take Topic 1 Quiz</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Hour 4 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hour 4 of 6</span>
+            <span class="hour-title">Motor Rotation & Torque Cancellation (Pitch, Roll, Yaw)</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Why 2 Motors Spin CW and 2 Spin CCW</h4>
+              <p>According to Newton's Third Law, when a motor spins a propeller clockwise, it exerts an equal reactive torque pushing the drone body counter-clockwise.</p>
+              <ul class="bullet-list">
+                <li><strong>Torque Cancellation:</strong> Two diagonal motors (M2, M3) spin Clockwise (CW), while the other two (M1, M4) spin Counter-Clockwise (CCW). In steady hover, the opposing torques cancel to zero.</li>
+                <li><strong>Pitch (Forward / Backward):</strong> Rear motors (M1, M3) spin faster while front motors (M2, M4) slow down. The nose tilts down, angling thrust backward to propel the drone forward.</li>
+                <li><strong>Roll (Left / Right):</strong> Left motors spin faster than right motors to tilt right, and vice versa.</li>
+                <li><strong>Yaw (Turn in Place):</strong> CW motors speed up while CCW motors slow down. The resulting reactive torque rotates the drone body smoothly without changing altitude!</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Key Takeaway:</strong> Yaw rotation requires zero mechanical steering rudders; it is achieved purely through torque imbalance.
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1579829366248-204fe8413f31?auto=format&fit=crop&w=1000&q=80" alt="Quadcopter close up">
+              </div>
+              <div class="media-caption">Paired counter-rotating motors on a carbon fiber airframe.</div>
+              <div class="sim-launch-card">
+                <p>Experiment with Pitch, Roll, and Yaw in the flight physics lab:</p>
+                <button class="btn-secondary" data-open-sim="sim-flight-physics">Try Motor Simulator</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Hour 5 & 6 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 5 & 6 of 6</span>
+            <span class="hour-title">Brushless Motors, ESCs & LiPo Battery Safety</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Power Train Electronics & Battery Chemistry</h4>
+              <p>Multirotors draw massive electrical current (often 80 to 150 Amperes at full throttle). Reliable power management is paramount.</p>
+              <ul class="bullet-list">
+                <li><strong>Brushless DC (BLDC) Motors:</strong> Contain permanent magnets in the outer rotor and copper wire electromagnets in the stationary stator. Zero friction contacts mean extreme reliability.</li>
+                <li><strong>KV Rating:</strong> RPM generated per 1 Volt applied (with no load). Low KV = high torque for large props; High KV = rapid RPM for small agile props.</li>
+                <li><strong>ESC (Electronic Speed Controller):</strong> Rapidly pulses direct battery current into 3-phase AC signals using high-speed MOSFET transistors.</li>
+                <li><strong>LiPo Battery Voltages:</strong> 4.20V (Full) | 3.85V (Safe Storage) | 3.50V (Land Warning) | < 3.00V (Permanent Damage Zone).</li>
+                <li><strong>Storage Charging Rule:</strong> Always charge/discharge batteries to 3.80V–3.85V per cell if not flying within 48 hours to avoid dangerous swelling and fire hazard.</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Safety Warning:</strong> Never charge a LiPo battery unattended or on a flammable surface. Use a fire-resistant LiPo bag.
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80" alt="Electronics circuit board">
+              </div>
+              <div class="media-caption">High-power MOSFET circuits and electrical management components.</div>
+              <div class="sim-launch-card">
+                <p>Launch the interactive LiPo discharge curve visualizer:</p>
+                <button class="btn-secondary" data-open-sim="sim-lipo-monitor">Open LiPo Monitor</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Day 1 Quizzes Grid -->
+      <div class="quiz-hub-card">
+        <h3>Day 1 Knowledge Checks (3 Topics)</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Complete all three topic quizzes to validate your grasp of Day 1 concepts:</p>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn-secondary" data-quiz-topic="d1-t1">Topic 1: Drone Types & Aerodynamics</button>
+          <button class="btn-secondary" data-quiz-topic="d1-t2">Topic 2: Motor Rotation & Force Balance</button>
+          <button class="btn-secondary" data-quiz-topic="d1-t3">Topic 3: BLDC Motors, ESCs & LiPo Batteries</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB: DAY 2 DETAILS -->
+    <!-- ================================================================= -->
+    <section class="tab-pane" id="tab-day2">
+      <div class="day-header-banner">
+        <span class="day-badge">Day 2 • 6 Hours</span>
+        <h2>Hardware Assembly, Propeller Sizing & Safe Wiring</h2>
+        <p>Hands-on airframe construction, powertrain sizing, precision soldering, and pre-power continuity verification.</p>
+      </div>
+
+      <div class="hours-container">
+        <!-- Hour 7 & 8 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 7 & 8 of 6</span>
+            <span class="hour-title">Airframe Geometry & Thrust-to-Weight Ratio (TWR)</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Sizing Your Powertrain Correctly</h4>
+              <p>An underpowered drone is hazardous; it cannot recover from altitude drops or resist sudden wind gusts. Proper calculation prevents crashes.</p>
+              <ul class="bullet-list">
+                <li><strong>All-Up Weight (AUW):</strong> The complete flight weight of frame, motors, ESC, flight controller, receiver, battery, and payload.</li>
+                <li><strong>The 2:1 TWR Golden Rule:</strong> Total maximum thrust from all motors must be at least double the total AUW.</li>
+                <li><strong>Why 2:1 is Essential:</strong> The drone hovers comfortably at 45%–50% throttle, leaving a full 50% power margin for attitude correction and climb.</li>
+                <li><strong>Propeller Sizing (e.g. 5045):</strong> 5.0 inch diameter, 4.5 inch pitch (theoretical distance moved per revolution).</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Formula:</strong> TWR = (Thrust per motor in grams × 4) / Total AUW in grams.
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1506947411487-a56738267384?w=800" alt="Drone propeller close up">
+              </div>
+              <div class="media-caption">Propeller pitch and motor torque must be matched to frame weight.</div>
+              <div class="sim-launch-card">
+                <p>Calculate your drone's Thrust-to-Weight Ratio:</p>
+                <button class="btn-secondary" data-open-sim="sim-thrust-calc">Open TWR Calculator</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Hour 9 & 10 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 9 & 10 of 6</span>
+            <span class="hour-title">Radio Systems, Protocols & Workbench Tools</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Digital Radio Links & Workshop Preparation</h4>
+              <p>Reliable control links prevent flyaways. Clean tools ensure professional electrical joints.</p>
+              <ul class="bullet-list">
+                <li><strong>Transmitter (Radio) & Receiver (RX):</strong> Handheld control communicating with the onboard receiver. Mode 2 is global standard (Left = Throttle/Yaw, Right = Pitch/Roll).</li>
+                <li><strong>Digital Protocols:</strong> Modern serial protocols like CRSF (Crossfire / ExpressLRS) update at 250Hz–500Hz with under 5ms latency.</li>
+                <li><strong>Channel Mapping (AETR):</strong> Ch1 = Aileron/Roll, Ch2 = Elevator/Pitch, Ch3 = Throttle, Ch4 = Rudder/Yaw.</li>
+                <li><strong>Soldering Tools:</strong> Temperature-controlled iron (350°C–400°C), 63/37 leaded or lead-free solder with flux core, brass cleaning sponge, and flux pen.</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Workbench Rule:</strong> Always keep soldering iron tips clean and tinned to ensure instant, void-free heat transfer.
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1521405924368-64c5b84bec60?auto=format&fit=crop&w=1000&q=80" alt="Handheld radio controller">
+              </div>
+              <div class="media-caption">Handheld digital radio transmitter with dual multi-axis gimbals.</div>
+              <div class="sim-launch-card">
+                <p>Test your knowledge of hardware sizing:</p>
+                <button class="btn-secondary" data-quiz-topic="d2-t1">Take Topic 1 Quiz</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Hour 11 & 12 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 11 & 12 of 6</span>
+            <span class="hour-title">Soldering Practice, Motor Phasing & Smoke Stopper Test</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Clean Power Wiring & Bench Safety Verification</h4>
+              <p>A single solder bridge on high-voltage battery pads will destroy electronics within milliseconds. Testing is non-negotiable.</p>
+              <ul class="bullet-list">
+                <li><strong>Pre-Tinning Rule:</strong> Always pre-tin both the stripped wire tip and the copper PCB pad with fresh solder before joining them.</li>
+                <li><strong>Avoiding Cold Joints:</strong> Heat both surfaces simultaneously until solder flows freely into a shiny, concave bond. Never move the joint while cooling.</li>
+                <li><strong>Motor Direction Swap Rule:</strong> Swapping ANY two of the three motor phase wires reverses its rotational direction (CW to CCW).</li>
+                <li><strong>Low-ESR Capacitor:</strong> Solder a 35V 470µF–1000µF capacitor across the main battery pads to absorb inductive voltage spikes. Observe negative stripe polarity!</li>
+                <li><strong>The Smoke Stopper Test:</strong> Connect an inline current-limiting bulb/fuse on the first power-up. If a short exists, it trips instantly before boards burn.</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Golden Safety Rule:</strong> NEVER install propellers on your drone while configuring software or testing on your workbench!
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80" alt="Soldering electronics">
+              </div>
+              <div class="media-caption">Soldering power cables onto high-current circuit distribution boards.</div>
+              <div class="sim-launch-card">
+                <p>Test circuits with the interactive Smoke Stopper simulator:</p>
+                <button class="btn-secondary" data-open-sim="sim-wiring-test">Open Wiring Simulator</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Day 2 Quizzes Grid -->
+      <div class="quiz-hub-card">
+        <h3>Day 2 Knowledge Checks (3 Topics)</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Test your understanding of hardware assembly, soldering, and electrical safety:</p>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn-secondary" data-quiz-topic="d2-t1">Topic 1: Airframes & Thrust-to-Weight</button>
+          <button class="btn-secondary" data-quiz-topic="d2-t2">Topic 2: Soldering & Clean Wiring</button>
+          <button class="btn-secondary" data-quiz-topic="d2-t3">Topic 3: Bench Safety & Continuity Tests</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB: DAY 3 DETAILS -->
+    <!-- ================================================================= -->
+    <section class="tab-pane" id="tab-day3">
+      <div class="day-header-banner">
+        <span class="day-badge">Day 3 • 6 Hours</span>
+        <h2>Sensors, Autopilot & Stability Control (PID Tuning)</h2>
+        <p>Inertial sensors, mathematical sensor fusion, closed-loop PID control, and software configurator setup.</p>
+      </div>
+
+      <div class="hours-container">
+        <!-- Hour 13 & 14 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 13 & 14 of 6</span>
+            <span class="hour-title">Flight Controller Architecture & IMU Sensors</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>The Central Processing Brain</h4>
+              <p>The Flight Controller (FC) is an embedded real-time computer running at 100MHz–480MHz, reading sensors up to 8,000 times per second.</p>
+              <ul class="bullet-list">
+                <li><strong>Microcontroller (MCU):</strong> ARM Cortex processors (STM32 F4, F7, or H7) executing control loop math in microseconds.</li>
+                <li><strong>3-Axis Gyroscope:</strong> Measures rotational angular velocity along Pitch, Roll, and Yaw in degrees per second (°/s). Extremely fast with zero delay, but drifts over time.</li>
+                <li><strong>3-Axis Accelerometer:</strong> Measures linear acceleration and detects Earth's 1G gravity vector. No drift, but corrupted by motor vibration noise.</li>
+                <li><strong>Barometer & Compass:</strong> Barometer measures atmospheric pressure drops to hold altitude. Compass measures Earth's magnetic heading.</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Core Sensor Role:</strong> Gyros tell the drone how fast it is rotating; accelerometers tell it which way is down.
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1608222351212-18fe0ec7b13b?auto=format&fit=crop&w=1000&q=80" alt="Circuit traces and microcontroller">
+              </div>
+              <div class="media-caption">ARM Cortex microcontroller and IMU sensor cluster on a modern flight board.</div>
+              <div class="sim-launch-card">
+                <p>Launch the interactive Sensor Fusion visualizer:</p>
+                <button class="btn-secondary" data-open-sim="sim-sensor-fusion">Open Sensor Fusion Lab</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Hour 15 & 16 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 15 & 16 of 6</span>
+            <span class="hour-title">Understanding PID Control Loops (P, I, D)</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>The Mathematical Heart of Drone Stability</h4>
+              <p>A drone cannot balance without closed-loop feedback. The PID algorithm compares desired angle with measured angle and calculates immediate motor corrections.</p>
+              <ul class="bullet-list">
+                <li><strong>Error:</strong> Error = Desired Angle (from Pilot Stick) - Actual Measured Angle (from Sensors).</li>
+                <li><strong>Proportional (P):</strong> Generates force directly proportional to current error. The muscle that pushes the drone back to level. Too high = fast shuddering oscillations.</li>
+                <li><strong>Integral (I):</strong> Accumulates persistent error over time. Holds attitude against constant wind gusts or an off-center battery pack.</li>
+                <li><strong>Derivative (D):</strong> Measures the rate of change of error. Acts like a shock absorber or brake, dampening overshoot from the P-term. Too high = hot motors from noise amplification.</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Tuning Intuition:</strong> P gives response authority, I holds attitude in wind, and D prevents bouncing and overshoot.
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=80" alt="Microprocessor chip">
+              </div>
+              <div class="media-caption">Closed-loop algorithms executing thousands of times per second.</div>
+              <div class="sim-launch-card">
+                <p>Tune P, I, and D parameters against simulated wind gusts:</p>
+                <button class="btn-secondary" data-open-sim="sim-pid-tuner">Open PID Tuner</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Hour 17 & 18 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 17 & 18 of 6</span>
+            <span class="hour-title">Software Configuration & Sensor Calibration</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Configurators, Flight Modes & Arming Logic</h4>
+              <p>Connecting the drone to software configurators (Betaflight, ArduPilot, PX4) to calibrate sensors and configure switches.</p>
+              <ul class="bullet-list">
+                <li><strong>Board Alignment:</strong> Verify that tilting the physical drone forward tilts the 3D model forward on your computer screen.</li>
+                <li><strong>Accelerometer Calibration:</strong> Must be performed on a dead-flat, level table so the autopilot learns true horizontal reference.</li>
+                <li><strong>Angle Mode (Self-Level):</strong> Automatically levels the drone when sticks are centered, with a strict maximum tilt angle limit (best for beginners).</li>
+                <li><strong>Acro Mode (Rate Mode):</strong> Disables self-leveling; stick movement directly commands rotation rate in degrees/sec (used for agile aerobatics).</li>
+                <li><strong>Arming Switch:</strong> Map a dedicated 2-position switch on your radio for arming/disarming motors.</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Pre-Flight Check:</strong> Always test motor directions in software with PROPELLERS REMOVED before heading to the field!
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1563770660941-20978e870e26?auto=format&fit=crop&w=1000&q=80" alt="Motherboard testing">
+              </div>
+              <div class="media-caption">Interactive flight configurator running real-time sensor calibration.</div>
+              <div class="sim-launch-card">
+                <p>Test your understanding with Day 3 Quizzes:</p>
+                <button class="btn-secondary" data-quiz-topic="d3-t2">Take PID Quiz</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Day 3 Quizzes Grid -->
+      <div class="quiz-hub-card">
+        <h3>Day 3 Knowledge Checks (3 Topics)</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Test your grasp of sensors, PID balance loops, and flight software setup:</p>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn-secondary" data-quiz-topic="d3-t1">Topic 1: Flight Controller Sensors (IMU, Baro)</button>
+          <button class="btn-secondary" data-quiz-topic="d3-t2">Topic 2: PID Control Loop Principles</button>
+          <button class="btn-secondary" data-quiz-topic="d3-t3">Topic 3: Firmware Setup & Flight Modes</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB: DAY 4 DETAILS -->
+    <!-- ================================================================= -->
+    <section class="tab-pane" id="tab-day4">
+      <div class="day-header-banner">
+        <span class="day-badge">Day 4 • 6 Hours</span>
+        <h2>Autonomous Missions, Troubleshooting & Aviation Safety</h2>
+        <p>Ground control stations, waypoint navigation, systematic fault diagnostics, fail-safes, and aviation regulations.</p>
+      </div>
+
+      <div class="hours-container">
+        <!-- Hour 19 & 20 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 19 & 20 of 6</span>
+            <span class="hour-title">Ground Stations, Waypoint Missions & Fail-Safes</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Autonomous Flight Planning & Safety Boundaries</h4>
+              <p>Ground Control Stations (Mission Planner, QGroundControl) enable autonomous commercial operations via telemetry modems.</p>
+              <ul class="bullet-list">
+                <li><strong>Waypoint Navigation:</strong> Program 3D coordinates (Latitude, Longitude, Altitude AGL) for the drone to execute autonomously.</li>
+                <li><strong>Survey Grid Patterns:</strong> Lawnmower flight paths with 70% forward overlap for aerial mapping and 3D terrain reconstruction.</li>
+                <li><strong>Geofencing:</strong> Virtual 3D boundary cylinder around the launch point. If breached, the autopilot halts or triggers automatic return.</li>
+                <li><strong>RTL (Return to Launch):</strong> Autopilot climbs to a safe obstacle-clearance altitude, flies straight home, and lands automatically.</li>
+                <li><strong>Radio Loss Failsafe:</strong> When transmitter signal drops for >0.5s, the autopilot automatically takes over to execute RTL.</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Fail-Safe Rule:</strong> Always configure and verify your failsafe behavior before launching an autonomous mission.
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80" alt="Aerial terrain mapping">
+              </div>
+              <div class="media-caption">Autonomous grid survey mission mapped over natural terrain.</div>
+              <div class="sim-launch-card">
+                <p>Plan and fly autonomous waypoints in the mission simulator:</p>
+                <button class="btn-secondary" data-open-sim="sim-waypoint-mission">Open Mission Planner</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Hour 21 & 22 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 21 & 22 of 6</span>
+            <span class="hour-title">Systematic Troubleshooting & Diagnostic Matrix</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Diagnosing Anomalies Like an Aerospace Engineer</h4>
+              <p>When unexpected behavior occurs, systematic elimination of root causes saves time and prevents crashes.</p>
+              <ul class="bullet-list">
+                <li><strong>"Immediate Flip on Takeoff":</strong> Caused by wrong propeller placement, reversed motor spin direction, or incorrect FC board orientation in software.</li>
+                <li><strong>"Violent Wobbles & Burning Hot Motors":</strong> Caused by excessive D-term gain, bent propeller, or frame vibrations saturating the gyro.</li>
+                <li><strong>"Toilet-Bowling in GPS Mode":</strong> Drone circles in widening spirals due to magnetic compass interference from high-current battery leads.</li>
+                <li><strong>"Radio Sticks Give No Response":</strong> Unbound receiver, wrong UART serial port selected, or incorrect receiver protocol (CRSF vs SBUS).</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Troubleshooting Law:</strong> An immediate takeoff flip is always a software-hardware mismatch, never a pilot error!
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1000&q=80" alt="Bench testing and diagnostics">
+              </div>
+              <div class="media-caption">Systematic bench diagnostic checking motor numbering and prop rotations.</div>
+              <div class="sim-launch-card">
+                <p>Launch the interactive Diagnostic Matrix & Fault Finder:</p>
+                <button class="btn-secondary" data-open-sim="sim-troubleshooting">Open Diagnostic Matrix</button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Hour 23 & 24 -->
+        <article class="hour-block">
+          <div class="hour-header">
+            <span class="hour-tag">Hours 23 & 24 of 6</span>
+            <span class="hour-title">Pre-Flight Checklist, Aviation Law & Capstone Review</span>
+          </div>
+          <div class="hour-body">
+            <div class="hour-text">
+              <h4>Aviation Safety Regulations & Workshop Graduation</h4>
+              <p>Operating in shared airspace demands disciplined adherence to aviation laws and pre-flight checklists.</p>
+              <ul class="bullet-list">
+                <li><strong>The 400ft (120m) Rule:</strong> Universal legal maximum altitude Above Ground Level (AGL) to protect manned civil aviation.</li>
+                <li><strong>Visual Line of Sight (VLOS):</strong> The pilot must maintain direct unaided visual contact with the aircraft at all times.</li>
+                <li><strong>No-Fly Zones:</strong> Strict 5km exclusion radius around airports, heliports, military bases, and government facilities.</li>
+                <li><strong>Pre-Flight Checklist:</strong> Transmitter ON first -> Battery connected -> ESC chimes confirmed -> GPS lock >10 satellites -> Stand back 5 meters -> Arm safely.</li>
+              </ul>
+              <div class="concept-box">
+                <strong>Graduation Milestone:</strong> You now possess the practical and theoretical knowledge to build, tune, and safely operate unmanned aerial systems!
+              </div>
+            </div>
+            <div class="hour-media">
+              <div class="media-frame">
+                <img src="https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=1000&q=80" alt="Drone in outdoor flight">
+              </div>
+              <div class="media-caption">Safe flight conducted strictly within legal visual line of sight and altitude ceilings.</div>
+              <div class="sim-launch-card">
+                <p>Take the final regulations & troubleshooting quiz:</p>
+                <button class="btn-secondary" data-quiz-topic="d4-t3">Take Day 4 Quiz</button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Day 4 Quizzes Grid -->
+      <div class="quiz-hub-card">
+        <h3>Day 4 Knowledge Checks (3 Topics)</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Validate your understanding of autonomous missions, diagnostics, and flight regulations:</p>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <button class="btn-secondary" data-quiz-topic="d4-t1">Topic 1: Autonomous Missions & Fail-Safes</button>
+          <button class="btn-secondary" data-quiz-topic="d4-t2">Topic 2: Systematic Troubleshooting</button>
+          <button class="btn-secondary" data-quiz-topic="d4-t3">Topic 3: Field Safety & Flight Regulations</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB: SIMULATIONS SUITE (ALL 8 CONCEPTS) -->
+    <!-- ================================================================= -->
+    <section class="tab-pane" id="tab-simulations">
+      <div class="day-header-banner">
+        <span class="day-badge">Interactive Visual Lab</span>
+        <h2>Simulations Suite: Visualizing All Drone Concepts</h2>
+        <p>Real-time physics engines, PID control loop tuners, battery curves, and diagnostic simulators.</p>
+      </div>
+
+      <div class="sim-suite-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sim-sidebar">
+          <h3>Simulation Tools</h3>
+          <button class="sim-tab-btn active" data-sim-target="sim-flight-physics">1. 3D Flight Physics & Motors</button>
+          <button class="sim-tab-btn" data-sim-target="sim-thrust-calc">2. Thrust-to-Weight Calculator</button>
+          <button class="sim-tab-btn" data-sim-target="sim-lipo-monitor">3. LiPo Battery Curve & Safety</button>
+          <button class="sim-tab-btn" data-sim-target="sim-wiring-test">4. Circuit Wiring & Smoke Stopper</button>
+          <button class="sim-tab-btn" data-sim-target="sim-pid-tuner">5. PID Attitude Balance Lab</button>
+          <button class="sim-tab-btn" data-sim-target="sim-sensor-fusion">6. Sensor Fusion (Gyro vs Accel)</button>
+          <button class="sim-tab-btn" data-sim-target="sim-waypoint-mission">7. Autonomous Waypoint Planner</button>
+          <button class="sim-tab-btn" data-sim-target="sim-troubleshooting">8. Diagnostic Fault Matrix</button>
+        </aside>
+
+        <!-- Viewport -->
+        <div class="sim-viewport">
+
+          <!-- 1. FLIGHT PHYSICS -->
+          <div class="sim-panel active" id="sim-flight-physics">
+            <div class="sim-panel-header">
+              <h3>Quadcopter 3D Flight Physics & Motor Torque Visualizer</h3>
+              <p>Adjust Throttle, Pitch, Roll, and Yaw to observe how 4 independent motor speeds generate 3D maneuvers and cancel reactive torque.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box">
+                <canvas id="canvas-flight-physics"></canvas>
+                <div class="status-callout" id="fp-explanation" style="margin: 12px;">
+                  Steady Vertical Thrust: All 4 motors spinning equally at 50%. Total thrust pushes directly upward. Net rotational torque is exactly zero.
+                </div>
+              </div>
+              <div class="sim-controls-card">
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Throttle (Altitude Climb/Descend)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="fp-throttle" min="0" max="100" value="50">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Pitch (Forward / Backward Tilt)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="fp-pitch" min="-50" max="50" value="0">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Roll (Left / Right Tilt)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="fp-roll" min="-50" max="50" value="0">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Yaw (Turn in Place CW / CCW)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="fp-yaw" min="-50" max="50" value="0">
+                </div>
+                <button class="btn-secondary" id="fp-reset-btn">Reset to Level Hover</button>
+                <div style="border-top: 1px solid var(--border-color); padding-top: 10px;">
+                  <table class="readout-table">
+                    <tr><td>M1 (Rear Right CCW):</td><td id="fp-m1-val">50%</td></tr>
+                    <tr><td>M2 (Front Right CW):</td><td id="fp-m2-val">50%</td></tr>
+                    <tr><td>M3 (Rear Left CW):</td><td id="fp-m3-val">50%</td></tr>
+                    <tr><td>M4 (Front Left CCW):</td><td id="fp-m4-val">50%</td></tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. THRUST CALCULATOR -->
+          <div class="sim-panel" id="sim-thrust-calc">
+            <div class="sim-panel-header">
+              <h3>Thrust-to-Weight Ratio (TWR) & Powertrain Sizing Calculator</h3>
+              <p>Calculate whether your motor, propeller, battery, and total drone weight combination provides safe, stable flight.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box" style="padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                  <div>
+                    <span style="font-size: 12px; color: var(--text-faint); font-weight: 600;">CALCULATED RATIO</span>
+                    <div style="font-size: 36px; font-weight: 800;" id="calc-twr-val">2.25 : 1</div>
+                  </div>
+                  <div id="calc-verdict" style="padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 700;">
+                    OPTIMAL (Safe & Agile)
+                  </div>
+                </div>
+                <div class="status-callout" id="calc-verdict-desc" style="margin-bottom: 20px;">
+                  Ideal sweet spot! Hover is near 45% throttle, leaving a full 55% power headroom for stable altitude holding, windy weather navigation, and safe maneuvers.
+                </div>
+                <table class="readout-table" style="font-size: 13px;">
+                  <tr><td>Total All-Up Weight (AUW):</td><td id="calc-weight-val">600 g</td></tr>
+                  <tr><td>Total Maximum Thrust:</td><td id="calc-thrust-val">1350 g (337g / motor)</td></tr>
+                  <tr><td>Required Hover Throttle:</td><td id="calc-hover-val">44%</td></tr>
+                </table>
+              </div>
+              <div class="sim-controls-card">
+                <div class="control-group">
+                  <div class="control-label"><span>All-Up Drone Weight (grams)</span></div>
+                  <input type="range" class="control-slider" id="calc-weight" min="200" max="3000" step="50" value="600">
+                </div>
+                <div class="control-group">
+                  <div class="control-label"><span>Number of Motors</span></div>
+                  <select class="control-select" id="calc-motors">
+                    <option value="4">Quadcopter (4 Motors)</option>
+                    <option value="6">Hexacopter (6 Motors)</option>
+                    <option value="8">Octocopter (8 Motors)</option>
+                  </select>
+                </div>
+                <div class="control-group">
+                  <div class="control-label"><span>Motor Size & KV</span></div>
+                  <select class="control-select" id="calc-motor-type">
+                    <option value="2207-2400">2207 (2400 KV - 5" Standard)</option>
+                    <option value="2306-1750">2306 (1750 KV - 6S Efficiency)</option>
+                    <option value="1404-3800">1404 (3800 KV - Ultralight 3")</option>
+                    <option value="4114-400">4114 (400 KV - Heavy Lift 15")</option>
+                  </select>
+                </div>
+                <div class="control-group">
+                  <div class="control-label"><span>Battery Cell Count</span></div>
+                  <select class="control-select" id="calc-cells">
+                    <option value="3">3S LiPo (11.1V)</option>
+                    <option value="4" selected>4S LiPo (14.8V)</option>
+                    <option value="6">6S LiPo (22.2V)</option>
+                  </select>
+                </div>
+                <div class="control-group">
+                  <div class="control-label"><span>Propeller Diameter</span></div>
+                  <select class="control-select" id="calc-prop">
+                    <option value="3">3.0 Inch Prop</option>
+                    <option value="5" selected>5.0 Inch Prop</option>
+                    <option value="7">7.0 Inch Long Range</option>
+                    <option value="10">10.0 Inch Cruiser</option>
+                    <option value="15">15.0 Inch Heavy Lifter</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. LIPO BATTERY MONITOR -->
+          <div class="sim-panel" id="sim-lipo-monitor">
+            <div class="sim-panel-header">
+              <h3>LiPo Battery Voltage Curve & Health Analyzer</h3>
+              <p>Explore safe operating limits, storage charge requirements, and the danger zones of Lithium Polymer chemistry.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box" style="padding: 16px;">
+                <canvas id="canvas-lipo-graph"></canvas>
+                <div style="display: flex; justify-content: space-between; margin-top: 14px; align-items: center;">
+                  <div>
+                    <div style="font-size: 22px; font-weight: 800;" id="lipo-cell-voltage">3.85 V / cell</div>
+                    <div style="font-size: 13px; color: var(--text-faint);" id="lipo-pack-voltage">15.40 V (4S Pack)</div>
+                  </div>
+                  <div id="lipo-status-badge" style="padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: 700;">
+                    SAFE STORAGE RANGE (3.80V - 3.85V)
+                  </div>
+                </div>
+                <div class="status-callout" id="lipo-advise" style="margin-top: 12px;">
+                  Optimal chemical equilibrium. Batteries can be safely stored in this range for months without degradation or dangerous swelling.
+                </div>
+              </div>
+              <div class="sim-controls-card">
+                <div class="control-group">
+                  <div class="control-label"><span>Battery Cell Count</span></div>
+                  <select class="control-select" id="lipo-cells">
+                    <option value="1">1S (3.7V Nominal)</option>
+                    <option value="3">3S (11.1V Nominal)</option>
+                    <option value="4" selected>4S (14.8V Nominal)</option>
+                    <option value="6">6S (22.2V Nominal)</option>
+                  </select>
+                </div>
+                <div class="control-group">
+                  <div class="control-label"><span>Simulate Voltage per Cell</span></div>
+                  <input type="range" class="control-slider" id="lipo-voltage-slider" min="3.00" max="4.30" step="0.01" value="3.85">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn-secondary" id="lipo-storage-btn" style="flex:1;">Storage (3.85V)</button>
+                  <button class="btn-secondary" id="lipo-full-btn" style="flex:1;">Full (4.20V)</button>
+                  <button class="btn-secondary" id="lipo-cutoff-btn" style="flex:1;">Cutoff (3.50V)</button>
+                </div>
+                <div style="border-top: 1px solid var(--border-color); padding-top: 10px;">
+                  <table class="readout-table">
+                    <tr><td>Remaining Capacity:</td><td id="lipo-capacity-remain">50%</td></tr>
+                    <tr><td>Safe Charge Rate:</td><td>1C (1.5A for 1500mAh)</td></tr>
+                    <tr><td>Critical Floor:</td><td>3.00 V / cell</td></tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. WIRING & SMOKE STOPPER -->
+          <div class="sim-panel" id="sim-wiring-test">
+            <div class="sim-panel-header">
+              <h3>Circuit Wiring & Smoke Stopper Continuity Test</h3>
+              <p>Simulate connecting high-current power cables, detecting short circuits, reverse capacitor polarity, and motor phase wire reversals.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box" style="padding: 24px;">
+                <div id="wire-bulb-indicator" style="background-color: var(--bg-subtle); border: 1px solid var(--border-color); padding: 14px; text-align: center; font-weight: 700; border-radius: 4px; margin-bottom: 16px;">
+                  SMOKE STOPPER READY (STANDBY)
+                </div>
+                <div class="status-callout" id="wire-status-text">
+                  Toggle configuration checks on the right and press "Connect Battery & Test" to simulate bench continuity verification.
+                </div>
+                <div style="margin-top: 24px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 12.5px;">
+                  <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 4px;">
+                    <strong>LiPo Battery XT60</strong>
+                    <p style="color: var(--text-faint); margin-top: 2px;">Red (+), Black (-)</p>
+                  </div>
+                  <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 4px;">
+                    <strong>Low-ESR Capacitor</strong>
+                    <p style="color: var(--text-faint); margin-top: 2px;">35V 470µF Filter</p>
+                  </div>
+                  <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 4px;">
+                    <strong>4-in-1 ESC Board</strong>
+                    <p style="color: var(--text-faint); margin-top: 2px;">4 Channels (3-Phase AC)</p>
+                  </div>
+                  <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 4px;">
+                    <strong>Flight Controller</strong>
+                    <p style="color: var(--text-faint); margin-top: 2px;">5V Regulated Bus</p>
+                  </div>
+                </div>
+              </div>
+              <div class="sim-controls-card">
+                <h4 style="font-size: 13px; font-weight: 700;">Simulated Fault Injections</h4>
+                <label style="display: flex; gap: 8px; font-size: 13px; cursor: pointer; align-items: center;">
+                  <input type="checkbox" id="wire-short-switch">
+                  <span>Create Direct Short Circuit (+ to -)</span>
+                </label>
+                <label style="display: flex; gap: 8px; font-size: 13px; cursor: pointer; align-items: center;">
+                  <input type="checkbox" id="wire-cap-polarity">
+                  <span>Reverse Capacitor Polarity</span>
+                </label>
+                <label style="display: flex; gap: 8px; font-size: 13px; cursor: pointer; align-items: center;">
+                  <input type="checkbox" id="wire-motor-swap">
+                  <span>Swap 2 Motor Phase Wires</span>
+                </label>
+                <button class="btn-primary" id="wire-test-btn" style="margin-top: 10px;">Connect Battery & Test</button>
+                <button class="btn-secondary" id="wire-reset-btn">Reset All Checks</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. PID CONTROLLER LAB -->
+          <div class="sim-panel" id="sim-pid-tuner">
+            <div class="sim-panel-header">
+              <h3>PID Controller Attitude Balance & Stabilizer Lab</h3>
+              <p>Tune Proportional, Integral, and Derivative gains against aerodynamic wind gusts and physical impacts in real time.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box">
+                <canvas id="canvas-pid-graph"></canvas>
+                <div class="status-callout" id="pid-diagnosis" style="margin: 12px; font-weight: 600;">
+                  LOCKED-IN STABILITY: Balanced tuning. Error is swiftly driven to zero without oscillation or overshoot.
+                </div>
+              </div>
+              <div class="sim-controls-card">
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>P (Proportional) Gain: Present Muscle</span>
+                    <span id="pid-p-val">45</span>
+                  </div>
+                  <input type="range" class="control-slider" id="pid-p" min="0" max="100" value="45">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>I (Integral) Gain: Wind Memory</span>
+                    <span id="pid-i-val">35</span>
+                  </div>
+                  <input type="range" class="control-slider" id="pid-i" min="0" max="100" value="35">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>D (Derivative) Gain: Shock Absorber</span>
+                    <span id="pid-d-val">30</span>
+                  </div>
+                  <input type="range" class="control-slider" id="pid-d" min="0" max="100" value="30">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn-secondary" id="pid-gust-btn" style="flex:1;">Wind Gust</button>
+                  <button class="btn-secondary" id="pid-push-btn" style="flex:1;">Push Drone</button>
+                  <button class="btn-secondary" id="pid-reset-btn" style="flex:1;">Reset</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. SENSOR FUSION -->
+          <div class="sim-panel" id="sim-sensor-fusion">
+            <div class="sim-panel-header">
+              <h3>Sensor Fusion (Gyroscope Drift vs. Accelerometer Vibration Noise)</h3>
+              <p>Understand why neither sensor alone is sufficient, and how a Complementary Filter produces clean, rock-solid attitude estimates.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box">
+                <canvas id="canvas-fusion"></canvas>
+                <div class="status-callout" style="margin: 12px;">
+                  <strong>Sensor Fusion Equation:</strong> Angle = α × (Angle + Gyro_rate × dt) + (1 - α) × Accel_angle.
+                  Trust the fast Gyro for 98% of instant motion, and trust the stable Accelerometer for 2% long-term leveling.
+                </div>
+              </div>
+              <div class="sim-controls-card">
+                <div class="control-group">
+                  <div class="control-label"><span>Motor Vibration Noise (Accel)</span></div>
+                  <input type="range" class="control-slider" id="fusion-noise" min="0" max="80" value="30">
+                </div>
+                <div class="control-group">
+                  <div class="control-label"><span>Gyro Integration Bias Drift</span></div>
+                  <input type="range" class="control-slider" id="fusion-drift" min="0" max="60" value="25">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Fusion Alpha Factor (Gyro Trust)</span>
+                    <span id="fusion-alpha-val">0.98</span>
+                  </div>
+                  <input type="range" class="control-slider" id="fusion-alpha" min="0.80" max="0.99" step="0.01" value="0.98">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. WAYPOINT MISSION SIMULATOR -->
+          <div class="sim-panel" id="sim-waypoint-mission">
+            <div class="sim-panel-header">
+              <h3>Autonomous Waypoint Mission Planner & Fail-Safe Simulator</h3>
+              <p>Click on the map grid to add waypoints, execute autonomous flight paths, or trigger a radio signal loss to verify automatic Return-to-Launch (RTL).</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box">
+                <canvas id="canvas-waypoints"></canvas>
+                <div class="status-callout" id="wp-status" style="margin: 12px;">
+                  Ready on Launch Pad. Click "Start Autonomous Mission" or "Trigger Failsafe (RTL)" to test autopilot navigation.
+                </div>
+              </div>
+              <div class="sim-controls-card">
+                <button class="btn-primary" id="wp-start-btn">Start Autonomous Mission</button>
+                <button class="btn-secondary" id="wp-rtl-btn" style="border-color: var(--danger); color: var(--danger);">Trigger Failsafe (RTL)</button>
+                <button class="btn-secondary" id="wp-reset-btn">Reset Mission</button>
+                <div style="font-size: 12px; color: var(--text-faint); margin-top: 8px;">
+                  Tip: Click anywhere inside the white canvas map to add a custom inspection waypoint.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 8. TROUBLESHOOTING MATRIX -->
+          <div class="sim-panel" id="sim-troubleshooting">
+            <div class="sim-panel-header">
+              <h3>Diagnostic Matrix & Fault Finding Interactive Guide</h3>
+              <p>Select any flight anomaly to reveal root causes, step-by-step physical inspection procedures, and software resolutions.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box" style="padding: 20px;">
+                <div id="diag-pass-indicator" style="background-color: var(--bg-subtle); padding: 8px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; margin-bottom: 14px;">
+                  DIAGNOSTIC COMPLETE: STEP-BY-STEP CHECKLIST LOADED
+                </div>
+                <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 8px;" id="diag-result-title">Immediate Violent Flip on Takeoff</h4>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;" id="diag-cause">1. Propellers mounted on wrong motors. 2. Motor spin direction reversed. 3. Flight Controller orientation offset in software.</p>
+                <h5 style="font-size: 13px; font-weight: 700; margin-bottom: 8px;">Resolution Checklist:</h5>
+                <ul class="bullet-list" id="diag-fix-list">
+                  <li>Remove propellers immediately for bench inspection.</li>
+                  <li>Connect to configurator software and confirm the 3D model tilts exactly in sync with the physical drone.</li>
+                  <li>Check motor spin direction tab in software and verify individual motors 1 to 4 match standard direction.</li>
+                </ul>
+              </div>
+              <div class="sim-controls-card">
+                <div class="control-group">
+                  <div class="control-label"><span>Select Anomaly / Symptom</span></div>
+                  <select class="control-select" id="diag-symptom-select">
+                    <option value="flip">1. Drone Flips Over Violently on Takeoff</option>
+                    <option value="wobble">2. High-Frequency Shaking & Hot Motors</option>
+                    <option value="toiletbowl">3. Spiraling in GPS Mode (Toilet-Bowling)</option>
+                    <option value="norx">4. Transmitter Sticks Have No Effect</option>
+                    <option value="brownout">5. Electronics Restart on Full Throttle</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB: SLIDE DECK PRESENTATION MODE -->
+    <!-- ================================================================= -->
+    <section class="tab-pane" id="tab-slides">
+      <div class="slides-wrapper">
+        <div class="slides-toolbar">
+          <div class="slide-controls-left">
+            <select class="slide-day-select" id="slide-day-select">
+              <option value="day1">Day 1: Principles of Flight & Electronics</option>
+              <option value="day2">Day 2: Assembly, Motors & Safe Wiring</option>
+              <option value="day3">Day 3: Sensors, Autopilot & PID Control</option>
+              <option value="day4">Day 4: Missions, Diagnostics & Safety</option>
+            </select>
+            <span class="slide-counter" id="slide-counter-display">Slide 1 / 10</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-secondary" id="slide-prev-btn">Previous (←)</button>
+            <button class="btn-primary" id="slide-next-btn">Next (→ or Space)</button>
+          </div>
+        </div>
+
+        <div class="slide-stage">
+          <div class="slide-content-grid">
+            <div>
+              <span class="slide-meta-badge" id="slide-meta-badge">Day 1 • Introduction</span>
+              <h2 class="slide-heading" id="slide-heading">Welcome to the 4-Day Drone Masterclass</h2>
+              <ul class="slide-bullets" id="slide-bullets-list">
+                <li>Workshop Schedule: 4 Days × 6 Hours per day (24 Total Hours).</li>
+                <li>Day 1: Aerodynamics, multirotor physics, motor rotation, ESCs, and LiPo batteries.</li>
+                <li>Day 2: Frame geometry, thrust calculations, precision soldering, and power wiring.</li>
+                <li>Day 3: Sensors, flight controllers, PID balance loops, and firmware tuning.</li>
+                <li>Day 4: Autonomous navigation, live troubleshooting matrix, and aviation safety rules.</li>
+              </ul>
+              <div class="slide-takeaway-box">
+                <strong>Key Takeaway:</strong>
+                <span id="slide-takeaway-text">Mastering drone technology requires understanding the intersection of aerodynamics, electronics, and control theory.</span>
+              </div>
+              <div class="slide-action-bar">
+                <button class="btn-secondary" id="slide-sim-action-btn" style="display: none;">Launch Concept Simulator</button>
+              </div>
+            </div>
+            <div class="slide-visual-side">
+              <img id="slide-image" src="https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=1000&q=80" alt="Slide visual demonstration">
+              <div class="slide-visual-caption" id="slide-caption">Quadcopter in steady hover demonstrating balanced thrust forces.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB: TOPIC QUESTIONNAIRES & QUIZZES -->
+    <!-- ================================================================= -->
+    <section class="tab-pane" id="tab-quizzes">
+      <div class="quiz-hub-card">
+        <div class="quiz-hub-header">
+          <div>
+            <h2>Topic Questionnaires & Certification Checks</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Select any topic below to answer multiple-choice questions with instant rationale explanations.</p>
+          </div>
+          <div class="quiz-score-badge" id="quiz-score-badge">Score: 0 / 0 (0%)</div>
+        </div>
+
+        <div class="quiz-days-grid">
+          <!-- Day 1 Quizzes -->
+          <div class="quiz-day-card">
+            <h3>Day 1: Aerodynamics & Electronics</h3>
+            <button class="quiz-topic-btn" data-quiz-topic="d1-t1">
+              <span>Topic 1: Drone Types & Forces</span>
+              <span>3 Qs →</span>
+            </button>
+            <button class="quiz-topic-btn" data-quiz-topic="d1-t2">
+              <span>Topic 2: Torque Balance & Motors</span>
+              <span>3 Qs →</span>
+            </button>
+            <button class="quiz-topic-btn" data-quiz-topic="d1-t3">
+              <span>Topic 3: BLDC Motors & LiPo</span>
+              <span>3 Qs →</span>
+            </button>
+          </div>
+
+          <!-- Day 2 Quizzes -->
+          <div class="quiz-day-card">
+            <h3>Day 2: Assembly & Wiring</h3>
+            <button class="quiz-topic-btn" data-quiz-topic="d2-t1">
+              <span>Topic 1: Airframes & TWR</span>
+              <span>3 Qs →</span>
+            </button>
+            <button class="quiz-topic-btn" data-quiz-topic="d2-t2">
+              <span>Topic 2: Soldering & Clean Wiring</span>
+              <span>3 Qs →</span>
+            </button>
+            <button class="quiz-topic-btn" data-quiz-topic="d2-t3">
+              <span>Topic 3: Bench Safety Checks</span>
+              <span>3 Qs →</span>
+            </button>
+          </div>
+
+          <!-- Day 3 Quizzes -->
+          <div class="quiz-day-card">
+            <h3>Day 3: Sensors & PID Control</h3>
+            <button class="quiz-topic-btn" data-quiz-topic="d3-t1">
+              <span>Topic 1: IMU Sensors & Baro</span>
+              <span>3 Qs →</span>
+            </button>
+            <button class="quiz-topic-btn" data-quiz-topic="d3-t2">
+              <span>Topic 2: PID Balance Theory</span>
+              <span>3 Qs →</span>
+            </button>
+            <button class="quiz-topic-btn" data-quiz-topic="d3-t3">
+              <span>Topic 3: Firmware & Modes</span>
+              <span>3 Qs →</span>
+            </button>
+          </div>
+
+          <!-- Day 4 Quizzes -->
+          <div class="quiz-day-card">
+            <h3>Day 4: Missions & Safety</h3>
+            <button class="quiz-topic-btn" data-quiz-topic="d4-t1">
+              <span>Topic 1: Waypoints & Fail-Safes</span>
+              <span>3 Qs →</span>
+            </button>
+            <button class="quiz-topic-btn" data-quiz-topic="d4-t2">
+              <span>Topic 2: Troubleshooting Guide</span>
+              <span>3 Qs →</span>
+            </button>
+            <button class="quiz-topic-btn" data-quiz-topic="d4-t3">
+              <span>Topic 3: Field Safety & Laws</span>
+              <span>3 Qs →</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Quiz View Container -->
+      <div class="active-quiz-modal" id="active-quiz-container" style="display: none;">
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;" id="quiz-active-title">Topic Questions</h3>
+        <div id="quiz-questions-wrapper"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <p>Drone Engineering Workshop • 4-Day Comprehensive Masterclass (24 Hours) • Built with Minimalist HTML5, Vanilla CSS & Canvas Physics</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="quiz-data.js"></script>
+  <script src="slides-data.js"></script>
+  <script src="simulations.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
