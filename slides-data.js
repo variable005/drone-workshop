@@ -700,6 +700,10 @@ const SLIDES_DATA = {
   }
 };
 
+if (typeof window !== 'undefined') {
+  window.SLIDES_DATA = SLIDES_DATA;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { SLIDES_DATA };
 }

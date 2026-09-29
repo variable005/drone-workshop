@@ -408,11 +408,12 @@ class DroneSimulations {
     const canvas = document.getElementById('canvas-lipo-graph');
     if (!sliderVoltage || !canvas) return;
     const ctx = canvas.getContext('2d');
+    let selectedCells = 4;
 
     const updateBattery = () => {
       const cellVoltage = parseFloat(sliderVoltage.value); // 3.00 to 4.30
-      const cells = parseInt(cellsSelect.value, 10);       // 1, 3, 4, 6
-      const packVoltage = (cellVoltage * cells).toFixed(2);
+      selectedCells = parseInt(cellsSelect.value, 10) || 4; // 1, 3, 4, 6
+      const packVoltage = (cellVoltage * selectedCells).toFixed(2);
 
       let pct = 0;
       if (cellVoltage >= 4.20) pct = 100;
@@ -423,7 +424,7 @@ class DroneSimulations {
       }
 
       if (cellVoltEl) cellVoltEl.textContent = `${cellVoltage.toFixed(2)} V / cell`;
-      if (packVoltEl) packVoltEl.textContent = `${packVoltage} V (${cells}S Pack)`;
+      if (packVoltEl) packVoltEl.textContent = `${packVoltage} V (${selectedCells}S Pack)`;
       if (capacityRemainEl) capacityRemainEl.textContent = `${pct}%`;
 
       // Status badge and advice
@@ -456,10 +457,11 @@ class DroneSimulations {
         }
       }
 
-      drawGraph(cellVoltage);
+      drawGraph(cellVoltage, selectedCells);
     };
 
-    const drawGraph = (currentV) => {
+    const drawGraph = (currentV, cells = selectedCells) => {
+      cells = cells || selectedCells || 4;
       const w = canvas.width = canvas.parentElement.clientWidth;
       const h = canvas.height = 340;
 

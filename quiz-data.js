@@ -540,6 +540,10 @@ const QUIZ_DATA = {
   ]
 };
 
+if (typeof window !== 'undefined') {
+  window.QUIZ_DATA = QUIZ_DATA;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { QUIZ_DATA };
 }
