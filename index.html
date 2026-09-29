@@ -1216,23 +1216,33 @@
               <div class="sim-canvas-box" style="position: relative;">
                 <canvas id="canvas-radio-blueprint" width="800" height="620" style="width: 100%; height: auto; display: block; background: #ffffff; cursor: crosshair;"></canvas>
                 <div class="status-callout" id="radio-blueprint-status" style="margin: 14px; font-weight: 600; font-family: var(--font-mono); font-size: 13px; line-height: 1.5;">
-                  STATUS: SAFE [DISARMED] • THROTTLE AT ZERO (1000µs) • READY TO ARM ON SWITCH SA
+                  STATUS: SAFE [DISARMED] • THROTTLE AT ZERO • READY TO ARM ON SWITCH SA
                 </div>
               </div>
 
               <!-- Right Column: Switch & Gimbal Controls -->
               <div class="sim-controls-card">
-                <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">Hardware Switch Matrix</h4>
+                <!-- Microsecond (µs) Numerations Display Toggle -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 4px;">
+                  <div>
+                    <h4 style="margin: 0; font-size: 13.5px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">Hardware Switch Matrix</h4>
+                    <p style="margin: 2px 0 0 0; font-size: 11.5px; color: var(--text-secondary);">Numeric microsecond (µs) labels</p>
+                  </div>
+                  <div class="switch-toggle-row" style="width: 145px; margin: 0;">
+                    <button class="switch-btn active" id="btn-toggle-us-hide">Hide µs</button>
+                    <button class="switch-btn" id="btn-toggle-us-show">Show µs</button>
+                  </div>
+                </div>
 
                 <!-- SA: Arm Switch -->
                 <div class="control-group">
                   <div class="control-label">
                     <span>Switch SA [Top-Left Shoulder] — Arming</span>
-                    <span id="sa-readout" style="font-family: var(--font-mono); font-weight: 700;">DISARM (1000µs)</span>
+                    <span id="sa-readout" style="font-family: var(--font-mono); font-weight: 700;">DISARM</span>
                   </div>
                   <div class="switch-toggle-row" id="sa-toggle-row">
-                    <button class="switch-btn active" data-sw="sa" data-pos="0">DISARM (1000µs)</button>
-                    <button class="switch-btn" data-sw="sa" data-pos="1">ARM MOTORS (2000µs)</button>
+                    <button class="switch-btn active" data-sw="sa" data-pos="0">DISARM</button>
+                    <button class="switch-btn" data-sw="sa" data-pos="1">ARM MOTORS</button>
                   </div>
                 </div>
 
@@ -1240,12 +1250,12 @@
                 <div class="control-group">
                   <div class="control-label">
                     <span>Switch SB [Left Face] — Flight Mode</span>
-                    <span id="sb-readout" style="font-family: var(--font-mono); font-weight: 700;">ANGLE (1000µs)</span>
+                    <span id="sb-readout" style="font-family: var(--font-mono); font-weight: 700;">ANGLE</span>
                   </div>
                   <div class="switch-toggle-row" id="sb-toggle-row">
-                    <button class="switch-btn active" data-sw="sb" data-pos="0">ANGLE (1000µs)</button>
-                    <button class="switch-btn" data-sw="sb" data-pos="1">HORIZON (1500µs)</button>
-                    <button class="switch-btn" data-sw="sb" data-pos="2">ACRO (2000µs)</button>
+                    <button class="switch-btn active" data-sw="sb" data-pos="0">ANGLE</button>
+                    <button class="switch-btn" data-sw="sb" data-pos="1">HORIZON</button>
+                    <button class="switch-btn" data-sw="sb" data-pos="2">ACRO</button>
                   </div>
                 </div>
 
@@ -1253,12 +1263,12 @@
                 <div class="control-group">
                   <div class="control-label">
                     <span>Switch SC [Right Face] — Navigation / Rescue</span>
-                    <span id="sc-readout" style="font-family: var(--font-mono); font-weight: 700;">NORMAL (1000µs)</span>
+                    <span id="sc-readout" style="font-family: var(--font-mono); font-weight: 700;">NORMAL</span>
                   </div>
                   <div class="switch-toggle-row" id="sc-toggle-row">
-                    <button class="switch-btn active" data-sw="sc" data-pos="0">NORMAL (1000µs)</button>
-                    <button class="switch-btn" data-sw="sc" data-pos="1">POS HOLD (1500µs)</button>
-                    <button class="switch-btn" data-sw="sc" data-pos="2">GPS RTH (2000µs)</button>
+                    <button class="switch-btn active" data-sw="sc" data-pos="0">NORMAL</button>
+                    <button class="switch-btn" data-sw="sc" data-pos="1">POS HOLD</button>
+                    <button class="switch-btn" data-sw="sc" data-pos="2">GPS RTH</button>
                   </div>
                 </div>
 
@@ -1266,11 +1276,11 @@
                 <div class="control-group">
                   <div class="control-label">
                     <span>Switch SD [Top-Right Shoulder] — Lost Model Beeper</span>
-                    <span id="sd-readout" style="font-family: var(--font-mono); font-weight: 700;">SILENT (1000µs)</span>
+                    <span id="sd-readout" style="font-family: var(--font-mono); font-weight: 700;">SILENT</span>
                   </div>
                   <div class="switch-toggle-row" id="sd-toggle-row">
-                    <button class="switch-btn active" data-sw="sd" data-pos="0">SILENT (1000µs)</button>
-                    <button class="switch-btn" data-sw="sd" data-pos="1">BEEP ALARM (2000µs)</button>
+                    <button class="switch-btn active" data-sw="sd" data-pos="0">SILENT</button>
+                    <button class="switch-btn" data-sw="sd" data-pos="1">BEEP ALARM</button>
                   </div>
                 </div>
 
@@ -1281,7 +1291,7 @@
                   <div class="control-group">
                     <div class="control-label">
                       <span>CH3: Throttle (Left Stick Y)</span>
-                      <span id="ctrl-throttle-val" style="font-family: var(--font-mono);">1000 µs (0%)</span>
+                      <span id="ctrl-throttle-val" style="font-family: var(--font-mono);">0%</span>
                     </div>
                     <input type="range" class="control-slider" id="ctrl-throttle" min="1000" max="2000" step="5" value="1000">
                   </div>
@@ -1289,7 +1299,7 @@
                   <div class="control-group">
                     <div class="control-label">
                       <span>CH4: Yaw / Rudder (Left Stick X)</span>
-                      <span id="ctrl-yaw-val" style="font-family: var(--font-mono);">1500 µs (Center)</span>
+                      <span id="ctrl-yaw-val" style="font-family: var(--font-mono);">Center</span>
                     </div>
                     <input type="range" class="control-slider" id="ctrl-yaw" min="1000" max="2000" step="5" value="1500">
                   </div>
@@ -1297,7 +1307,7 @@
                   <div class="control-group">
                     <div class="control-label">
                       <span>CH2: Pitch / Elevator (Right Stick Y)</span>
-                      <span id="ctrl-pitch-val" style="font-family: var(--font-mono);">1500 µs (Center)</span>
+                      <span id="ctrl-pitch-val" style="font-family: var(--font-mono);">Center</span>
                     </div>
                     <input type="range" class="control-slider" id="ctrl-pitch" min="1000" max="2000" step="5" value="1500">
                   </div>
@@ -1305,7 +1315,7 @@
                   <div class="control-group">
                     <div class="control-label">
                       <span>CH1: Roll / Aileron (Right Stick X)</span>
-                      <span id="ctrl-roll-val" style="font-family: var(--font-mono);">1500 µs (Center)</span>
+                      <span id="ctrl-roll-val" style="font-family: var(--font-mono);">Center</span>
                     </div>
                     <input type="range" class="control-slider" id="ctrl-roll" min="1000" max="2000" step="5" value="1500">
                   </div>
@@ -1313,7 +1323,7 @@
                   <div class="control-group">
                     <div class="control-label">
                       <span>Dial S1: Analog Potentiometer (Camera Tilt)</span>
-                      <span id="ctrl-s1-val" style="font-family: var(--font-mono);">1500 µs (50%)</span>
+                      <span id="ctrl-s1-val" style="font-family: var(--font-mono);">50%</span>
                     </div>
                     <input type="range" class="control-slider" id="ctrl-s1" min="1000" max="2000" step="10" value="1500">
                   </div>

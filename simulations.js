@@ -1692,6 +1692,9 @@ class DroneSimulations {
     const btnTxBatNom = document.getElementById('tx-bat-btn-nom');
     const btnTxBatLow = document.getElementById('tx-bat-btn-low');
 
+    const btnToggleUsHide = document.getElementById('btn-toggle-us-hide');
+    const btnToggleUsShow = document.getElementById('btn-toggle-us-show');
+
     // Switch state
     let sa = 0; // 0 = Disarm (1000us), 1 = Arm (2000us)
     let sb = 0; // 0 = Angle (1000us), 1 = Horizon (1500us), 2 = Acro (2000us)
@@ -1708,6 +1711,7 @@ class DroneSimulations {
     let isDraggingLeftStick = false;
     let isDraggingRightStick = false;
     let wavePulse = 0;
+    let showMicroseconds = false; // Default to clean labels (no (1000µs) clutter)
 
     // Geometric coordinates on 800x620 canvas
     const cx = 400;
@@ -1726,6 +1730,53 @@ class DroneSimulations {
       screen: { x: cx - 56, y: cy - 15, w: 112, h: 78 }
     };
 
+    // Update button text labels based on showMicroseconds toggle
+    const updateButtonLabels = () => {
+      const sa0 = document.querySelector('#sa-toggle-row [data-pos="0"]');
+      const sa1 = document.querySelector('#sa-toggle-row [data-pos="1"]');
+      if (sa0) sa0.textContent = showMicroseconds ? "DISARM (1000µs)" : "DISARM";
+      if (sa1) sa1.textContent = showMicroseconds ? "ARM MOTORS (2000µs)" : "ARM MOTORS";
+
+      const sb0 = document.querySelector('#sb-toggle-row [data-pos="0"]');
+      const sb1 = document.querySelector('#sb-toggle-row [data-pos="1"]');
+      const sb2 = document.querySelector('#sb-toggle-row [data-pos="2"]');
+      if (sb0) sb0.textContent = showMicroseconds ? "ANGLE (1000µs)" : "ANGLE";
+      if (sb1) sb1.textContent = showMicroseconds ? "HORIZON (1500µs)" : "HORIZON";
+      if (sb2) sb2.textContent = showMicroseconds ? "ACRO (2000µs)" : "ACRO";
+
+      const sc0 = document.querySelector('#sc-toggle-row [data-pos="0"]');
+      const sc1 = document.querySelector('#sc-toggle-row [data-pos="1"]');
+      const sc2 = document.querySelector('#sc-toggle-row [data-pos="2"]');
+      if (sc0) sc0.textContent = showMicroseconds ? "NORMAL (1000µs)" : "NORMAL";
+      if (sc1) sc1.textContent = showMicroseconds ? "POS HOLD (1500µs)" : "POS HOLD";
+      if (sc2) sc2.textContent = showMicroseconds ? "GPS RTH (2000µs)" : "GPS RTH";
+
+      const sd0 = document.querySelector('#sd-toggle-row [data-pos="0"]');
+      const sd1 = document.querySelector('#sd-toggle-row [data-pos="1"]');
+      if (sd0) sd0.textContent = showMicroseconds ? "SILENT (1000µs)" : "SILENT";
+      if (sd1) sd1.textContent = showMicroseconds ? "BEEP ALARM (2000µs)" : "BEEP ALARM";
+    };
+
+    if (btnToggleUsHide && btnToggleUsShow) {
+      btnToggleUsHide.addEventListener('click', () => {
+        showMicroseconds = false;
+        btnToggleUsHide.classList.add('active');
+        btnToggleUsShow.classList.remove('active');
+        updateButtonLabels();
+        updateUI();
+        updateDiagnostics();
+      });
+
+      btnToggleUsShow.addEventListener('click', () => {
+        showMicroseconds = true;
+        btnToggleUsShow.classList.add('active');
+        btnToggleUsHide.classList.remove('active');
+        updateButtonLabels();
+        updateUI();
+        updateDiagnostics();
+      });
+    }
+
     // Update Status Readout
     const updateDiagnostics = () => {
       if (!statusEl) return;
@@ -1735,17 +1786,25 @@ class DroneSimulations {
         return;
       }
       if (sa === 1 && !armingBlocked) {
-        statusEl.textContent = `SYSTEM ARMED [MOTORS LIVE] • THROTTLE AT ${Math.round((throttle - 1000) / 10)}% (${throttle}µs) • DANGER: PROPELLERS WILL SPIN`;
+        statusEl.textContent = showMicroseconds
+          ? `SYSTEM ARMED [MOTORS LIVE] • THROTTLE AT ${Math.round((throttle - 1000) / 10)}% (${throttle}µs) • DANGER: PROPELLERS WILL SPIN`
+          : `SYSTEM ARMED [MOTORS LIVE] • THROTTLE AT ${Math.round((throttle - 1000) / 10)}% • DANGER: PROPELLERS WILL SPIN`;
         statusEl.style.color = "#dc2626";
       } else if (armingBlocked) {
-        statusEl.textContent = `ARMING PREVENTED: THROTTLE IS AT ${throttle}µs (>1050µs SAFETY LIMIT). Pull throttle stick all the way down to 1000µs before arming.`;
+        statusEl.textContent = showMicroseconds
+          ? `ARMING PREVENTED: THROTTLE IS AT ${throttle}µs (>1050µs SAFETY LIMIT). Pull throttle stick all the way down to 1000µs before arming.`
+          : `ARMING PREVENTED: THROTTLE IS NOT AT ZERO. Lower throttle stick to 0% before arming.`;
         statusEl.style.color = "#b91c1c";
       } else {
         if (throttle === 1000) {
-          statusEl.textContent = `STATUS: SAFE [DISARMED] • TX BATTERY: ${txBattery.toFixed(1)}V • THROTTLE AT ZERO (1000µs) • READY TO ARM ON SWITCH SA`;
+          statusEl.textContent = showMicroseconds
+            ? `STATUS: SAFE [DISARMED] • TX BATTERY: ${txBattery.toFixed(1)}V • THROTTLE AT ZERO (1000µs) • READY TO ARM ON SWITCH SA`
+            : `STATUS: SAFE [DISARMED] • TX BATTERY: ${txBattery.toFixed(1)}V • THROTTLE AT ZERO • READY TO ARM ON SWITCH SA`;
           statusEl.style.color = "#166534";
         } else {
-          statusEl.textContent = `STATUS: SAFE [DISARMED] • THROTTLE AT ${throttle}µs • MUST LOWER TO ZERO (1000µs) TO ARM SAFELY`;
+          statusEl.textContent = showMicroseconds
+            ? `STATUS: SAFE [DISARMED] • THROTTLE AT ${throttle}µs • MUST LOWER TO ZERO (1000µs) TO ARM SAFELY`
+            : `STATUS: SAFE [DISARMED] • THROTTLE ACTIVE • MUST LOWER TO ZERO TO ARM SAFELY`;
           statusEl.style.color = "#92400e";
         }
       }
@@ -1785,7 +1844,7 @@ class DroneSimulations {
           }
         }
         if (valSpan) {
-          valSpan.textContent = `${ch.val} µs`;
+          valSpan.textContent = showMicroseconds ? `${ch.val} µs` : `${Math.round(((ch.val - 1000) / 1000) * 100)}%`;
         }
       });
 
@@ -1794,7 +1853,11 @@ class DroneSimulations {
         btn.classList.toggle('active', parseInt(btn.getAttribute('data-pos'), 10) === sa);
       });
       if (saReadout) {
-        saReadout.textContent = sa === 0 ? "DISARM (1000µs)" : (armingBlocked ? "REFUSED (>1050µs)" : "ARM MOTORS (2000µs)");
+        if (showMicroseconds) {
+          saReadout.textContent = sa === 0 ? "DISARM (1000µs)" : (armingBlocked ? "REFUSED (>1050µs)" : "ARM MOTORS (2000µs)");
+        } else {
+          saReadout.textContent = sa === 0 ? "DISARM" : (armingBlocked ? "ARMING BLOCKED" : "ARM MOTORS");
+        }
         saReadout.style.color = (sa === 1 && !armingBlocked) ? "#dc2626" : "var(--text-primary)";
       }
 
@@ -1803,7 +1866,9 @@ class DroneSimulations {
         btn.classList.toggle('active', parseInt(btn.getAttribute('data-pos'), 10) === sb);
       });
       if (sbReadout) {
-        const modes = ["ANGLE (1000µs)", "HORIZON (1500µs)", "ACRO (2000µs)"];
+        const modes = showMicroseconds
+          ? ["ANGLE (1000µs)", "HORIZON (1500µs)", "ACRO (2000µs)"]
+          : ["ANGLE", "HORIZON", "ACRO"];
         sbReadout.textContent = modes[sb];
       }
 
@@ -1812,7 +1877,9 @@ class DroneSimulations {
         btn.classList.toggle('active', parseInt(btn.getAttribute('data-pos'), 10) === sc);
       });
       if (scReadout) {
-        const rescue = ["NORMAL (1000µs)", "POS HOLD (1500µs)", "GPS RTH (2000µs)"];
+        const rescue = showMicroseconds
+          ? ["NORMAL (1000µs)", "POS HOLD (1500µs)", "GPS RTH (2000µs)"]
+          : ["NORMAL", "POS HOLD", "GPS RTH"];
         scReadout.textContent = rescue[sc];
       }
 
@@ -1821,25 +1888,49 @@ class DroneSimulations {
         btn.classList.toggle('active', parseInt(btn.getAttribute('data-pos'), 10) === sd);
       });
       if (sdReadout) {
-        sdReadout.textContent = sd === 0 ? "SILENT (1000µs)" : "BEEP ALARM (2000µs)";
+        if (showMicroseconds) {
+          sdReadout.textContent = sd === 0 ? "SILENT (1000µs)" : "BEEP ALARM (2000µs)";
+        } else {
+          sdReadout.textContent = sd === 0 ? "SILENT" : "BEEP ALARM";
+        }
         sdReadout.style.color = sd === 1 ? "#dc2626" : "var(--text-primary)";
       }
 
       // Sliders & Readouts
       if (sliderThrottle) sliderThrottle.value = throttle;
-      if (valThrottle) valThrottle.textContent = `${throttle} µs (${Math.round((throttle - 1000) / 10)}%)`;
+      if (valThrottle) {
+        valThrottle.textContent = showMicroseconds
+          ? `${throttle} µs (${Math.round((throttle - 1000) / 10)}%)`
+          : `${Math.round((throttle - 1000) / 10)}%`;
+      }
 
       if (sliderYaw) sliderYaw.value = yaw;
-      if (valYaw) valYaw.textContent = `${yaw} µs ${yaw === 1500 ? '(Center)' : (yaw < 1500 ? '(Left)' : '(Right)')}`;
+      if (valYaw) {
+        valYaw.textContent = showMicroseconds
+          ? `${yaw} µs ${yaw === 1500 ? '(Center)' : (yaw < 1500 ? '(Left)' : '(Right)')}`
+          : (yaw === 1500 ? 'Center' : (yaw < 1500 ? `Left ${Math.round((1500 - yaw) / 5)}%` : `Right ${Math.round((yaw - 1500) / 5)}%`));
+      }
 
       if (sliderPitch) sliderPitch.value = pitch;
-      if (valPitch) valPitch.textContent = `${pitch} µs ${pitch === 1500 ? '(Center)' : (pitch < 1500 ? '(Down)' : '(Up)')}`;
+      if (valPitch) {
+        valPitch.textContent = showMicroseconds
+          ? `${pitch} µs ${pitch === 1500 ? '(Center)' : (pitch < 1500 ? '(Down)' : '(Up)')}`
+          : (pitch === 1500 ? 'Center' : (pitch < 1500 ? `Down ${Math.round((1500 - pitch) / 5)}%` : `Up ${Math.round((pitch - 1500) / 5)}%`));
+      }
 
       if (sliderRoll) sliderRoll.value = roll;
-      if (valRoll) valRoll.textContent = `${roll} µs ${roll === 1500 ? '(Center)' : (roll < 1500 ? '(Left)' : '(Right)')}`;
+      if (valRoll) {
+        valRoll.textContent = showMicroseconds
+          ? `${roll} µs ${roll === 1500 ? '(Center)' : (roll < 1500 ? '(Left)' : '(Right)')}`
+          : (roll === 1500 ? 'Center' : (roll < 1500 ? `Left ${Math.round((1500 - roll) / 5)}%` : `Right ${Math.round((roll - 1500) / 5)}%`));
+      }
 
       if (sliderS1) sliderS1.value = s1;
-      if (valS1) valS1.textContent = `${s1} µs (${Math.round((s1 - 1000) / 10)}%)`;
+      if (valS1) {
+        valS1.textContent = showMicroseconds
+          ? `${s1} µs (${Math.round((s1 - 1000) / 10)}%)`
+          : `${Math.round((s1 - 1000) / 10)}%`;
+      }
 
       // Transmitter Battery UI
       if (sliderTxBat) sliderTxBat.value = txBattery;
@@ -2594,7 +2685,11 @@ class DroneSimulations {
       ctx.fillText("[SA] 2-POS SAFETY ARM", 36, coords.sa.y - 32);
       ctx.font = "8.5px monospace";
       ctx.fillStyle = sa === 1 ? "#dc2626" : "#166534";
-      ctx.fillText(sa === 1 ? "CH5: 2000µs (ARMED)" : "CH5: 1000µs (SAFE DISARM)", 36, coords.sa.y - 20);
+      if (showMicroseconds) {
+        ctx.fillText(sa === 1 ? "CH5: 2000µs (ARMED)" : "CH5: 1000µs (SAFE DISARM)", 36, coords.sa.y - 20);
+      } else {
+        ctx.fillText(sa === 1 ? "CH5: ARMED" : "CH5: SAFE DISARM", 36, coords.sa.y - 20);
+      }
 
       // SB (Left Face, 3-Pos Mode)
       drawSwitch(coords.sb.x, coords.sb.y, sb, 2, "SB", false, false);
@@ -2613,7 +2708,9 @@ class DroneSimulations {
       ctx.fillText("[SB] 3-POS FLIGHT MODE", 36, cy - 198);
       ctx.font = "8.5px monospace";
       ctx.fillStyle = "#71717a";
-      const modeStr = sb === 0 ? "ANGLE (1000µs)" : (sb === 1 ? "HORIZON (1500µs)" : "ACRO (2000µs)");
+      const modeStr = showMicroseconds
+        ? (sb === 0 ? "ANGLE (1000µs)" : (sb === 1 ? "HORIZON (1500µs)" : "ACRO (2000µs)"))
+        : (sb === 0 ? "ANGLE" : (sb === 1 ? "HORIZON" : "ACRO"));
       ctx.fillText(`CH6: ${modeStr}`, 36, cy - 186);
 
       // SC (Right Face, 3-Pos Rescue)
@@ -2633,7 +2730,9 @@ class DroneSimulations {
       ctx.fillText("[SC] 3-POS GPS RESCUE", w - 36, cy - 198);
       ctx.font = "8.5px monospace";
       ctx.fillStyle = "#71717a";
-      const scStr = sc === 0 ? "NORMAL (1000µs)" : (sc === 1 ? "POS HOLD (1500µs)" : "GPS RTH (2000µs)");
+      const scStr = showMicroseconds
+        ? (sc === 0 ? "NORMAL (1000µs)" : (sc === 1 ? "POS HOLD (1500µs)" : "GPS RTH (2000µs)"))
+        : (sc === 0 ? "NORMAL" : (sc === 1 ? "POS HOLD" : "GPS RTH"));
       ctx.fillText(`CH7: ${scStr}`, w - 36, cy - 186);
 
       // SD (Top-Right Shoulder, 2-Pos Momentary)
@@ -2653,7 +2752,11 @@ class DroneSimulations {
       ctx.fillText("[SD] 2-POS MOMENTARY ⟲", w - 36, coords.sd.y - 32);
       ctx.font = "8.5px monospace";
       ctx.fillStyle = sd === 1 ? "#dc2626" : "#71717a";
-      ctx.fillText(sd === 1 ? "CH8: 2000µs (BEEP ALARM)" : "CH8: 1000µs (SILENT)", w - 36, coords.sd.y - 20);
+      if (showMicroseconds) {
+        ctx.fillText(sd === 1 ? "CH8: 2000µs (BEEP ALARM)" : "CH8: 1000µs (SILENT)", w - 36, coords.sd.y - 20);
+      } else {
+        ctx.fillText(sd === 1 ? "CH8: BEEP ALARM" : "CH8: SILENT", w - 36, coords.sd.y - 20);
+      }
 
       // S1 & S2 Analog Rotary Dials
       const drawPot = (px, py, val, label) => {
