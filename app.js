@@ -95,6 +95,16 @@ class DroneWorkshopApp {
         }
       });
     });
+
+    // Keyboard shortcut '/' or 'Cmd+K' to focus search
+    window.addEventListener('keydown', (e) => {
+      if ((e.key === '/' || (e.key === 'k' && (e.metaKey || e.ctrlKey))) && document.activeElement !== searchInput) {
+        e.preventDefault();
+        searchInput.focus();
+      } else if (e.key === 'Escape' && document.activeElement === searchInput) {
+        searchInput.blur();
+      }
+    });
   }
 
   // Slide Deck Engine

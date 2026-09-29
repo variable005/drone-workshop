@@ -137,7 +137,7 @@ class DroneSimulations {
 
     const render = () => {
       const w = canvas.width = canvas.parentElement.clientWidth;
-      const h = canvas.height = 360;
+      const h = canvas.height = 380;
 
       ctx.clearRect(0, 0, w, h);
 
@@ -459,7 +459,7 @@ class DroneSimulations {
 
     const drawGraph = (currentV) => {
       const w = canvas.width = canvas.parentElement.clientWidth;
-      const h = canvas.height = 180;
+      const h = canvas.height = 220;
 
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = "#ffffff";
@@ -757,7 +757,7 @@ class DroneSimulations {
     // Canvas render loop
     const render = () => {
       const w = canvas.width = canvas.parentElement.clientWidth;
-      const h = canvas.height = 200;
+      const h = canvas.height = 240;
 
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = "#ffffff";
@@ -840,7 +840,7 @@ class DroneSimulations {
 
     const render = () => {
       const w = canvas.width = canvas.parentElement.clientWidth;
-      const h = canvas.height = 240;
+      const h = canvas.height = 260;
 
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = "#ffffff";
@@ -1018,7 +1018,7 @@ class DroneSimulations {
 
     const render = () => {
       const w = canvas.width = canvas.parentElement.clientWidth;
-      const h = canvas.height = 320;
+      const h = canvas.height = 360;
 
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = "#ffffff";
