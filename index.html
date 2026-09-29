@@ -9,69 +9,64 @@
 </head>
 <body>
 
-  <!-- Site Header -->
+  <!-- Site Header — Streamlined 52px Single-Row Topbar -->
   <header class="site-header">
-    <div class="header-top">
+    <div class="site-topbar">
+      <!-- Brand Identity -->
       <div class="brand-group">
+        <div class="brand-icon">🚁</div>
         <div class="brand-titles">
-          <h1>DRONE ENGINEERING MASTERCLASS</h1>
-          <p>4 Days • 6 Hours / Day (24 Total Hours) • Aerodynamics, RF Systems, Silicon Architecture & Autonomous Flight</p>
+          <h1 class="brand-title-main">DRONE WORKSHOP</h1>
+          <span class="brand-badge">4-DAY MASTERCLASS</span>
         </div>
       </div>
-      <div class="header-tools">
-        <div class="search-box">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-          <input type="text" id="global-search-input" placeholder="Search topics, terms, parts...">
-          <span class="search-hint">/</span>
-        </div>
-        <div class="progress-pill">
-          <span id="header-progress-text">0/40 Slides • 0/36 Quizzes</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- Two-Track Header Navigation: Theory Part vs Practical Part -->
-    <nav class="nav-bar-tracks" aria-label="Main Workshop Navigation">
-      <!-- Section A: Theory Part -->
-      <div class="nav-track-group track-theory">
-        <div class="nav-track-badge">
-          <span>📚</span>
-          <span>THEORY PART</span>
-        </div>
-        <div class="nav-track-items">
+      <!-- Unified Segmented Two-Track Navigation -->
+      <nav class="nav-bar-compact" aria-label="Workshop Tracks">
+        <!-- Theory Segment -->
+        <div class="nav-track-segment track-theory-segment">
+          <span class="nav-segment-label">THEORY</span>
           <button class="nav-tab-btn active" data-tab="tab-overview">Overview</button>
           <button class="nav-tab-btn" data-tab="tab-day1">Day 1: Physics</button>
-          <button class="nav-tab-btn" data-tab="tab-day2">Day 2: Assembly Specs</button>
-          <button class="nav-tab-btn" data-tab="tab-day3">Day 3: Sensors &amp; PID</button>
-          <button class="nav-tab-btn" data-tab="tab-day4">Day 4: Missions &amp; Law</button>
-          <button class="nav-tab-btn" data-tab="tab-slides">Slide Deck</button>
+          <button class="nav-tab-btn" data-tab="tab-day2">Day 2: Specs</button>
+          <button class="nav-tab-btn" data-tab="tab-day3">Day 3: PID</button>
+          <button class="nav-tab-btn" data-tab="tab-day4">Day 4: Law</button>
+          <button class="nav-tab-btn" data-tab="tab-slides">Slides</button>
           <button class="nav-tab-btn" data-tab="tab-quizzes">Quizzes (12)</button>
         </div>
-      </div>
 
-      <div class="nav-track-divider" aria-hidden="true"></div>
+        <div class="nav-segment-divider" aria-hidden="true"></div>
 
-      <!-- Section B: Practical Part -->
-      <div class="nav-track-group track-practical">
-        <div class="nav-track-badge">
-          <span>🛠️</span>
-          <span>PRACTICAL PART</span>
-        </div>
-        <div class="nav-track-items">
+        <!-- Practical Segment -->
+        <div class="nav-track-segment track-practical-segment">
+          <span class="nav-segment-label practical">PRACTICAL</span>
           <button class="nav-tab-btn nav-tab-flagship" data-tab="tab-hardware-assembly">
-            <span>🚁</span>
-            <span>F450 Assembly &amp; Wiring Lab</span>
-            <span class="flagship-tag">Pixhawk &amp; APM</span>
+            <span>🛠️</span>
+            <span>F450 Assembly Lab</span>
+            <span class="flagship-chip">Pixhawk/APM</span>
           </button>
           <button class="nav-tab-btn" data-tab="tab-simulations">
+            <span>⚡</span>
             <span>Simulators (13)</span>
           </button>
         </div>
+      </nav>
+
+      <!-- Utility Tools: Search + Progress -->
+      <div class="header-tools-compact">
+        <div class="search-box-compact">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="global-search-input" placeholder="Search..." aria-label="Search curriculum">
+          <span class="search-hint">/</span>
+        </div>
+        <div class="progress-pill-compact" title="Workshop Slides & Quizzes Completed">
+          <span id="header-progress-text">0/40 • 0/36</span>
+        </div>
       </div>
-    </nav>
+    </div>
   </header>
 
   <!-- Main Content Body -->
@@ -783,78 +778,86 @@
     <!-- ================================================================= -->
     <section class="tab-pane" id="tab-hardware-assembly">
       <div class="asm-flagship-container">
-        <!-- Top Hero Bar with Section Subtitle & Theory/Practical Switcher -->
-        <div class="asm-top-hero">
-          <div class="asm-hero-titles">
-            <span class="day-badge" style="background-color: #0284c7; color: #ffffff; border-color: #0369a1;">PRACTICAL WORKSHOP • CLASS 2 &amp; 3 HANDS-ON BUILD</span>
-            <h2>🚁 F450 Quadcopter Assembly &amp; Wiring Master Blueprint</h2>
-            <p>Complete step-by-step physical drone construction guide featuring Pixhawk 2.4.8 (32-Bit ARM) &amp; APM 2.8 (ArduPilot Classic).</p>
+        <!-- Single-Row Studio Header (46px) -->
+        <div class="asm-studio-header">
+          <!-- Left: Lab Identity & Mode Toggle -->
+          <div class="asm-studio-left">
+            <div class="asm-studio-brand">
+              <span>🚁 F450 BUILD LAB</span>
+              <span class="badge-practical">PRACTICAL</span>
+            </div>
+
+            <div class="asm-studio-divider" aria-hidden="true"></div>
+
+            <!-- Mode Switcher: Practical vs Theory -->
+            <div class="asm-mode-toggle" role="tablist" aria-label="Assembly Modes">
+              <button class="asm-mode-btn active" id="btn-mode-practical">
+                <span>🛠️</span>
+                <span>Practical Build</span>
+              </button>
+              <button class="asm-mode-btn" id="btn-mode-theory">
+                <span>📖</span>
+                <span>Theory Pinouts</span>
+              </button>
+            </div>
           </div>
 
-          <!-- Section Mode Toggle: Practical Build vs Theory Guide -->
-          <div class="asm-mode-toggle" role="tablist" aria-label="Assembly Modes">
-            <button class="asm-mode-btn active" id="btn-mode-practical">
-              <span>🛠️</span>
-              <span>Practical Build Mode</span>
-            </button>
-            <button class="asm-mode-btn" id="btn-mode-theory">
-              <span>📖</span>
-              <span>Hardware Theory &amp; Pinouts</span>
-            </button>
+          <!-- Center: Controller & View Selectors -->
+          <div class="asm-studio-center">
+            <!-- Flight Controller Switcher -->
+            <div class="asm-control-group">
+              <span class="asm-group-label">FC:</span>
+              <div class="compact-toggle">
+                <button class="switch-btn active" id="btn-fc-pixhawk">Pixhawk 2.4.8</button>
+                <button class="switch-btn" id="btn-fc-apm">APM 2.8</button>
+              </div>
+            </div>
+
+            <div class="asm-studio-divider" aria-hidden="true"></div>
+
+            <!-- Blueprint Views Switcher -->
+            <div class="asm-control-group">
+              <span class="asm-group-label">View:</span>
+              <div class="compact-toggle">
+                <button class="switch-btn active" id="btn-view-airframe">🚁 Airframe</button>
+                <button class="switch-btn" id="btn-view-pinout">🔌 Pinouts</button>
+                <button class="switch-btn" id="btn-view-pdb">⚡ PDB</button>
+                <button class="switch-btn" id="btn-view-radio">📡 GPS/Rx</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Layout Switcher & Step Navigation -->
+          <div class="asm-studio-right">
+            <!-- Layout Mode Toggle (Full-Width Giant vs Split) -->
+            <div class="asm-control-group">
+              <span class="asm-group-label">Layout:</span>
+              <div class="compact-toggle">
+                <button class="switch-btn active" id="btn-layout-fullwidth" title="Giant Full-Width Blueprint">⛶ Full</button>
+                <button class="switch-btn" id="btn-layout-split" title="Split Screen Mode">◫ Split</button>
+              </div>
+            </div>
+
+            <div class="asm-studio-divider" aria-hidden="true"></div>
+
+            <!-- Step Navigation -->
+            <div class="asm-control-group">
+              <span id="asm-step-badge" class="asm-step-pill-badge">STEP 1/10</span>
+              <button class="btn-secondary compact-btn" id="btn-asm-prev">← Prev</button>
+              <button class="btn-primary compact-btn" id="btn-asm-next">Next →</button>
+            </div>
           </div>
         </div>
 
         <!-- PRACTICAL BUILD VIEW -->
         <div id="asm-view-practical-panel">
-          <!-- Super Unified Toolbar -->
-          <div class="asm-super-toolbar">
-            <!-- Row 1: Controller, Views, Layout, Zoom, Step Navigation -->
-            <div class="asm-toolbar-row1">
-              <!-- Flight Controller Switcher -->
-              <div class="asm-control-group">
-                <span class="asm-group-label">Controller:</span>
-                <div class="compact-toggle">
-                  <button class="switch-btn active" id="btn-fc-pixhawk">Pixhawk 2.4.8</button>
-                  <button class="switch-btn" id="btn-fc-apm">APM 2.8</button>
-                </div>
-              </div>
-
-              <!-- Blueprint Views Switcher -->
-              <div class="asm-control-group">
-                <span class="asm-group-label">View:</span>
-                <div class="compact-toggle">
-                  <button class="switch-btn active" id="btn-view-airframe">🚁 Airframe</button>
-                  <button class="switch-btn" id="btn-view-pinout">🔌 FC Pinouts</button>
-                  <button class="switch-btn" id="btn-view-pdb">⚡ PDB Solder</button>
-                  <button class="switch-btn" id="btn-view-radio">📡 GPS &amp; Rx</button>
-                </div>
-              </div>
-
-              <!-- Layout Mode Toggle (Full-Width Giant vs Split) -->
-              <div class="asm-control-group">
-                <span class="asm-group-label">Layout:</span>
-                <div class="compact-toggle">
-                  <button class="switch-btn active" id="btn-layout-fullwidth" title="Giant Full-Width Blueprint (Maximum Detail)">⛶ Full-Width</button>
-                  <button class="switch-btn" id="btn-layout-split" title="Split Screen (Canvas + Side Checklist)">◫ Split</button>
-                </div>
-              </div>
-
-              <!-- Step Navigation -->
-              <div class="asm-control-group" style="margin-left: auto;">
-                <span id="asm-step-badge" class="asm-step-pill-badge" style="margin-right: 6px;">STEP 1/10</span>
-                <button class="btn-secondary compact-btn" id="btn-asm-prev">← Prev</button>
-                <button class="btn-primary compact-btn" id="btn-asm-next">Next →</button>
-              </div>
-            </div>
-
-            <!-- Row 2: 10 Slim Step Pills with Verified Icons -->
-            <div class="asm-toolbar-row2">
-              <div id="asm-step-pills" class="asm-step-pills-slim" style="width: 100%;"></div>
-            </div>
+          <!-- Step Progress Ribbon (34px) -->
+          <div class="asm-step-ribbon">
+            <div id="asm-step-pills" class="asm-step-pills-ribbon"></div>
           </div>
 
           <!-- Giant Blueprint & Micro-Steps Display Wrapper (Defaults to Full-Width for Maximum Size!) -->
-          <div id="asm-display-wrapper" class="asm-display-wrapper layout-fullwidth" style="margin-top: 14px;">
+          <div id="asm-display-wrapper" class="asm-display-wrapper layout-fullwidth" style="margin-top: 8px;">
             <!-- GIANT TECHNICAL CANVAS FRAME (White Background, Pure Vector Contrast) -->
             <div class="asm-canvas-frame">
               <!-- Floating Zoom & Fit Toolbar -->
