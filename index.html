@@ -87,32 +87,48 @@
 
       <!-- Quick Plain-English Glossary -->
       <div class="hero-card">
-        <h3 style="font-size: 16px; margin-bottom: 12px; font-weight: 700;">Plain-English Drone Terms (Zero Confusing Jargon)</h3>
-        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px;">Technical acronyms can feel overwhelming. Here are the core hardware components defined in plain language:</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px;">
-          <div class="concept-box">
-            <strong>BLDC Motor (Brushless Electric Motor)</strong>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">An electric motor without friction brushes. Uses permanent magnets and computer-pulsed copper coils for high power and long lifespan.</p>
+        <h3 style="font-size: 19px; margin-bottom: 8px; font-weight: 700;">Plain-English Drone Engineering Directory</h3>
+        <p style="font-size: 14.5px; color: var(--text-muted); margin-bottom: 24px;">Core hardware and avionics components defined in clear, accessible language:</p>
+        <div class="glossary-grid">
+          <div class="glossary-card">
+            <span class="glossary-meta">Propulsion</span>
+            <h4 class="glossary-title">BLDC Motor (Brushless Electric Motor)</h4>
+            <p class="glossary-desc">An electric motor without physical friction brushes. Utilizes permanent neodymium rotor magnets and computer-pulsed copper coils for high power-to-weight ratio and long operating lifespan.</p>
           </div>
-          <div class="concept-box">
-            <strong>ESC (Electronic Speed Controller)</strong>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">The motor driver. Takes DC power from the battery and rapidly turns the brushless motor at precise speeds commanded by the flight computer.</p>
+          <div class="glossary-card">
+            <span class="glossary-meta">Speed Regulation</span>
+            <h4 class="glossary-title">ESC (Electronic Speed Controller)</h4>
+            <p class="glossary-desc">High-speed motor driver with onboard MOSFETs. Converts DC battery current into precisely timed 3-phase AC pulses based on digital DShot commands streamed from the autopilot.</p>
           </div>
-          <div class="concept-box">
-            <strong>Flight Controller (FC)</strong>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">The central computer brain. Reads tilt sensors thousands of times per second and adjusts motor speeds to keep the drone level and stable.</p>
+          <div class="glossary-card">
+            <span class="glossary-meta">Central Computer</span>
+            <h4 class="glossary-title">Flight Controller (FC)</h4>
+            <p class="glossary-desc">The central real-time embedded computer. Reads onboard gyro and accelerometer tilt sensors at up to 8,000 times per second, executing closed-loop attitude stabilization algorithms.</p>
           </div>
-          <div class="concept-box">
-            <strong>IMU (Inertial Measurement Unit)</strong>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">A small sensor chip holding a 3-axis gyroscope (measures rotation speed) and a 3-axis accelerometer (detects which way gravity points).</p>
+          <div class="glossary-card">
+            <span class="glossary-meta">Inertial Sensor</span>
+            <h4 class="glossary-title">IMU (Inertial Measurement Unit)</h4>
+            <p class="glossary-desc">Microscopic MEMS silicon sensor holding a 3-axis gyroscope (detects rotation speed in deg/s) and a 3-axis accelerometer (detects Earth's 1G gravity vector).</p>
           </div>
-          <div class="concept-box">
-            <strong>PID Controller (Balance Algorithm)</strong>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">The math formula inside the autopilot: Proportional (present muscle), Integral (wind drift memory), and Derivative (shock absorber damping).</p>
+          <div class="glossary-card">
+            <span class="glossary-meta">Control Theory</span>
+            <h4 class="glossary-title">PID Controller (Attitude Loop)</h4>
+            <p class="glossary-desc">The mathematical balance algorithm: Proportional (immediate corrective muscle), Integral (wind drift memory), and Derivative (aerodynamic shock absorber damping).</p>
           </div>
-          <div class="concept-box">
-            <strong>TWR (Thrust-to-Weight Ratio)</strong>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">The ratio of total motor lift force to drone weight. A minimum 2:1 ratio ensures safe hover at 50% power with plenty of emergency climb margin.</p>
+          <div class="glossary-card">
+            <span class="glossary-meta">Powertrain Metric</span>
+            <h4 class="glossary-title">TWR (Thrust-to-Weight Ratio)</h4>
+            <p class="glossary-desc">Ratio of total maximum propeller thrust to total all-up drone weight. A minimum 2:1 ratio ensures stable hover at 50% throttle with ample climb authority.</p>
+          </div>
+          <div class="glossary-card">
+            <span class="glossary-meta">RF Transmission</span>
+            <h4 class="glossary-title">ExpressLRS & CRSF</h4>
+            <p class="glossary-desc">Open-source LoRa chirp spread-spectrum radio protocol operating over high-speed serial UART at up to 1000Hz refresh rates with sub-2ms end-to-end latency.</p>
+          </div>
+          <div class="glossary-card">
+            <span class="glossary-meta">Electromagnetics</span>
+            <h4 class="glossary-title">Antenna Toroidal Null</h4>
+            <p class="glossary-desc">The radiation pattern of dipole antennas resembles a donut with zero radiation along the axial wire tips. Always orient antennas broadside to the aircraft.</p>
           </div>
         </div>
       </div>

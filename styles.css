@@ -327,7 +327,6 @@ body {
 .day-header-banner {
   background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-left: 5px solid var(--primary);
   border-radius: var(--radius-lg);
   padding: var(--space-lg) var(--space-xl);
   margin-bottom: var(--space-2xl);
@@ -458,20 +457,67 @@ body {
 }
 
 .concept-box {
-  background-color: var(--bg-subtle);
+  background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-left: 4px solid var(--primary);
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-radius: var(--radius-md);
   font-size: 13.5px;
-  line-height: 1.6;
-  margin-top: 16px;
+  line-height: 1.65;
+  margin-top: 18px;
 }
 
 .concept-box strong {
   color: var(--text-primary);
-  display: inline-block;
-  margin-bottom: 2px;
+  display: block;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+/* Modern Clean Glossary Card Grid */
+.glossary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.glossary-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.glossary-card:hover {
+  border-color: var(--border-focus);
+}
+
+.glossary-meta {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+
+.glossary-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.glossary-desc {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
 }
 
 /* Media Cards inside Hours */
@@ -765,8 +811,7 @@ body {
 .status-callout {
   background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-left: 4px solid var(--primary);
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-radius: var(--radius-md);
   font-size: 13.5px;
   color: var(--text-secondary);
@@ -895,8 +940,7 @@ body {
 .slide-takeaway-box {
   background-color: var(--bg-subtle);
   border: 1px solid var(--border-subtle);
-  border-left: 4px solid var(--primary);
-  padding: 16px 20px;
+  padding: 18px 22px;
   border-radius: var(--radius-md);
   font-size: 14px;
   line-height: 1.6;
@@ -1092,7 +1136,6 @@ body {
   padding: 16px 20px;
   background-color: var(--bg-subtle);
   border: 1px solid var(--border-subtle);
-  border-left: 4px solid var(--primary);
   border-radius: var(--radius-md);
   font-size: 13.5px;
   color: var(--text-secondary);
