@@ -201,45 +201,135 @@ body {
   white-space: nowrap;
 }
 
-/* Navigation Bar Tabs */
-.nav-bar {
+/* Navigation Bar & Two-Track Tracks */
+.nav-bar, .nav-bar-tracks {
   display: flex;
   overflow-x: auto;
   padding: 0 32px;
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
   border-top: 1px solid var(--border-subtle);
   background-color: var(--bg-card);
-  gap: 8px;
+  gap: 12px;
   scrollbar-width: none;
 }
 
-.nav-bar::-webkit-scrollbar {
+.nav-bar::-webkit-scrollbar, .nav-bar-tracks::-webkit-scrollbar {
   display: none;
+}
+
+.nav-bar-tracks {
+  padding: 6px 32px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-track-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.nav-track-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.track-theory .nav-track-badge {
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.track-practical .nav-track-badge {
+  background-color: #eff6ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.nav-track-items {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nav-track-divider {
+  width: 1px;
+  height: 28px;
+  background-color: var(--border-medium);
+  margin: 0 6px;
+  flex-shrink: 0;
 }
 
 .nav-tab-btn {
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  padding: 14px 18px;
-  font-size: 13.5px;
+  padding: 10px 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
   white-space: nowrap;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
   position: relative;
+  border-radius: var(--radius-sm);
 }
 
 .nav-tab-btn:hover {
   color: var(--text-primary);
+  background-color: var(--bg-subtle);
 }
 
 .nav-tab-btn.active {
   color: var(--text-primary);
   border-bottom-color: var(--primary);
   font-weight: 700;
+  background-color: var(--bg-subtle);
+}
+
+/* Flagship Primary Practical Tab Highlight */
+.nav-tab-flagship {
+  background-color: #0284c7;
+  color: #ffffff !important;
+  border: 1px solid #0369a1;
+  border-bottom: 1px solid #0369a1;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+}
+
+.nav-tab-flagship:hover {
+  background-color: #0369a1;
+  color: #ffffff !important;
+}
+
+.nav-tab-flagship.active {
+  background-color: #0c4a6e;
+  border-color: #075985;
+  color: #ffffff !important;
+  box-shadow: 0 0 0 2px #38bdf8;
+}
+
+.flagship-tag {
+  background-color: #38bdf8;
+  color: #082f49;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 
 /* ==========================================================================
@@ -1620,6 +1710,298 @@ body {
   font-size: 11.5px;
   color: var(--text-secondary);
   line-height: 1.5;
+/* ==========================================================================
+   FLAGSHIP HARDWARE ASSEMBLY & WIRING WORKSHOP STYLES
+   Strictly Zero Gradients! Solid high-contrast palette.
+   ========================================================================== */
+.asm-flagship-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.asm-top-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.asm-hero-titles h2 {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.asm-hero-titles p {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.asm-mode-toggle {
+  display: inline-flex;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 3px;
+}
+
+.asm-mode-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.asm-mode-btn:hover {
+  color: var(--text-primary);
+}
+
+.asm-mode-btn.active {
+  background-color: #ffffff;
+  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+/* Super Toolbar */
+.asm-super-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 12px 18px;
+}
+
+.asm-toolbar-row1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.asm-toolbar-row2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.asm-control-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.asm-group-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+/* Canvas Display Wrapper & Layout Modes */
+.asm-display-wrapper {
+  width: 100%;
+}
+
+.asm-display-wrapper.layout-fullwidth {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.asm-display-wrapper.layout-split {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Canvas Frame (Big White Technical Engine) */
+.asm-canvas-frame {
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+}
+
+.asm-canvas-frame canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: crosshair;
+  background: #ffffff;
+}
+
+/* Floating Zoom & Layout Tools */
+.asm-canvas-floating-tools {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: rgba(255, 255, 255, 0.96);
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  padding: 4px 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  z-index: 5;
+}
+
+.asm-tool-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.asm-tool-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.asm-zoom-indicator {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #0284c7;
+  padding: 3px 6px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: var(--radius-sm);
+}
+
+/* Full-Width Action Rack (3-Action Visual Cards Under Big Canvas) */
+.asm-actions-rack-fullwidth {
+  display: grid;
+  grid-template-columns: 2.2fr 1fr;
+  gap: 16px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 18px 22px;
+}
+
+.asm-rack-actions-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.asm-rack-side-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Theory Guide Panel (When Toggled to Theory Part) */
+.asm-theory-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.asm-theory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 18px;
+}
+
+.asm-theory-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.asm-theory-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.asm-theory-card-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.asm-theory-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.asm-theory-card-body {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.asm-theory-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.asm-theory-table th {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  font-weight: 700;
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid var(--border-medium);
+}
+
+.asm-theory-table td {
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
 }
 
 /* ==========================================================================

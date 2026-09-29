@@ -45,9 +45,13 @@ class DroneWorkshopApp {
     document.querySelectorAll('[data-open-sim]').forEach(el => {
       el.addEventListener('click', (e) => {
         const simId = e.currentTarget.getAttribute('data-open-sim');
-        this.switchTab('tab-simulations');
-        if (window.droneSims) {
-          window.droneSims.switchSimulation(simId);
+        if (simId === 'sim-hardware-assembly') {
+          this.switchTab('tab-hardware-assembly');
+        } else {
+          this.switchTab('tab-simulations');
+          if (window.droneSims) {
+            window.droneSims.switchSimulation(simId);
+          }
         }
       });
     });
@@ -66,8 +70,8 @@ class DroneWorkshopApp {
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // If switching to simulations or slides, trigger resize
-    if (tabId === 'tab-simulations' || tabId === 'tab-slides') {
+    // If switching to simulations, assembly, or slides, trigger resize
+    if (tabId === 'tab-simulations' || tabId === 'tab-slides' || tabId === 'tab-hardware-assembly') {
       window.dispatchEvent(new Event('resize'));
     }
   }

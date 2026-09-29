@@ -33,16 +33,44 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <nav class="nav-bar" aria-label="Main Workshop Navigation">
-      <button class="nav-tab-btn active" data-tab="tab-overview">Overview</button>
-      <button class="nav-tab-btn" data-tab="tab-day1">Day 1: Physics & Electronics</button>
-      <button class="nav-tab-btn" data-tab="tab-day2">Day 2: Assembly & Wiring</button>
-      <button class="nav-tab-btn" data-tab="tab-day3">Day 3: Sensors & PID Control</button>
-      <button class="nav-tab-btn" data-tab="tab-day4">Day 4: Missions & Safety</button>
-      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (14)</button>
-      <button class="nav-tab-btn" data-tab="tab-slides">Slide Deck Mode</button>
-      <button class="nav-tab-btn" data-tab="tab-quizzes">Topic Quizzes (12)</button>
+    <!-- Two-Track Header Navigation: Theory Part vs Practical Part -->
+    <nav class="nav-bar-tracks" aria-label="Main Workshop Navigation">
+      <!-- Section A: Theory Part -->
+      <div class="nav-track-group track-theory">
+        <div class="nav-track-badge">
+          <span>📚</span>
+          <span>THEORY PART</span>
+        </div>
+        <div class="nav-track-items">
+          <button class="nav-tab-btn active" data-tab="tab-overview">Overview</button>
+          <button class="nav-tab-btn" data-tab="tab-day1">Day 1: Physics</button>
+          <button class="nav-tab-btn" data-tab="tab-day2">Day 2: Assembly Specs</button>
+          <button class="nav-tab-btn" data-tab="tab-day3">Day 3: Sensors &amp; PID</button>
+          <button class="nav-tab-btn" data-tab="tab-day4">Day 4: Missions &amp; Law</button>
+          <button class="nav-tab-btn" data-tab="tab-slides">Slide Deck</button>
+          <button class="nav-tab-btn" data-tab="tab-quizzes">Quizzes (12)</button>
+        </div>
+      </div>
+
+      <div class="nav-track-divider" aria-hidden="true"></div>
+
+      <!-- Section B: Practical Part -->
+      <div class="nav-track-group track-practical">
+        <div class="nav-track-badge">
+          <span>🛠️</span>
+          <span>PRACTICAL PART</span>
+        </div>
+        <div class="nav-track-items">
+          <button class="nav-tab-btn nav-tab-flagship" data-tab="tab-hardware-assembly">
+            <span>🚁</span>
+            <span>F450 Assembly &amp; Wiring Lab</span>
+            <span class="flagship-tag">Pixhawk &amp; APM</span>
+          </button>
+          <button class="nav-tab-btn" data-tab="tab-simulations">
+            <span>Simulators (13)</span>
+          </button>
+        </div>
+      </div>
     </nav>
   </header>
 
@@ -746,6 +774,276 @@
           <button class="btn-secondary" data-quiz-topic="d4-t1">Topic 1: Autonomous Missions & Fail-Safes</button>
           <button class="btn-secondary" data-quiz-topic="d4-t2">Topic 2: Systematic Troubleshooting</button>
           <button class="btn-secondary" data-quiz-topic="d4-t3">Topic 3: Field Safety & Flight Regulations</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB: FLAGSHIP PRACTICAL DRONE ASSEMBLY & WIRING LAB               -->
+    <!-- ================================================================= -->
+    <section class="tab-pane" id="tab-hardware-assembly">
+      <div class="asm-flagship-container">
+        <!-- Top Hero Bar with Section Subtitle & Theory/Practical Switcher -->
+        <div class="asm-top-hero">
+          <div class="asm-hero-titles">
+            <span class="day-badge" style="background-color: #0284c7; color: #ffffff; border-color: #0369a1;">PRACTICAL WORKSHOP • CLASS 2 &amp; 3 HANDS-ON BUILD</span>
+            <h2>🚁 F450 Quadcopter Assembly &amp; Wiring Master Blueprint</h2>
+            <p>Complete step-by-step physical drone construction guide featuring Pixhawk 2.4.8 (32-Bit ARM) &amp; APM 2.8 (ArduPilot Classic).</p>
+          </div>
+
+          <!-- Section Mode Toggle: Practical Build vs Theory Guide -->
+          <div class="asm-mode-toggle" role="tablist" aria-label="Assembly Modes">
+            <button class="asm-mode-btn active" id="btn-mode-practical">
+              <span>🛠️</span>
+              <span>Practical Build Mode</span>
+            </button>
+            <button class="asm-mode-btn" id="btn-mode-theory">
+              <span>📖</span>
+              <span>Hardware Theory &amp; Pinouts</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PRACTICAL BUILD VIEW -->
+        <div id="asm-view-practical-panel">
+          <!-- Super Unified Toolbar -->
+          <div class="asm-super-toolbar">
+            <!-- Row 1: Controller, Views, Layout, Zoom, Step Navigation -->
+            <div class="asm-toolbar-row1">
+              <!-- Flight Controller Switcher -->
+              <div class="asm-control-group">
+                <span class="asm-group-label">Controller:</span>
+                <div class="compact-toggle">
+                  <button class="switch-btn active" id="btn-fc-pixhawk">Pixhawk 2.4.8</button>
+                  <button class="switch-btn" id="btn-fc-apm">APM 2.8</button>
+                </div>
+              </div>
+
+              <!-- Blueprint Views Switcher -->
+              <div class="asm-control-group">
+                <span class="asm-group-label">View:</span>
+                <div class="compact-toggle">
+                  <button class="switch-btn active" id="btn-view-airframe">🚁 Airframe</button>
+                  <button class="switch-btn" id="btn-view-pinout">🔌 FC Pinouts</button>
+                  <button class="switch-btn" id="btn-view-pdb">⚡ PDB Solder</button>
+                  <button class="switch-btn" id="btn-view-radio">📡 GPS &amp; Rx</button>
+                </div>
+              </div>
+
+              <!-- Layout Mode Toggle (Full-Width Giant vs Split) -->
+              <div class="asm-control-group">
+                <span class="asm-group-label">Layout:</span>
+                <div class="compact-toggle">
+                  <button class="switch-btn active" id="btn-layout-fullwidth" title="Giant Full-Width Blueprint (Maximum Detail)">⛶ Full-Width</button>
+                  <button class="switch-btn" id="btn-layout-split" title="Split Screen (Canvas + Side Checklist)">◫ Split</button>
+                </div>
+              </div>
+
+              <!-- Step Navigation -->
+              <div class="asm-control-group" style="margin-left: auto;">
+                <span id="asm-step-badge" class="asm-step-pill-badge" style="margin-right: 6px;">STEP 1/10</span>
+                <button class="btn-secondary compact-btn" id="btn-asm-prev">← Prev</button>
+                <button class="btn-primary compact-btn" id="btn-asm-next">Next →</button>
+              </div>
+            </div>
+
+            <!-- Row 2: 10 Slim Step Pills with Verified Icons -->
+            <div class="asm-toolbar-row2">
+              <div id="asm-step-pills" class="asm-step-pills-slim" style="width: 100%;"></div>
+            </div>
+          </div>
+
+          <!-- Giant Blueprint & Micro-Steps Display Wrapper (Defaults to Full-Width for Maximum Size!) -->
+          <div id="asm-display-wrapper" class="asm-display-wrapper layout-fullwidth" style="margin-top: 14px;">
+            <!-- GIANT TECHNICAL CANVAS FRAME (White Background, Pure Vector Contrast) -->
+            <div class="asm-canvas-frame">
+              <!-- Floating Zoom & Fit Toolbar -->
+              <div class="asm-canvas-floating-tools">
+                <span class="asm-group-label" style="font-size: 10px; margin-right: 2px;">ZOOM:</span>
+                <button class="asm-tool-btn" id="btn-zoom-in" title="Zoom In (+)">➕</button>
+                <button class="asm-tool-btn" id="btn-zoom-out" title="Zoom Out (-)">➖</button>
+                <span id="asm-zoom-val" class="asm-zoom-indicator">100%</span>
+                <button class="asm-tool-btn" id="btn-zoom-reset" title="Reset Zoom &amp; Pan">⟲ Reset</button>
+              </div>
+
+              <!-- Giant Canvas (1350 x 820 internal High-DPI resolution) -->
+              <canvas id="canvas-hardware-assembly" width="1350" height="820"></canvas>
+
+              <div id="asm-canvas-hint" style="position: absolute; bottom: 12px; left: 14px; font-size: 11px; color: #475569; font-family: var(--font-mono); pointer-events: none; background: rgba(255, 255, 255, 0.95); padding: 5px 12px; border-radius: 4px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.06);">
+                Interactive Schematic • Drag to pan when zoomed • Click any component to inspect specs
+              </div>
+            </div>
+
+            <!-- Micro-Step Visual Cards (Positioned in Full-Width Rack or Side Column) -->
+            <div id="asm-micro-rack" class="asm-actions-rack-fullwidth">
+              <!-- Left Column: 3 Action Micro-Items -->
+              <div class="asm-rack-actions-col">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <h4 id="asm-step-heading" style="font-size: 16px; font-weight: 800; color: var(--text-primary); margin: 0;">
+                    1. Frame Inspection &amp; Bottom Plate PDB
+                  </h4>
+                  <div style="display: flex; gap: 6px;">
+                    <span id="asm-phase-badge" style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); background: var(--bg-page); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-subtle);">Mechanical Base</span>
+                    <span id="asm-fc-badge" style="font-size: 10.5px; font-weight: 700; color: #0284c7; background: #f0f9ff; padding: 3px 8px; border-radius: 4px; border: 1px solid #bae6fd;">Pixhawk 2.4.8</span>
+                  </div>
+                </div>
+
+                <!-- 3 Action Micro-Items (Zero Dense Text) -->
+                <div id="asm-micro-actions" class="asm-micro-actions-list" style="margin-top: 6px;"></div>
+
+                <!-- Deep Dive Dropdown for Instructors -->
+                <details class="asm-deepdive-details" style="margin-top: 4px;">
+                  <summary class="asm-deepdive-summary">
+                    <span>📘 Instructor Engineering Notes &amp; Deep-Dive Details</span>
+                    <span style="font-size: 10px;">▼</span>
+                  </summary>
+                  <div id="asm-step-deepdive" class="asm-deepdive-content">
+                    Detailed engineering instructions will appear here.
+                  </div>
+                </details>
+              </div>
+
+              <!-- Right Column: Danger Box, Gamified Button, Quick Inspector -->
+              <div class="asm-rack-side-col">
+                <!-- Danger Pitfall Alert Box -->
+                <div class="asm-danger-box">
+                  <div class="asm-danger-icon">🚫</div>
+                  <div id="asm-step-pitfall" class="asm-danger-text">
+                    Never install arms upside down! Snug tight only into brass inserts.
+                  </div>
+                </div>
+
+                <!-- Gamified Step Verification Button -->
+                <div class="asm-verify-box" style="margin: 0;">
+                  <button id="btn-asm-verify" class="asm-verify-btn">
+                    <span id="asm-verify-icon">⬜</span>
+                    <span id="asm-verify-text">Tap to Verify Step Completion</span>
+                  </button>
+                </div>
+
+                <!-- Component Inspector Chips -->
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                  <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px;">Click to inspect part specs:</div>
+                  <div style="display: flex; gap: 4px; flex-wrap: wrap;" id="asm-component-chips">
+                    <button class="chip-btn active" data-part="frame">F450 Frame</button>
+                    <button class="chip-btn" data-part="power">Power Module</button>
+                    <button class="chip-btn" data-part="motors">2212 Motors</button>
+                    <button class="chip-btn" data-part="escs">30A ESCs</button>
+                    <button class="chip-btn" data-part="fc">Flight Controller</button>
+                    <button class="chip-btn" data-part="rx">Radio Rx</button>
+                    <button class="chip-btn" data-part="gps">GPS &amp; Compass</button>
+                    <button class="chip-btn" data-part="safety">Safety &amp; Buzzer</button>
+                  </div>
+                  <div id="asm-part-details" style="margin-top: 8px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px; font-size: 11.5px; color: var(--text-secondary); line-height: 1.5;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- THEORY & PINOUT GUIDE VIEW (Toggled when clicking 'Hardware Theory & Pinouts') -->
+        <div id="asm-view-theory-panel" class="asm-theory-container" style="display: none;">
+          <div class="asm-theory-grid">
+            <!-- Theory 1: Motor Physics -->
+            <div class="asm-theory-card">
+              <div class="asm-theory-card-header">
+                <span class="asm-theory-card-icon">🛞</span>
+                <span class="asm-theory-card-title">1. Brushless Motor (BLDC) 3-Phase Physics &amp; Reversal Law</span>
+              </div>
+              <div class="asm-theory-card-body">
+                <p>Drone motors do not use mechanical brushes. Instead, the ESC generates <strong>3-Phase AC trapezoidal commutation</strong> into 12 stator electromagnets, pulling 14 neodymium rotor magnets.</p>
+                <table class="asm-theory-table">
+                  <tr><th>Wire Phase</th><th>Signal</th><th>Rule</th></tr>
+                  <tr><td>Phase A (Red)</td><td>AC High</td><td rowspan="3"><strong>The 2-Wire Reversal Rule:</strong> Swapping any two of the three bullet wires inverts the phase angle by 120°, reversing motor rotation from CW to CCW instantly.</td></tr>
+                  <tr><td>Phase B (Yellow)</td><td>AC Floating</td></tr>
+                  <tr><td>Phase C (Black)</td><td>AC Low</td></tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- Theory 2: Propeller Threads -->
+            <div class="asm-theory-card">
+              <div class="asm-theory-card-header">
+                <span class="asm-theory-card-icon">🌪️</span>
+                <span class="asm-theory-card-title">2. CW vs. CCW Propeller Threads &amp; Self-Tightening Physics</span>
+              </div>
+              <div class="asm-theory-card-body">
+                <p>During sudden throttle bursts, motor acceleration generates rotational inertia on the propeller nut.</p>
+                <table class="asm-theory-table">
+                  <tr><th>Motor Position</th><th>Rotation</th><th>Nut Color &amp; Thread</th><th>Self-Tightening Dynamic</th></tr>
+                  <tr><td>Motor 1 (FR) &amp; Motor 2 (RL)</td><td>Counter-Clockwise (CCW ↺)</td><td><strong>Black Nut</strong> (Standard Right-Hand Thread)</td><td>Motor spins CCW, inertia spins nut CW (tightens nut automatically).</td></tr>
+                  <tr><td>Motor 3 (FL) &amp; Motor 4 (RR)</td><td>Clockwise (CW ↻)</td><td><strong>Silver Nut</strong> (Reverse Left-Hand Thread)</td><td>Motor spins CW, inertia spins nut CCW (tightens nut automatically).</td></tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- Theory 3: ESC Architecture -->
+            <div class="asm-theory-card">
+              <div class="asm-theory-card-header">
+                <span class="asm-theory-card-icon">⚡</span>
+                <span class="asm-theory-card-title">3. ESC Architecture: Gate Drivers, MOSFETs &amp; PWM Signals</span>
+              </div>
+              <div class="asm-theory-card-body">
+                <p>Each 30A ESC contains 6 N-channel MOSFET switches arranged in an H-bridge driven by a dedicated micro-controller.</p>
+                <ul style="margin: 8px 0 0 16px; font-size: 12px;">
+                  <li><strong>Standard PWM Signal:</strong> 1000µs pulse (0% throttle, motor stopped), 1500µs pulse (50% throttle hover), 2000µs pulse (100% full thrust).</li>
+                  <li><strong>BEC (Battery Eliminator Circuit):</strong> 5V linear or switching step-down regulator that powers the receiver or flight controller servo rail.</li>
+                  <li><strong>Signal Ground:</strong> Always connect the brown/black signal ground wire to avoid signal noise and ground float.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Theory 4: Pixhawk vs APM 2.8 Comparison -->
+            <div class="asm-theory-card">
+              <div class="asm-theory-card-header">
+                <span class="asm-theory-card-icon">🧠</span>
+                <span class="asm-theory-card-title">4. Silicon Architecture: Pixhawk 2.4.8 vs. APM 2.8</span>
+              </div>
+              <div class="asm-theory-card-body">
+                <table class="asm-theory-table">
+                  <tr><th>Specification</th><th>Pixhawk 2.4.8</th><th>APM 2.8 Classic</th></tr>
+                  <tr><td>Processor</td><td><strong>32-Bit ARM Cortex-M4</strong> (168 MHz)</td><td><strong>8-Bit AVR ATmega2560</strong> (16 MHz)</td></tr>
+                  <tr><td>RAM / Flash</td><td>256 KB RAM / 2 MB Flash</td><td>8 KB RAM / 256 KB Flash</td></tr>
+                  <tr><td>Failsafe Coprocessor</td><td>Dedicated STM32F100 failsafe chip</td><td>None (Single CPU handles all)</td></tr>
+                  <tr><td>Firmware Support</td><td>Modern ArduCopter 4.x / PX4</td><td>Legacy ArduCopter 3.2.1 (Frozen)</td></tr>
+                  <tr><td>Jumper JP1 Gotcha</td><td>None (Independent isolated rails)</td><td><strong>CRITICAL: Remove JP1</strong> when using Power Module!</td></tr>
+                  <tr><td>Compass Jumper</td><td>Automatic external I2C priority</td><td><strong>Remove MAG jumper</strong> to disable onboard sensor!</td></tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- Theory 5: GPS Mast Magnetic Physics -->
+            <div class="asm-theory-card">
+              <div class="asm-theory-card-header">
+                <span class="asm-theory-card-icon">📡</span>
+                <span class="asm-theory-card-title">5. Magnetic Interference Physics: Why GPS Masts Are Mandatory</span>
+              </div>
+              <div class="asm-theory-card-body">
+                <p>According to Biot-Savart Law, high direct currents flowing through the bottom PDB plate create an intense magnetic field ($B \propto I/r$).</p>
+                <ul style="margin: 8px 0 0 16px; font-size: 12px;">
+                  <li><strong>At Frame Level (2cm from PDB):</strong> 60 Amps creates an electromagnetic field 300% stronger than Earth's magnetic field (0.5 Gauss), totally blinding the magnetometer.</li>
+                  <li><strong>At Mast Height (14cm above PDB):</strong> The magnetic field strength drops exponentially ($1/r$), reducing interference to less than 2% of Earth's magnetic field.</li>
+                  <li><strong>Consequence of Low GPS:</strong> "Toilet-bowling" death spirals in Loiter mode, GPS glitch failsafes, and autonomous flyaways.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Theory 6: Bench Safety Laws -->
+            <div class="asm-theory-card">
+              <div class="asm-theory-card-header">
+                <span class="asm-theory-card-icon">🛡️</span>
+                <span class="asm-theory-card-title">6. Golden Bench Safety Rules &amp; Smoke Stopper Protocol</span>
+              </div>
+              <div class="asm-theory-card-body">
+                <ul style="margin: 8px 0 0 16px; font-size: 12px; line-height: 1.7;">
+                  <li><strong>RULE #1 (ABSOLUTE):</strong> NEVER install propellers on the workbench during assembly, wiring, radio binding, or ESC calibration. Carbon-reinforced props at 10,000 RPM cut bone.</li>
+                  <li><strong>RULE #2 (SMOKE STOPPER):</strong> On the first LiPo plug-in after soldering, ALWAYS connect through an inline 1A-2A polyfuse / Smoke Stopper. If a solder bridge exists, the fuse trips in 10ms, protecting the electronics.</li>
+                  <li><strong>RULE #3 (POLARITY CHECK):</strong> Red is ALWAYS [+] 11.1V/14.8V; Black is ALWAYS [-] GND 0V. Reversing polarity for even 0.01 seconds destroys all 4 ESCs and the flight controller permanently.</li>
+                  <li><strong>RULE #4 (FAILSAFE TEST):</strong> Turn off your radio transmitter while on the bench; verify that Mission Planner reports "THROTTLE FAILSAFE" and disarms.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1907,169 +2205,17 @@
 
           <!-- 14. HARDWARE ASSEMBLY & WIRING BLUEPRINT (PIXHAWK & APM 2.8) -->
           <div class="sim-panel" id="sim-hardware-assembly">
-            <!-- Compact Unified Header (Saved 200px vertical space) -->
-            <div class="asm-unified-header">
-              <div class="asm-header-top">
-                <div class="asm-step-badge-group">
-                  <span id="asm-step-badge" class="asm-step-pill-badge">STEP 1/10</span>
-                  <h3 id="asm-step-title-header" class="asm-step-main-title">Frame Inspection &amp; Bottom Plate PDB</h3>
-                </div>
-
-                <div class="asm-header-actions">
-                  <!-- Flight Controller Switcher -->
-                  <div class="compact-toggle" title="Select Flight Controller">
-                    <button class="switch-btn active" id="btn-fc-pixhawk">Pixhawk 2.4.8</button>
-                    <button class="switch-btn" id="btn-fc-apm">APM 2.8</button>
-                  </div>
-                  <!-- View Switcher -->
-                  <div class="compact-toggle" title="Select View">
-                    <button class="switch-btn active" id="btn-view-airframe">Airframe</button>
-                    <button class="switch-btn" id="btn-view-pinout">Pinouts</button>
-                  </div>
-                  <!-- Step Prev / Next Buttons -->
-                  <div class="asm-nav-btn-group">
-                    <button class="btn-secondary compact-btn" id="btn-asm-prev">← Prev</button>
-                    <button class="btn-primary compact-btn" id="btn-asm-next">Next →</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Slim 1-Line Step Pills (1 to 10) -->
-              <div id="asm-step-pills" class="asm-step-pills-slim"></div>
-            </div>
-
-            <!-- Main Layout: Big Clean White Technical Canvas (Left) + Visual Micro-Steps (Right) -->
-            <div class="sim-grid-layout" style="grid-template-columns: 1.35fr 1fr; gap: 16px; align-items: start;">
-              <!-- White Technical Blueprint Canvas Box -->
-              <div class="sim-canvas-box" style="padding: 0; overflow: hidden; background: #ffffff; border: 1px solid var(--border-medium); border-radius: var(--radius-lg); position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                <canvas id="canvas-hardware-assembly" width="940" height="660" style="display: block; width: 100%; height: auto; cursor: crosshair; background: #ffffff;"></canvas>
-                <div id="asm-canvas-hint" style="position: absolute; bottom: 10px; left: 14px; font-size: 11px; color: #475569; font-family: var(--font-mono); pointer-events: none; background: rgba(255, 255, 255, 0.92); padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                  Interactive Schematic • Click any component to inspect specs &amp; pinouts
-                </div>
-              </div>
-
-              <!-- Visual-First Student Micro-Step Card -->
-              <div class="sim-controls-card" style="padding: 16px;">
-                <!-- Step Phase & Controller Badges -->
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <span id="asm-phase-badge" style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: var(--bg-page); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-subtle);">Mechanical Base</span>
-                  <span id="asm-fc-badge" style="font-size: 10.5px; font-weight: 700; color: #0284c7; background: #f0f9ff; padding: 2px 6px; border-radius: 4px; border: 1px solid #bae6fd;">Pixhawk 2.4.8</span>
-                </div>
-
-                <!-- Step Title -->
-                <h4 id="asm-step-heading" style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin-bottom: 10px; line-height: 1.3;">
-                  1. Frame Inspection &amp; Bottom Plate PDB
-                </h4>
-
-                <!-- Visual 3-Action Micro-List (Kids Friendly) -->
-                <div id="asm-micro-actions" class="asm-micro-actions-list">
-                  <!-- Dynamically populated 3 punchy action items -->
-                </div>
-
-                <!-- Danger / Fatal Pitfall Box -->
-                <div class="asm-danger-box">
-                  <div class="asm-danger-icon">🚫</div>
-                  <div id="asm-step-pitfall" class="asm-danger-text">
-                    Never install arms upside down! Snug tight only into brass inserts.
-                  </div>
-                </div>
-
-                <!-- Gamified Verification Button -->
-                <div class="asm-verify-box">
-                  <button id="btn-asm-verify" class="asm-verify-btn">
-                    <span id="asm-verify-icon">⬜</span>
-                    <span id="asm-verify-text">Tap to Verify Step Completion</span>
-                  </button>
-                </div>
-
-                <!-- Optional Deep Dive Specs Accordion (Hidden by default for non-readers) -->
-                <details class="asm-deepdive-details">
-                  <summary class="asm-deepdive-summary">
-                    <span>📘 Instructor Notes &amp; Deep-Dive Details</span>
-                    <span style="font-size: 10px;">▼</span>
-                  </summary>
-                  <div id="asm-step-deepdive" class="asm-deepdive-content">
-                    Detailed instructions will appear here.
-                  </div>
-                </details>
-
-                <!-- Interactive Hardware Component Inspector Drawer -->
-                <div style="border-top: 1px solid var(--border-subtle); padding-top: 16px;">
-                  <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; letter-spacing: 0.5px;">Click any component to inspect:</div>
-                  <div style="display: flex; gap: 6px; flex-wrap: wrap;" id="asm-component-chips">
-                    <button class="chip-btn active" data-part="frame">F450 Frame</button>
-                    <button class="chip-btn" data-part="power">Power Module</button>
-                    <button class="chip-btn" data-part="motors">2212 Motors</button>
-                    <button class="chip-btn" data-part="escs">30A ESCs</button>
-                    <button class="chip-btn" data-part="fc">Flight Controller</button>
-                    <button class="chip-btn" data-part="rx">Radio Receiver</button>
-                    <button class="chip-btn" data-part="gps">GPS &amp; Compass</button>
-                    <button class="chip-btn" data-part="safety">Safety &amp; Buzzer</button>
-                    <button class="chip-btn" data-part="telem">Telemetry Air</button>
-                    <button class="chip-btn" data-part="props">Propellers</button>
-                  </div>
-                  <div id="asm-part-details" style="margin-top: 12px; background: var(--bg-page); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.55;"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Deep Dive Technical Reference Cards -->
-            <div style="margin-top: 32px;">
-              <h4 style="font-size: 16px; margin-bottom: 16px; color: var(--text-primary); font-weight: 700;">Pixhawk 2.4.8 vs. APM 2.8 Hardware Pinout &amp; Jumper Reference</h4>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;">
-                <div class="glossary-card">
-                  <div class="glossary-term">Pixhawk 2.4.8 (32-Bit ARM Architecture)</div>
-                  <div class="glossary-desc">
-                    <strong>Port Layout &amp; Safety Switch:</strong> Runs on a powerful 32-bit STM32F4 processor with dual redundant IMUs.
-                    <ul style="margin: 8px 0 0 16px; font-size: 12.5px;">
-                      <li><strong>POWER (6-pin):</strong> 5.3V clean power from 3DR Power module + battery voltage &amp; current analog telemetry.</li>
-                      <li><strong>RC IN:</strong> Single 3-pin cable for PPM or SBUS serial digital receivers (e.g. FlySky FS-iA6B PPM output).</li>
-                      <li><strong>MAIN OUT 1–4:</strong> ESC signal pins (Motor 1 to 4 in ArduCopter Quad-X layout).</li>
-                      <li><strong>SWITCH (Safety Button):</strong> Pixhawk will NOT arm until this red button is pressed and held for 2 seconds (LED turns solid).</li>
-                      <li><strong>GPS &amp; I2C:</strong> 6-pin GPS cable to GPS port + 4-pin Compass cable to I2C port on the elevated mast.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div class="glossary-card">
-                  <div class="glossary-term">APM 2.8 (ArduPilot Mega 8-Bit Classic)</div>
-                  <div class="glossary-desc">
-                    <strong>Jumper JP1 &amp; MAG Compass Gotchas:</strong> The classic workshop teaching board with Atmel ATmega2560 (runs ArduCopter 3.2.1 max).
-                    <ul style="margin: 8px 0 0 16px; font-size: 12.5px;">
-                      <li><strong>Jumper JP1 Rule:</strong> If your ESCs have 5V BECs (red wire connected), <strong>REMOVE JP1</strong> to prevent dual voltage regulator conflict between the ESCs and the Power Module!</li>
-                      <li><strong>MAG Compass Jumper:</strong> <strong>REMOVE the MAG jumper</strong> next to the GPS port so the internal compass is disabled, allowing the external compass on the GPS mast to steer accurately.</li>
-                      <li><strong>INPUTS 1–8:</strong> Standard 3-pin headers (GND on outer edge, 5V in center, Signal on inner pin). Connect Ch1–Ch6 for Aileron, Elevator, Throttle, Rudder, Flight Mode switch, and Aux.</li>
-                      <li><strong>OUTPUTS 1–4:</strong> Connect ESC servo leads for Motors 1 to 4.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div class="glossary-card">
-                  <div class="glossary-term">ArduCopter Quad-X Motor Numbering &amp; Spin Direction</div>
-                  <div class="glossary-desc">
-                    <strong>Critical Flight Direction Rule:</strong> ArduCopter motor numbering differs from Betaflight!
-                    <ul style="margin: 8px 0 0 16px; font-size: 12.5px;">
-                      <li><strong>Motor 1 (Front-Right):</strong> Spins <strong>Counter-Clockwise (CCW)</strong> • Black nut / CCW propeller.</li>
-                      <li><strong>Motor 2 (Rear-Left):</strong> Spins <strong>Counter-Clockwise (CCW)</strong> • Black nut / CCW propeller.</li>
-                      <li><strong>Motor 3 (Front-Left):</strong> Spins <strong>Clockwise (CW)</strong> • Silver nut / CW propeller.</li>
-                      <li><strong>Motor 4 (Rear-Right):</strong> Spins <strong>Clockwise (CW)</strong> • Silver nut / CW propeller.</li>
-                      <li><strong>Direction Swap:</strong> Swap any two of the three motor phase wires to reverse rotation instantly.</li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div class="glossary-card">
-                  <div class="glossary-term">Elevated GPS Mast &amp; Pre-Power Smoke Stopper Safety</div>
-                  <div class="glossary-desc">
-                    <strong>Why Elevation &amp; Testing Matter:</strong>
-                    <ul style="margin: 8px 0 0 16px; font-size: 12.5px;">
-                      <li><strong>GPS Mast:</strong> A 12cm mast isolates the compass magnetometer from the heavy 60A DC magnetic field generated by the bottom PDB plate. Without elevation, the compass toilet-bowls and spins out of control in Loiter/RTL mode.</li>
-                      <li><strong>Smoke Stopper:</strong> Connect an inline polyfuse or 12V 20W bulb between the LiPo battery and XT60 on first power. If a solder bridge exists, the polyfuse trips safely in milliseconds, saving your $80 flight controller.</li>
-                      <li><strong>Props Off:</strong> Propellers are mounted ONLY after full Mission Planner calibration and right before flight in the field!</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+            <div class="hero-card" style="text-align: center; padding: 48px 24px; border: 1px solid var(--border-medium); border-radius: var(--radius-lg); background-color: var(--bg-card);">
+              <span class="day-badge" style="background-color: #0284c7; color: #ffffff; border-color: #0369a1;">PRACTICAL WORKSHOP • CLASS 2 &amp; 3</span>
+              <h3 style="font-size: 22px; margin: 14px 0 8px; font-weight: 800; color: var(--text-primary);">
+                🚁 F450 Drone Assembly &amp; Wiring Master Blueprint
+              </h3>
+              <p style="max-width: 620px; margin: 0 auto 24px; color: var(--text-secondary); line-height: 1.6; font-size: 14px;">
+                This comprehensive hands-on workshop is now hosted in its own full-width dedicated practical lab with giant high-definition engineering blueprints, interactive zoom controls, theory &amp; practical modes, and step-by-step Pixhawk 2.4.8 &amp; APM 2.8 wiring schematics.
+              </p>
+              <button class="btn-primary" data-jump-tab="tab-hardware-assembly" style="font-size: 14px; padding: 12px 28px; font-weight: 700; cursor: pointer;">
+                Launch Full-Width Assembly Workshop ➔
+              </button>
             </div>
           </div>
         </div>
