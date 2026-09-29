@@ -13,10 +13,9 @@
   <header class="site-header">
     <div class="header-top">
       <div class="brand-group">
-        <div class="brand-icon">UAV</div>
         <div class="brand-titles">
-          <h1>DRONE WORKSHOP MASTERCLASS</h1>
-          <p>4 Days • 6 Hours / Day (24 Total Hours) • Theory, Assembly, Tuning & Flight</p>
+          <h1>DRONE ENGINEERING MASTERCLASS</h1>
+          <p>4 Days • 6 Hours / Day (24 Total Hours) • Aerodynamics, RF Systems, Silicon Architecture & Autonomous Flight</p>
         </div>
       </div>
       <div class="header-tools">
@@ -41,7 +40,7 @@
       <button class="nav-tab-btn" data-tab="tab-day2">Day 2: Assembly & Wiring</button>
       <button class="nav-tab-btn" data-tab="tab-day3">Day 3: Sensors & PID Control</button>
       <button class="nav-tab-btn" data-tab="tab-day4">Day 4: Missions & Safety</button>
-      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (8)</button>
+      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (9)</button>
       <button class="nav-tab-btn" data-tab="tab-slides">Slide Deck Mode</button>
       <button class="nav-tab-btn" data-tab="tab-quizzes">Topic Quizzes (12)</button>
     </nav>
@@ -368,30 +367,50 @@
         <article class="hour-block">
           <div class="hour-header">
             <span class="hour-tag">Hours 9 & 10 of 6</span>
-            <span class="hour-title">Radio Systems, Protocols & Workbench Tools</span>
+            <span class="hour-title">RF Systems Engineering: Protocols, LoRa Modulation, Antennas & Transmitters</span>
           </div>
           <div class="hour-body">
             <div class="hour-text">
-              <h4>Digital Radio Links & Workshop Preparation</h4>
-              <p>Reliable control links prevent flyaways. Clean tools ensure professional electrical joints.</p>
+              <h4>Radio Control Links, Electromagnetics & Gimbals</h4>
+              <p>The radio control link is the critical safety lifeline of the aircraft. Modern UAV engineering has evolved from legacy analog PWM/PPM to ultra-reliable digital LoRa spread-spectrum links operating at microsecond latencies.</p>
+              
               <ul class="bullet-list">
-                <li><strong>Transmitter (Radio) & Receiver (RX):</strong> Handheld control communicating with the onboard receiver. Mode 2 is global standard (Left = Throttle/Yaw, Right = Pitch/Roll).</li>
-                <li><strong>Digital Protocols:</strong> Modern serial protocols like CRSF (Crossfire / ExpressLRS) update at 250Hz–500Hz with under 5ms latency.</li>
-                <li><strong>Channel Mapping (AETR):</strong> Ch1 = Aileron/Roll, Ch2 = Elevator/Pitch, Ch3 = Throttle, Ch4 = Rudder/Yaw.</li>
-                <li><strong>Soldering Tools:</strong> Temperature-controlled iron (350°C–400°C), 63/37 leaded or lead-free solder with flux core, brass cleaning sponge, and flux pen.</li>
+                <li><strong>Transmitter Mechanics (Hall-Effect Gimbals):</strong> High-end radios utilize Hall-Effect sensors rather than mechanical carbon-wiper potentiometers. Hall sensors detect magnetic field rotation without physical contact, providing 12-bit (4,096-step) resolution, zero mechanical wear, and zero centering drift over millions of flight hours.</li>
+                <li><strong>Frequency Bands & Propagation:</strong>
+                  <br>• <strong>2.4 GHz Band (2400–2483.5 MHz):</strong> High bandwidth supporting packet rates up to 1000Hz, ultra-compact quarter-wave antennas (~31.2mm). Optimal for low-latency line-of-sight flying.
+                  <br>• <strong>Sub-GHz (868 MHz EU / 915 MHz US/Asia):</strong> Exceptional diffraction around terrain obstacles and foliage penetration. Extreme range (>40 km) with packet rates up to 200Hz and ~82mm antennas.
+                </li>
+                <li><strong>LoRa Modulation vs. Legacy FSK:</strong> ExpressLRS (ELRS) and Crossfire utilize Chirp Spread Spectrum (LoRa). LoRa provides massive processing gain, enabling the receiver to decode signals down to <strong>-128 dBm</strong>, which is <em>below</em> the ambient thermal RF noise floor (negative SNR down to -20dB!).</li>
+                <li><strong>Packet Rate vs. Sensitivity Scale:</strong>
+                  <br>• <strong>25Hz / 50Hz:</strong> Maximum range, receiver sensitivity down to -128 dBm. Ideal for autonomous long-range missions.
+                  <br>• <strong>150Hz / 250Hz:</strong> Balanced multirotor standard.
+                  <br>• <strong>500Hz / 1000Hz:</strong> Sub-2ms end-to-end latency for extreme agile control, with sensitivity at -105 dBm.
+                </li>
+                <li><strong>Serial Protocols (CRSF vs. SBUS):</strong>
+                  <br>• <strong>CRSF (Crossfire Protocol):</strong> Full-duplex asynchronous serial over UART (420,000 or 921,600 baud). Carries 16 control channels plus bidirectional telemetry (GPS coordinates, battery voltage, current draw, RSSI, and link quality) back to the radio.
+                  <br>• <strong>Legacy SBUS:</strong> Inverted serial at 100,000 baud with fixed 9ms frame delay and zero telemetry.
+                </li>
+                <li><strong>Antenna Physics & Quarter-Wave Wavelength ($L = \frac{c}{4f}$):</strong>
+                  <br>• 2.45 GHz: $\lambda/4 = \frac{3 \times 10^8}{4 \times 2.45 \times 10^9} \approx 30.6\text{ mm}$ active exposed wire element.
+                  <br>• 915 MHz: $\lambda/4 = \frac{3 \times 10^8}{4 \times 9.15 \times 10^8} \approx 82\text{ mm}$.
+                </li>
+                <li><strong>Toroidal Radiation Pattern & Axial Nulls:</strong> Dipole and monopole antennas radiate in a torus (donut) shape perpendicular to the wire. The axial tips of the antenna wire have a near-zero radiation <strong>null zone</strong>. Pointing the tip of your handheld transmitter antenna directly at the drone causes an immediate link drop!</li>
+                <li><strong>Cross-Polarization Attenuation:</strong> Linear antennas transmit energy in a single E-field plane. If the transmitter antenna is vertical and the drone rolls to horizontal (90° orthogonal mismatch), the link suffers a <strong>20 dB to 26 dB signal attenuation</strong> (over 99% received power loss!).</li>
+                <li><strong>True Diversity vs. Antenna Switching:</strong> True Diversity receivers feature two completely independent RF transceiver ICs and demodulators, choosing or combining the strongest packet. Antenna-switching receivers use a single RF chip with an electronic switch toggling between two antenna inputs.</li>
               </ul>
+
               <div class="concept-box">
-                <strong>Workbench Rule:</strong> Always keep soldering iron tips clean and tinned to ensure instant, void-free heat transfer.
+                <strong>Golden RF Rule:</strong> Mount dual receiver antennas separated by 90° in an "L" or "V" configuration away from carbon fiber plates (carbon fiber is electrically conductive and blocks RF signals). Never aim the tip of your transmitter antenna at the aircraft!
               </div>
             </div>
             <div class="hour-media">
               <div class="media-frame">
                 <img src="https://images.unsplash.com/photo-1521405924368-64c5b84bec60?auto=format&fit=crop&w=1000&q=80" alt="Handheld radio controller">
               </div>
-              <div class="media-caption">Handheld digital radio transmitter with dual multi-axis gimbals.</div>
+              <div class="media-caption">Hall-sensor digital transmitter with high-gain dipole antenna.</div>
               <div class="sim-launch-card">
-                <p>Test your knowledge of hardware sizing:</p>
-                <button class="btn-secondary" data-quiz-topic="d2-t1">Take Topic 1 Quiz</button>
+                <p>Simulate antenna radiation patterns, cross-polarization losses, and LoRa link budgets:</p>
+                <button class="btn-secondary" data-open-sim="sim-rf-link">Open RF Link Simulator</button>
               </div>
             </div>
           </div>
@@ -459,27 +478,41 @@
         <article class="hour-block">
           <div class="hour-header">
             <span class="hour-tag">Hours 13 & 14 of 6</span>
-            <span class="hour-title">Flight Controller Architecture & IMU Sensors</span>
+            <span class="hour-title">Flight Controller Silicon Architecture: MCUs, SPI Buses, DMA Timers & Bidirectional DShot</span>
           </div>
           <div class="hour-body">
             <div class="hour-text">
-              <h4>The Central Processing Brain</h4>
-              <p>The Flight Controller (FC) is an embedded real-time computer running at 100MHz–480MHz, reading sensors up to 8,000 times per second.</p>
+              <h4>Microcontroller Silicon, Bus Topologies & Signal Processing</h4>
+              <p>The Flight Controller (FC) is a high-speed real-time embedded computer responsible for reading sensor registers, computing closed-loop control mathematics, and streaming digital motor pulses at loop frequencies up to 8 kHz (8,000 cycles/second).</p>
+              
               <ul class="bullet-list">
-                <li><strong>Microcontroller (MCU):</strong> ARM Cortex processors (STM32 F4, F7, or H7) executing control loop math in microseconds.</li>
-                <li><strong>3-Axis Gyroscope:</strong> Measures rotational angular velocity along Pitch, Roll, and Yaw in degrees per second (°/s). Extremely fast with zero delay, but drifts over time.</li>
-                <li><strong>3-Axis Accelerometer:</strong> Measures linear acceleration and detects Earth's 1G gravity vector. No drift, but corrupted by motor vibration noise.</li>
-                <li><strong>Barometer & Compass:</strong> Barometer measures atmospheric pressure drops to hold altitude. Compass measures Earth's magnetic heading.</li>
+                <li><strong>Microcontroller Generations (STM32 Architecture):</strong>
+                  <br>• <strong>STM32F405 (168 MHz ARM Cortex-M4):</strong> Single-precision FPU, 1MB Flash, 192KB SRAM. Standard workhorse, but lacks internal UART inverters (requires dedicated external hardware inverters or un-inverted receiver pads for SBUS/SmartPort).
+                  <br>• <strong>STM32F722 (216 MHz ARM Cortex-M7):</strong> Superscalar pipeline, 512KB Flash. Built-in software-configurable hardware inverters on all UART ports, enabling seamless direct connection of any serial protocol.
+                  <br>• <strong>STM32H743 (480 MHz ARM Cortex-M7):</strong> Double-precision FPU, 2MB Flash, 1MB RAM. Handles dual-gyro sampling, 8kHz bidirectional DShot, and high-order Extended Kalman Filters (EKF) simultaneously with negligible CPU load (<15%).
+                </li>
+                <li><strong>High-Speed SPI Bus vs. Slow I2C Bus:</strong>
+                  <br>• <strong>SPI (Serial Peripheral Interface):</strong> Synchronous full-duplex bus clocked at <strong>10 MHz to 20 MHz</strong>. Dedicated strictly to the primary IMU gyroscopes (e.g., InvenSense ICM-42688-P, Bosch BMI270, InvenSense MPU6000). Provides deterministic sub-millisecond register readouts.
+                  <br>• <strong>I2C (Inter-Integrated Circuit):</strong> 2-wire serial bus running at standard <strong>400 kHz</strong>. Reserved solely for slow environmental sensors: Barometers (BMP280, DPS310) and Magnetometers (QMC5883L, IST8310). Flight gyros must <em>never</em> share an I2C bus due to clock-stretching and bus-blocking latency.
+                </li>
+                <li><strong>DMA (Direct Memory Access) & Motor Timers:</strong> The STM32 hardware timers (TIM1, TIM2, TIM3, TIM4) stream 16-bit DShot digital frames directly from internal SRAM buffers out to the ESC signal pins via DMA channels without consuming CPU instruction cycles.</li>
+                <li><strong>DShot Digital Protocol Evolution:</strong>
+                  <br>• <strong>DShot300 (300 kbit/s) & DShot600 (600 kbit/s):</strong> Fully digital 16-bit packet: 11 bits throttle resolution (2,048 discrete steps), 1 bit telemetry request, and 4 bits CRC checksum. Immune to analog electrical noise and eliminates ESC throttle calibration entirely.
+                  <br>• <strong>Bidirectional DShot (BiDir):</strong> The ESC inverts the signal line between packet bursts and transmits instantaneous motor electrical RPM (e-RPM) back to the flight controller over the exact same single signal wire!
+                </li>
+                <li><strong>Real-Time RPM Notch Filtering:</strong> Using real-time e-RPM telemetry from Bidirectional DShot, the flight controller dynamically tunes sharp multi-harmonic notch filters to track and eliminate motor noise spikes at their exact rotational frequency. This removes gyro noise before it reaches the PID loop, allowing pilots to run aggressive D-term gains without hot motors.</li>
+                <li><strong>Blackbox Logging Architecture:</strong> High-rate flight data logging via dedicated 16MB/32MB SPI NOR Flash chips or high-speed MicroSD card slots operating in 4-bit SDIO mode (50 MHz bus clock), recording gyro, accelerometer, PID error, and motor outputs at 1kHz–8kHz for post-flight frequency spectrum (FFT) analysis.</li>
               </ul>
+
               <div class="concept-box">
-                <strong>Core Sensor Role:</strong> Gyros tell the drone how fast it is rotating; accelerometers tell it which way is down.
+                <strong>Silicon Rule:</strong> Never connect GPS or receiver telemetry to software-emulated "SoftSerial" if a hardware UART with DMA is available. True hardware UARTs ensure zero dropped packets and jitter-free PID loop execution.
               </div>
             </div>
             <div class="hour-media">
               <div class="media-frame">
                 <img src="https://images.unsplash.com/photo-1608222351212-18fe0ec7b13b?auto=format&fit=crop&w=1000&q=80" alt="Circuit traces and microcontroller">
               </div>
-              <div class="media-caption">ARM Cortex microcontroller and IMU sensor cluster on a modern flight board.</div>
+              <div class="media-caption">ARM Cortex microcontroller, SPI gyro cluster, and DMA timer bus traces.</div>
               <div class="sim-launch-card">
                 <p>Launch the interactive Sensor Fusion visualizer:</p>
                 <button class="btn-secondary" data-open-sim="sim-sensor-fusion">Open Sensor Fusion Lab</button>
@@ -714,6 +747,7 @@
           <button class="sim-tab-btn" data-sim-target="sim-sensor-fusion">6. Sensor Fusion (Gyro vs Accel)</button>
           <button class="sim-tab-btn" data-sim-target="sim-waypoint-mission">7. Autonomous Waypoint Planner</button>
           <button class="sim-tab-btn" data-sim-target="sim-troubleshooting">8. Diagnostic Fault Matrix</button>
+          <button class="sim-tab-btn" data-sim-target="sim-rf-link">9. RF Link Budget & Antennas</button>
         </aside>
 
         <!-- Viewport -->
@@ -1077,6 +1111,67 @@
                     <option value="norx">4. Transmitter Sticks Have No Effect</option>
                     <option value="brownout">5. Electronics Restart on Full Throttle</option>
                   </select>
+                </div>
+          <!-- 9. RF LINK BUDGET & ANTENNAS -->
+          <div class="sim-panel" id="sim-rf-link">
+            <div class="sim-panel-header">
+              <h3>RF Link Budget, LoRa Sensitivity & Antenna Radiation Pattern Simulator</h3>
+              <p>Simulate electromagnetic path loss, LoRa chirp spread-spectrum processing gain, and cross-polarization antenna nulls in real time.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box">
+                <canvas id="canvas-rf-link"></canvas>
+                <div class="status-callout" id="rf-diagnosis" style="margin: 12px; font-weight: 600;">
+                  LINK ACTIVE: 100% Link Quality (LQ). Solid RF link budget with +35 dB margin above sensitivity floor.
+                </div>
+              </div>
+              <div class="sim-controls-card">
+                <div class="control-group">
+                  <div class="control-label"><span>RF Protocol & Modulation</span></div>
+                  <select class="control-select" id="rf-protocol">
+                    <option value="elrs-24" selected>ExpressLRS 2.4 GHz (LoRa CSS)</option>
+                    <option value="elrs-915">ExpressLRS 915 MHz (Sub-GHz LoRa)</option>
+                    <option value="legacy-fsk">Legacy 2.4 GHz (FSK / D16 / AFHDS)</option>
+                  </select>
+                </div>
+                <div class="control-group">
+                  <div class="control-label"><span>Packet Rate (Refresh Interval)</span></div>
+                  <select class="control-select" id="rf-rate">
+                    <option value="50">50 Hz (-123 dBm Sensitivity • Ultra Long Range)</option>
+                    <option value="150" selected>150 Hz (-117 dBm Sensitivity • Standard)</option>
+                    <option value="250">250 Hz (-114 dBm Sensitivity • Fast)</option>
+                    <option value="500">500 Hz (-108 dBm Sensitivity • High Speed)</option>
+                    <option value="1000">1000 Hz (-105 dBm Sensitivity • Ultra Low Latency)</option>
+                  </select>
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Transmitter Output Power</span>
+                    <span id="rf-power-val">100 mW (+20 dBm)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="rf-power" min="10" max="1000" step="10" value="100">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Distance to Aircraft</span>
+                    <span id="rf-distance-val">500 m</span>
+                  </div>
+                  <input type="range" class="control-slider" id="rf-distance" min="50" max="20000" step="50" value="500">
+                </div>
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Antenna Polarization Mismatch Angle</span>
+                    <span id="rf-angle-val">0° (Aligned)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="rf-angle" min="0" max="90" step="5" value="0">
+                </div>
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                  <table class="readout-table">
+                    <tr><td>Received RSSI:</td><td id="rf-rssi-val">-72 dBm</td></tr>
+                    <tr><td>Sensitivity Limit:</td><td id="rf-sens-val">-117 dBm</td></tr>
+                    <tr><td>Link Margin:</td><td id="rf-margin-val">+45 dB</td></tr>
+                    <tr><td>Link Quality (LQ):</td><td id="rf-lq-val" style="color: var(--success);">100%</td></tr>
+                  </table>
                 </div>
               </div>
             </div>

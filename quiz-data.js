@@ -170,6 +170,30 @@ const QUIZ_DATA = {
           ],
           correct: 1,
           explanation: "Total thrust required for 2:1 TWR = 1,200g * 2 = 2,400 grams. Dividing across 4 motors: 2,400g / 4 = 600 grams of thrust per motor."
+        },
+        {
+          id: "q2_rf1",
+          question: "Why does pointing the physical tip of your handheld transmitter dipole antenna directly at your drone frequently cause a sudden signal drop or failsafe?",
+          options: [
+            "Because dipole antennas radiate in a torus (donut) pattern with near-zero energy (axial null) along the wire axis",
+            "Because the signal speed drops below the speed of sound",
+            "Because radio waves cannot travel in straight lines",
+            "Because the battery voltage sags when the transmitter is tilted"
+          ],
+          correct: 0,
+          explanation: "Dipole and monopole antennas exhibit a toroidal (donut-shaped) radiation pattern perpendicular to the wire element. Directly off the tips of the wire lies the axial null, where radiated energy approaches zero. The strongest signal always emits broadside (perpendicular) to the wire."
+        },
+        {
+          id: "q2_rf2",
+          question: "What happens to received signal strength when a vertically polarized transmitter antenna communicates with a drone whose antenna has rotated to horizontal (90° cross-polarization mismatch)?",
+          options: [
+            "The signal is amplified by 6 dB",
+            "The signal suffers a 20 dB to 26 dB attenuation (over 99% received power loss)",
+            "The radio automatically switches modulation from LoRa to Wi-Fi",
+            "The link frequency doubles from 2.4 GHz to 5.8 GHz"
+          ],
+          correct: 1,
+          explanation: "Cross-polarization attenuation occurs when the electromagnetic E-field vector is orthogonal (90° rotated) relative to the receiving antenna wire. In practice, this mismatch attenuates the signal by 20 dB to 26 dB (99% to 99.7% power loss), which is why aircraft should always utilize dual 90° diversity antennas."
         }
       ]
     },

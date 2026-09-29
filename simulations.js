@@ -17,6 +17,7 @@ class DroneSimulations {
     this.initSensorFusionSim();
     this.initWaypointMissionSim();
     this.initTroubleshootingSim();
+    this.initRfLinkSim();
   }
 
   initEventListeners() {
@@ -1230,6 +1231,278 @@ class DroneSimulations {
 
     symptomSelect.addEventListener('change', updateDiag);
     updateDiag();
+  }
+
+  // =========================================================================
+  // 9. RF LINK BUDGET & ANTENNA RADIATION PATTERN SIMULATOR
+  // =========================================================================
+  initRfLinkSim() {
+    const canvas = document.getElementById('canvas-rf-link');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const protocolSelect = document.getElementById('rf-protocol');
+    const rateSelect = document.getElementById('rf-rate');
+    const powerSlider = document.getElementById('rf-power');
+    const distanceSlider = document.getElementById('rf-distance');
+    const angleSlider = document.getElementById('rf-angle');
+
+    const powerValEl = document.getElementById('rf-power-val');
+    const distanceValEl = document.getElementById('rf-distance-val');
+    const angleValEl = document.getElementById('rf-angle-val');
+    const rssiValEl = document.getElementById('rf-rssi-val');
+    const sensValEl = document.getElementById('rf-sens-val');
+    const marginValEl = document.getElementById('rf-margin-val');
+    const lqValEl = document.getElementById('rf-lq-val');
+    const diagnosisEl = document.getElementById('rf-diagnosis');
+
+    let packetPulseTime = 0;
+
+    const calculateLink = () => {
+      const protocol = protocolSelect ? protocolSelect.value : 'elrs-24';
+      const rateHz = parseInt(rateSelect ? rateSelect.value : '150', 10);
+      const powerMw = parseFloat(powerSlider ? powerSlider.value : 100);
+      const distanceM = parseFloat(distanceSlider ? distanceSlider.value : 500);
+      const angleDeg = parseFloat(angleSlider ? angleSlider.value : 0);
+
+      // Frequency in MHz
+      let freqMHz = 2450;
+      if (protocol === 'elrs-915') freqMHz = 915;
+
+      // Power in dBm: 10 * log10(P_mW)
+      const powerDbm = 10 * Math.log10(powerMw);
+
+      // Sensitivity table (dBm)
+      let sensitivityDbm = -117; // standard 150Hz ELRS
+      if (protocol === 'legacy-fsk') {
+        sensitivityDbm = -98; // Traditional FSK has no LoRa processing gain
+      } else {
+        if (rateHz === 50) sensitivityDbm = -123;
+        else if (rateHz === 150) sensitivityDbm = -117;
+        else if (rateHz === 250) sensitivityDbm = -114;
+        else if (rateHz === 500) sensitivityDbm = -108;
+        else if (rateHz === 1000) sensitivityDbm = -105;
+
+        // 915MHz LoRa has even higher sensitivity (+3 to 4 dB advantage)
+        if (protocol === 'elrs-915') sensitivityDbm -= 3;
+      }
+
+      // Free Space Path Loss (FSPL): 20*log10(d) + 20*log10(f_MHz) - 27.55
+      const fspl = 20 * Math.log10(Math.max(1, distanceM)) + 20 * Math.log10(freqMHz) - 27.55;
+
+      // Cross-polarization loss: orthogonal dipoles lose up to 26 dB
+      const angleRad = (angleDeg * Math.PI) / 180;
+      const cosVal = Math.max(0.05, Math.cos(angleRad)); // 0.05 = ~26 dB isolation floor
+      const polLoss = -20 * Math.log10(cosVal);
+
+      // Antenna gains (standard dipoles: +2.15 dBi each)
+      const gTx = 2.15;
+      const gRx = 2.15;
+
+      // Received RSSI
+      const rssiDbm = Math.round(powerDbm + gTx + gRx - fspl - polLoss);
+      const marginDb = rssiDbm - sensitivityDbm;
+
+      // Link Quality (LQ %) calculation
+      let lqPct = 100;
+      if (marginDb >= 15) {
+        lqPct = 100;
+      } else if (marginDb > 0) {
+        lqPct = Math.round(50 + (marginDb / 15) * 50);
+      } else if (marginDb > -6) {
+        lqPct = Math.max(5, Math.round(50 + (marginDb / 6) * 50));
+      } else {
+        lqPct = 0; // Complete link drop / failsafe
+      }
+
+      // Update UI readouts
+      if (powerValEl) powerValEl.textContent = `${powerMw} mW (+${powerDbm.toFixed(1)} dBm)`;
+      if (distanceValEl) distanceValEl.textContent = distanceM >= 1000 ? `${(distanceM / 1000).toFixed(2)} km` : `${Math.round(distanceM)} m`;
+      if (angleValEl) angleValEl.textContent = angleDeg === 0 ? "0° (Perfectly Parallel)" : angleDeg === 90 ? "90° (Orthogonal Null)" : `${angleDeg}° Mismatched`;
+
+      if (rssiValEl) rssiValEl.textContent = `${rssiDbm} dBm`;
+      if (sensValEl) sensValEl.textContent = `${sensitivityDbm} dBm`;
+      if (marginValEl) {
+        marginValEl.textContent = marginDb >= 0 ? `+${marginDb} dB` : `${marginDb} dB`;
+        marginValEl.style.color = marginDb > 10 ? "#15803d" : marginDb > 0 ? "#b45309" : "#b91c1c";
+      }
+
+      if (lqValEl) {
+        lqValEl.textContent = `${lqPct}%`;
+        lqValEl.style.color = lqPct > 80 ? "#15803d" : lqPct > 40 ? "#b45309" : "#b91c1c";
+      }
+
+      if (diagnosisEl) {
+        if (lqPct === 0) {
+          diagnosisEl.textContent = "FAILSAFE ACTIVATED: RSSI dropped below receiver sensitivity! Autopilot initiates automatic Return-to-Launch (RTL).";
+          diagnosisEl.style.color = "#991b1b";
+        } else if (angleDeg >= 80 && polLoss > 18) {
+          diagnosisEl.textContent = `CROSS-POLARIZATION WARNING: 90° antenna mismatch causes -${polLoss.toFixed(1)} dB attenuation! Always maintain dual 90° diversity antennas on aircraft.`;
+          diagnosisEl.style.color = "#92400e";
+        } else if (marginDb < 10) {
+          diagnosisEl.textContent = `LOW LINK MARGIN: Signal is within +${marginDb} dB of sensitivity limit. Increase transmitter power or climb above terrain obstructions.`;
+          diagnosisEl.style.color = "#92400e";
+        } else {
+          diagnosisEl.textContent = `OPTIMAL RF LINK: 100% LQ. Received signal is +${marginDb} dB above sensitivity floor. Safe for autonomous operations.`;
+          diagnosisEl.style.color = "#15803d";
+        }
+      }
+
+      return { freqMHz, powerDbm, sensitivityDbm, fspl, polLoss, rssiDbm, marginDb, lqPct, angleDeg, distanceM };
+    };
+
+    [protocolSelect, rateSelect, powerSlider, distanceSlider, angleSlider].forEach(el => {
+      if (el) el.addEventListener('input', calculateLink);
+    });
+
+    // Canvas render loop
+    const render = () => {
+      const w = canvas.width = canvas.parentElement.clientWidth;
+      const h = canvas.height = 360;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = "#e4e4e7";
+      ctx.strokeRect(0, 0, w, h);
+
+      packetPulseTime += 0.05;
+      const data = calculateLink();
+
+      // Transmitter position (Left)
+      const txX = 90;
+      const txY = h / 2;
+
+      // Drone receiver position (Right)
+      const rxX = w - 100;
+      const rxY = h / 2;
+
+      // 1. Draw Transmitter Dipole Antenna & Toroidal Pattern (Donut slice)
+      ctx.save();
+      ctx.translate(txX, txY);
+
+      // Antenna Wire (Vertical)
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 4;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(0, -45);
+      ctx.lineTo(0, 45);
+      ctx.stroke();
+
+      // Toroidal Donut Radiation Lobes
+      ctx.fillStyle = "rgba(2, 132, 199, 0.12)";
+      ctx.strokeStyle = "#0284c7";
+      ctx.lineWidth = 1.5;
+
+      // Right lobe
+      ctx.beginPath();
+      ctx.ellipse(35, 0, 40, 28, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Left lobe
+      ctx.beginPath();
+      ctx.ellipse(-35, 0, 40, 28, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Axial Null indicators (Tip of wire)
+      ctx.fillStyle = "#dc2626";
+      ctx.font = "bold 10px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("▲ Tip Null", 0, -52);
+      ctx.fillText("▼ Tip Null", 0, 60);
+
+      ctx.restore();
+
+      // 2. Draw Radio Transmitter Box Icon
+      ctx.fillStyle = "#27272a";
+      ctx.beginPath();
+      ctx.roundRect(txX - 22, txY - 14, 44, 28, 4);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 9px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("TX Radio", txX, txY + 4);
+
+      // 3. Draw Drone & Receiver Antenna (With Polarization Angle)
+      ctx.save();
+      ctx.translate(rxX, rxY);
+
+      // Mini Drone Body
+      ctx.fillStyle = "#09090b";
+      ctx.beginPath();
+      ctx.roundRect(-16, -16, 32, 32, 6);
+      ctx.fill();
+
+      // Mini arms
+      ctx.strokeStyle = "#52525b";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-24, -24); ctx.lineTo(24, 24);
+      ctx.moveTo(24, -24); ctx.lineTo(-24, 24);
+      ctx.stroke();
+
+      // Drone Receiver Antenna (Rotated by angleDeg)
+      ctx.rotate((data.angleDeg * Math.PI) / 180);
+      ctx.strokeStyle = data.angleDeg >= 75 ? "#dc2626" : "#16a34a";
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(0, -32);
+      ctx.lineTo(0, 32);
+      ctx.stroke();
+
+      // Tip markers
+      ctx.fillStyle = data.angleDeg >= 75 ? "#dc2626" : "#16a34a";
+      ctx.beginPath();
+      ctx.arc(0, -32, 3, 0, Math.PI * 2);
+      ctx.arc(0, 32, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // Drone text tag
+      ctx.fillStyle = "#09090b";
+      ctx.font = "bold 11px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(`Drone RX (${data.angleDeg}° Tilt)`, rxX, rxY + 42);
+
+      // 4. Draw Radio Frequency Propagation Beam
+      const linkColor = data.lqPct > 70 ? "#16a34a" : data.lqPct > 0 ? "#d97706" : "#dc2626";
+      ctx.strokeStyle = linkColor;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 6]);
+      ctx.beginPath();
+      ctx.moveTo(txX + 45, txY);
+      ctx.lineTo(rxX - 25, rxY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Traveling RF Packet Pulses
+      const pulseCount = 4;
+      const rayLen = (rxX - 25) - (txX + 45);
+      for (let p = 0; p < pulseCount; p++) {
+        let pulseOffset = ((packetPulseTime + (p / pulseCount)) % 1);
+        let px = (txX + 45) + (pulseOffset * rayLen);
+        ctx.fillStyle = linkColor;
+        ctx.beginPath();
+        ctx.arc(px, txY, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Legend & Math Notes
+      ctx.fillStyle = "#27272a";
+      ctx.font = "12px system-ui";
+      ctx.textAlign = "left";
+      ctx.fillText(`Path Loss (FSPL): -${data.fspl.toFixed(1)} dB • Polarization Loss: -${data.polLoss.toFixed(1)} dB`, 24, 28);
+      ctx.fillText(`Link Margin: ${data.marginDb >= 0 ? '+' : ''}${data.marginDb} dB (Floor: ${data.sensitivityDbm} dBm)`, 24, 48);
+
+      requestAnimationFrame(render);
+    };
+
+    render();
   }
 }
 

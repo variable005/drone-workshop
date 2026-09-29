@@ -232,18 +232,19 @@ const SLIDES_DATA = {
       {
         id: "d2_s4",
         day: 2,
-        topic: "Radio Communication",
-        title: "Radio Control Links: Transmitters, Receivers & Protocols",
+        topic: "RF Systems & Antennas",
+        title: "RF Links: LoRa Modulation, ExpressLRS, Antennas & Gimbals",
         bullets: [
-          "Transmitter (Radio): Handheld control with dual gimbals (Mode 2 standard: Left = Throttle/Yaw, Right = Pitch/Roll).",
-          "Receiver (RX): Mounted on the drone to decode radio commands and feed them to the flight controller.",
-          "Digital Protocols: Serial communications like CRSF (Crossfire / ELRS) and SBUS replace old slow analog PPM.",
-          "Latency & Refresh Rate: Modern links update at 250Hz–500Hz with under 5 milliseconds latency.",
-          "Channel Mapping (AETR): Ch1=Aileron/Roll, Ch2=Elevator/Pitch, Ch3=Throttle, Ch4=Rudder/Yaw."
+          "Transmitter Gimbals: Magnetic Hall-Effect sensors deliver 12-bit (4096-step) contactless precision with zero mechanical wear.",
+          "Frequency Bands: 2.4 GHz (ultra-low latency, up to 1000Hz packet rate, ~31.2mm quarter-wave antenna) vs. Sub-GHz 915 MHz (superior foliage penetration and >40km long-range).",
+          "LoRa Modulation: ExpressLRS uses Chirp Spread Spectrum to decode signals down to -128 dBm, operating successfully below the ambient thermal noise floor.",
+          "CRSF vs. SBUS: Crossfire serial runs at 420k/921k baud over full-duplex UART with bidirectional telemetry, replacing legacy 100k inverted SBUS.",
+          "Antenna Physics: Dipole antennas radiate in a torus (donut) pattern with axial nulls off the tips. 90° cross-polarization misalignment causes >20 dB signal attenuation (99% power loss!)."
         ],
         image: "https://images.unsplash.com/photo-1521405924368-64c5b84bec60?auto=format&fit=crop&w=1000&q=80",
         imageCaption: "Handheld digital radio transmitter with dual multi-axis gimbals.",
-        takeaway: "Always configure your radio failsafe before touching motor settings."
+        takeaway: "Always maintain dual 90° diversity antennas on the aircraft, and never aim the tip of your transmitter antenna at the drone.",
+        simulationRef: "sim-rf-link"
       },
       {
         id: "d2_s5",
@@ -354,18 +355,19 @@ const SLIDES_DATA = {
       {
         id: "d3_s1",
         day: 3,
-        topic: "Flight Controller Brain",
-        title: "The Flight Controller (FC) Architecture",
+        topic: "Silicon Architecture",
+        title: "Flight Controller Silicon: MCUs, SPI Buses, DMA & DShot",
         bullets: [
-          "Microcontroller (MCU): High-speed ARM Cortex processor (STM32 F4, F7, or H7) running at 100MHz–480MHz.",
-          "Task: Reads onboard sensors up to 8,000 times per second (8kHz loop), computes error, and updates motor speeds.",
-          "UART Serial Ports: Dedicated hardware communication channels for Receiver, GPS, Telemetry, and OSD.",
-          "5V & 9V Regulators: Onboard circuits stepping down high battery voltage to power delicate chips and cameras.",
-          "Blackbox Flash Memory: High-speed SPI flash recording sensor data for post-flight tuning analysis."
+          "MCU Hierarchy: STM32F405 (168MHz M4, external inverter needed for SBUS) vs. F722 (216MHz M7, internal hardware inverters) vs. H743 (480MHz M7, double-precision FPU).",
+          "Bus Speeds: High-speed SPI (10MHz–20MHz) dedicated to primary IMU gyros (ICM-42688-P/BMI270) vs. slow I2C (400kHz) reserved strictly for Barometer and Compass.",
+          "Hardware DMA Timers: Direct Memory Access (DMA) streams 16-bit DShot frames directly from SRAM to ESC signal lines without CPU cycle interruption.",
+          "Bidirectional DShot (BiDir): Inverts signal line between pulses to stream real-time motor e-RPM back to the FC over the single motor wire.",
+          "RPM Notch Filtering: Autopilot dynamically shifts multiple harmonic notch filters to eradicate motor noise at the source, allowing crisp PID response without motor heat."
         ],
         image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80",
         imageCaption: "ARM Cortex microcontroller and IMU sensor cluster on a modern flight board.",
-        takeaway: "The flight controller acts as the central brain, executing real-time stabilization algorithms."
+        takeaway: "Hardware DMA and high-speed SPI buses ensure deterministic sub-millisecond PID loop execution.",
+        simulationRef: "sim-sensor-fusion"
       },
       {
         id: "d3_s2",
