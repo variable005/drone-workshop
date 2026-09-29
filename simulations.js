@@ -2037,7 +2037,11 @@ class DroneSimulations {
       ctx.strokeStyle = "#18181b";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(antBaseX - 6, antTipY, 12, antBaseY - antTipY, [4, 4, 0, 0]);
+      if (ctx.roundRect) {
+        ctx.roundRect(antBaseX - 6, antTipY, 12, antBaseY - antTipY, 4);
+      } else {
+        ctx.rect(antBaseX - 6, antTipY, 12, antBaseY - antTipY);
+      }
       ctx.fill();
       ctx.stroke();
 
