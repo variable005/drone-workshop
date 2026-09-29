@@ -461,7 +461,7 @@ class DroneSimulations {
 
     const drawGraph = (currentV) => {
       const w = canvas.width = canvas.parentElement.clientWidth;
-      const h = canvas.height = 220;
+      const h = canvas.height = 340;
 
       ctx.clearRect(0, 0, w, h);
       ctx.fillStyle = "#ffffff";
@@ -470,13 +470,163 @@ class DroneSimulations {
       ctx.strokeStyle = "#e2e8f0";
       ctx.strokeRect(0, 0, w, h);
 
-      // Plot voltage discharge curve
-      const padL = 40, padR = 20, padT = 20, padB = 30;
+      // -----------------------------------------------------------------------
+      // 1. VISUAL PHYSICAL LIPO BATTERY PACK (Top Section)
+      // -----------------------------------------------------------------------
+      const padL = 40, padR = 20;
       const plotW = w - padL - padR;
+
+      const batX = padL;
+      const batY = 16;
+      const batW = Math.min(plotW - 85, 460);
+      const batH = 82;
+      const isDamaged = currentV < 3.20;
+
+      // Outer Battery Shrink-wrap Casing
+      ctx.fillStyle = isDamaged ? "#fef2f2" : "#f8fafc";
+      ctx.strokeStyle = isDamaged ? "#dc2626" : "#0f172a";
+      ctx.lineWidth = 2;
+
+      if (isDamaged) {
+        // Puffed / Swelled Battery Pack (bulging Bezier curves)
+        ctx.beginPath();
+        ctx.moveTo(batX, batY + 12);
+        ctx.bezierCurveTo(batX + batW * 0.5, batY - 14, batX + batW * 0.5, batY - 14, batX + batW, batY + 12);
+        ctx.bezierCurveTo(batX + batW + 16, batY + batH * 0.5, batX + batW + 16, batY + batH * 0.5, batX + batW, batY + batH - 12);
+        ctx.bezierCurveTo(batX + batW * 0.5, batY + batH + 14, batX + batW * 0.5, batY + batH + 14, batX, batY + batH - 12);
+        ctx.bezierCurveTo(batX - 16, batY + batH * 0.5, batX - 16, batY + batH * 0.5, batX, batY + 12);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#dc2626";
+        ctx.font = "bold 9.5px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("⚠️ HAZARD: PUFFED / DAMAGED PACK (GAS GENERATION - DISCARD)", batX + batW / 2, batY + 14);
+      } else {
+        // Standard Crisp Rectangular LiPo Pouch
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(batX, batY, batW, batH, 6);
+        else ctx.rect(batX, batY, batW, batH);
+        ctx.fill();
+        ctx.stroke();
+
+        // Technical Header Strip
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(batX, batY, batW, 16);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(`${cells}S ${(currentV * cells).toFixed(1)}V 1500mAh 100C LITHIUM POLYMER PACK`, batX + batW / 2, batY + 11);
+      }
+
+      // Individual Battery Cells Layout
+      const cellMargin = 6;
+      const cellAreaW = batW - (cellMargin * 2);
+      const singleCellW = (cellAreaW - ((cells - 1) * 4)) / cells;
+      const cellH = isDamaged ? 46 : 52;
+      const cellY = isDamaged ? batY + 22 : batY + 22;
+
+      const chargePct = Math.max(0, Math.min(100, ((currentV - 3.20) / (4.20 - 3.20)) * 100));
+      let cellColor = "#16a34a"; // Green (Full)
+      if (currentV < 3.50) cellColor = "#dc2626"; // Critical Red
+      else if (currentV < 3.75) cellColor = "#d97706"; // Amber Low
+      else if (currentV <= 3.90) cellColor = "#0284c7"; // Blue Storage
+
+      for (let c = 0; c < cells; c++) {
+        const cx = batX + cellMargin + (c * (singleCellW + 4));
+
+        // Cell Pouch Outline
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = isDamaged ? "#dc2626" : "#64748b";
+        ctx.lineWidth = 1.2;
+        ctx.fillRect(cx, cellY, singleCellW, cellH);
+        ctx.strokeRect(cx, cellY, singleCellW, cellH);
+
+        // Cell Liquid Fuel Fill Bar
+        const fillHeight = (chargePct / 100) * (cellH - 4);
+        ctx.fillStyle = cellColor;
+        ctx.fillRect(cx + 2, cellY + cellH - 2 - fillHeight, singleCellW - 4, fillHeight);
+
+        // Cell Voltage & Number Tag
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(`C${c + 1}`, cx + singleCellW / 2, cellY + 14);
+
+        ctx.font = "bold 8.5px monospace";
+        ctx.fillText(`${currentV.toFixed(2)}V`, cx + singleCellW / 2, cellY + cellH - 6);
+      }
+
+      // Main High-Current Power Leads (12AWG Red & Black)
+      const wireStartX = batX + batW;
+      const wireStartY = batY + 36;
+
+      ctx.strokeStyle = "#dc2626"; // Red wire (+)
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(wireStartX, wireStartY - 8);
+      ctx.lineTo(wireStartX + 30, wireStartY - 8);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#18181b"; // Black wire (-)
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(wireStartX, wireStartY + 8);
+      ctx.lineTo(wireStartX + 30, wireStartY + 8);
+      ctx.stroke();
+
+      // Yellow XT60 Connector
+      const xt60X = wireStartX + 30;
+      const xt60Y = wireStartY - 14;
+      ctx.fillStyle = "#eab308"; // XT60 Yellow
+      ctx.strokeStyle = "#ca8a04";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(xt60X, xt60Y, 26, 28, 4);
+      else ctx.rect(xt60X, xt60Y, 26, 28);
+      ctx.fill();
+      ctx.stroke();
+
+      // XT60 Socket Pins
+      ctx.fillStyle = "#713f12";
+      ctx.beginPath();
+      ctx.arc(xt60X + 8, xt60Y + 8, 3, 0, Math.PI * 2);
+      ctx.arc(xt60X + 8, xt60Y + 20, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 7px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("XT60", xt60X + 18, xt60Y + 16);
+
+      // Multi-Conductor JST-XH Balance Cable
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(wireStartX, batY + 62);
+      ctx.lineTo(wireStartX + 20, batY + 62);
+      ctx.stroke();
+
+      // White JST-XH Balance Plug
+      const jstX = wireStartX + 20;
+      const jstY = batY + 54;
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#64748b";
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(jstX, jstY, 18, 16);
+      ctx.fillRect(jstX, jstY, 18, 16);
+      ctx.fillStyle = "#64748b";
+      ctx.font = "bold 6.5px monospace";
+      ctx.fillText("JST", jstX + 9, jstY + 11);
+
+      // -----------------------------------------------------------------------
+      // 2. VOLTAGE DISCHARGE CURVE (Bottom Section)
+      // -----------------------------------------------------------------------
+      const padT = 125, padB = 26;
       const plotH = h - padT - padB;
 
       // Safe zones background
-      // 3.85V storage line
       const vToY = (v) => padT + (4.30 - v) / (4.30 - 3.00) * plotH;
       const pctToX = (p) => padL + (p / 100) * plotW;
 
@@ -485,7 +635,7 @@ class DroneSimulations {
       ctx.fillStyle = "#fef2f2";
       ctx.fillRect(padL, y33, plotW, padT + plotH - y33);
 
-      // Storage line
+      // Storage line (3.85V)
       const yStore = vToY(3.85);
       ctx.strokeStyle = "#cbd5e1";
       ctx.setLineDash([4, 4]);
@@ -497,15 +647,15 @@ class DroneSimulations {
 
       ctx.fillStyle = "#64748b";
       ctx.font = "10px sans-serif";
+      ctx.textAlign = "left";
       ctx.fillText("Storage 3.85V", padL + 6, yStore - 4);
       ctx.fillText("Cutoff 3.50V", padL + 6, vToY(3.50) - 4);
 
-      // Curve
+      // Discharge Curve Path
       ctx.strokeStyle = "#0f172a";
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       for (let p = 0; p <= 100; p++) {
-        // Curve formula from full to empty
         let v = 3.20 + (p / 100) * 0.90 + Math.pow(p / 100, 4) * 0.10;
         let x = pctToX(p);
         let y = vToY(v);
@@ -526,7 +676,7 @@ class DroneSimulations {
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      // Labels
+      // Axis Labels
       ctx.fillStyle = "#334155";
       ctx.font = "11px system-ui";
       ctx.textAlign = "right";
@@ -1525,12 +1675,18 @@ class DroneSimulations {
     const sliderPitch = document.getElementById('ctrl-pitch');
     const sliderRoll = document.getElementById('ctrl-roll');
     const sliderS1 = document.getElementById('ctrl-s1');
+    const sliderTxBat = document.getElementById('ctrl-tx-bat');
 
     const valThrottle = document.getElementById('ctrl-throttle-val');
     const valYaw = document.getElementById('ctrl-yaw-val');
     const valPitch = document.getElementById('ctrl-pitch-val');
     const valRoll = document.getElementById('ctrl-roll-val');
     const valS1 = document.getElementById('ctrl-s1-val');
+    const valTxBat = document.getElementById('ctrl-tx-bat-val');
+
+    const btnTxBatFull = document.getElementById('tx-bat-btn-full');
+    const btnTxBatNom = document.getElementById('tx-bat-btn-nom');
+    const btnTxBatLow = document.getElementById('tx-bat-btn-low');
 
     // Switch state
     let sa = 0; // 0 = Disarm (1000us), 1 = Arm (2000us)
@@ -1538,6 +1694,7 @@ class DroneSimulations {
     let sc = 0; // 0 = Normal (1000us), 1 = Pos Hold (1500us), 2 = GPS RTH (2000us)
     let sd = 0; // 0 = Silent (1000us), 1 = Beep Alarm (2000us)
     let s1 = 1500; // Analog dial S1
+    let txBattery = 8.2; // 6.4V to 8.4V (2S Li-Ion 18650)
     let throttle = 1000;
     let yaw = 1500;
     let pitch = 1500;
@@ -1568,6 +1725,11 @@ class DroneSimulations {
     // Update Status Readout
     const updateDiagnostics = () => {
       if (!statusEl) return;
+      if (txBattery < 7.0) {
+        statusEl.textContent = `WARNING: TX BATTERY LOW (${txBattery.toFixed(1)}V < 7.0V CUTOFF) • CONNECT USB-C CHARGER IMMEDIATELY BEFORE FLYING!`;
+        statusEl.style.color = "#dc2626";
+        return;
+      }
       if (sa === 1 && !armingBlocked) {
         statusEl.textContent = `SYSTEM ARMED [MOTORS LIVE] • THROTTLE AT ${Math.round((throttle - 1000) / 10)}% (${throttle}µs) • DANGER: PROPELLERS WILL SPIN`;
         statusEl.style.color = "#dc2626";
@@ -1576,7 +1738,7 @@ class DroneSimulations {
         statusEl.style.color = "#b91c1c";
       } else {
         if (throttle === 1000) {
-          statusEl.textContent = "STATUS: SAFE [DISARMED] • THROTTLE AT ZERO (1000µs) • READY TO ARM ON SWITCH SA";
+          statusEl.textContent = `STATUS: SAFE [DISARMED] • TX BATTERY: ${txBattery.toFixed(1)}V • THROTTLE AT ZERO (1000µs) • READY TO ARM ON SWITCH SA`;
           statusEl.style.color = "#166534";
         } else {
           statusEl.textContent = `STATUS: SAFE [DISARMED] • THROTTLE AT ${throttle}µs • MUST LOWER TO ZERO (1000µs) TO ARM SAFELY`;
@@ -1675,6 +1837,17 @@ class DroneSimulations {
       if (sliderS1) sliderS1.value = s1;
       if (valS1) valS1.textContent = `${s1} µs (${Math.round((s1 - 1000) / 10)}%)`;
 
+      // Transmitter Battery UI
+      if (sliderTxBat) sliderTxBat.value = txBattery;
+      const txPct = Math.max(0, Math.min(100, Math.round(((txBattery - 6.4) / (8.4 - 6.4)) * 100)));
+      if (valTxBat) {
+        valTxBat.textContent = `${txBattery.toFixed(1)} V (${txPct}%)`;
+        valTxBat.style.color = txBattery > 7.4 ? "#166534" : (txBattery >= 7.0 ? "#d97706" : "#dc2626");
+      }
+      if (btnTxBatFull) btnTxBatFull.classList.toggle('active', txBattery >= 8.3);
+      if (btnTxBatNom) btnTxBatNom.classList.toggle('active', txBattery >= 7.3 && txBattery <= 7.5);
+      if (btnTxBatLow) btnTxBatLow.classList.toggle('active', txBattery <= 6.9);
+
       updateDiagnostics();
     };
 
@@ -1761,6 +1934,17 @@ class DroneSimulations {
         updateUI();
       });
     }
+
+    if (sliderTxBat) {
+      sliderTxBat.addEventListener('input', (e) => {
+        txBattery = parseFloat(e.target.value);
+        updateUI();
+      });
+    }
+
+    if (btnTxBatFull) btnTxBatFull.addEventListener('click', () => { txBattery = 8.4; updateUI(); });
+    if (btnTxBatNom) btnTxBatNom.addEventListener('click', () => { txBattery = 7.4; updateUI(); });
+    if (btnTxBatLow) btnTxBatLow.addEventListener('click', () => { txBattery = 6.8; updateUI(); });
 
     // Direct Canvas Mouse / Drag Interaction
     const getCanvasMousePos = (e) => {
@@ -2114,26 +2298,135 @@ class DroneSimulations {
         ctx.stroke();
       }
 
-      // Lanyard Neck Strap Eyelet
-      ctx.strokeStyle = "#18181b";
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(cx - 14, cy + 120, 28, 14);
-      ctx.beginPath();
-      ctx.arc(cx, cy + 127, 4, 0, Math.PI * 2);
-      ctx.stroke();
-
       // Power Button ⏻
       ctx.strokeStyle = "#18181b";
       ctx.fillStyle = (sa === 1 && !armingBlocked) ? "#fef2f2" : "#f4f4f5";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(cx, cy + 85, 12, 0, Math.PI * 2);
+      ctx.arc(cx, cy + 74, 10, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = (sa === 1 && !armingBlocked) ? "#dc2626" : "#18181b";
-      ctx.font = "bold 12px sans-serif";
+      ctx.font = "bold 11px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("⏻", cx, cy + 89);
+      ctx.fillText("⏻", cx, cy + 78);
+
+      // -----------------------------------------------------------------------
+      // TRANSMITTER BATTERY BAY (2S 18650 Li-Ion Cutaway Schematic)
+      // -----------------------------------------------------------------------
+      const bayX = cx - 85;
+      const bayY = cy + 92;
+      const bayW = 170;
+      const bayH = 50;
+
+      // Dashed Cutaway Perimeter
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(bayX, bayY, bayW, bayH);
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 7.5px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("BATTERY COMPARTMENT: 2S 18650 LI-ION", cx, bayY + 10);
+
+      // Cell 1 (Left 18650 Cylindrical Cell)
+      const c1X = bayX + 8;
+      const c1Y = bayY + 16;
+      const cellW = 72;
+      const cellH = 26;
+
+      ctx.fillStyle = "#f4f4f5";
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(c1X, c1Y, cellW, cellH);
+      ctx.strokeRect(c1X, c1Y, cellW, cellH);
+
+      // Positive nipple terminal on left
+      ctx.fillStyle = "#18181b";
+      ctx.fillRect(c1X - 3, c1Y + 7, 3, 12);
+
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 8px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("[+] 18650 3.7V [-]", c1X + cellW / 2, c1Y + 16);
+
+      // Cell 2 (Right 18650 Cylindrical Cell)
+      const c2X = bayX + 90;
+      const c2Y = bayY + 16;
+
+      ctx.fillStyle = "#f4f4f5";
+      ctx.fillRect(c2X, c2Y, cellW, cellH);
+      ctx.strokeRect(c2X, c2Y, cellW, cellH);
+
+      // Positive nipple terminal on right
+      ctx.fillStyle = "#18181b";
+      ctx.fillRect(c2X + cellW, c2Y + 7, 3, 12);
+
+      ctx.fillStyle = "#18181b";
+      ctx.fillText("[-] 18650 3.7V [+]", c2X + cellW / 2, c2Y + 16);
+
+      // Series Bus Wire (connecting Cell 1 right to Cell 2 left)
+      ctx.strokeStyle = "#71717a";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(c1X + cellW, c1Y + 13);
+      ctx.lineTo(c2X, c2Y + 13);
+      ctx.stroke();
+
+      // Power Leads (Red + and Black -) routed to 2-pin JST-XH connector
+      ctx.strokeStyle = "#dc2626"; // Red wire
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(c1X - 3, c1Y + 13);
+      ctx.lineTo(c1X - 6, c1Y + 13);
+      ctx.lineTo(c1X - 6, bayY - 6);
+      ctx.lineTo(cx - 8, bayY - 6);
+      ctx.stroke();
+
+      ctx.strokeStyle = "#18181b"; // Black wire
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(c2X + cellW + 3, c2Y + 13);
+      ctx.lineTo(c2X + cellW + 6, c2Y + 13);
+      ctx.lineTo(c2X + cellW + 6, bayY - 6);
+      ctx.lineTo(cx + 8, bayY - 6);
+      ctx.stroke();
+
+      // 2-Pin JST-XH Socket on Motherboard
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(cx - 12, bayY - 10, 24, 8);
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 6px monospace";
+      ctx.fillText("JST-XH", cx, bayY - 4);
+
+      // Leader line pointing to battery specs on bottom-left
+      ctx.strokeStyle = "#71717a";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(bayX, bayY + 28);
+      ctx.lineTo(cx - 280, bayY + 28);
+      ctx.lineTo(cx - 280, bayY + 54);
+      ctx.stroke();
+
+      ctx.fillStyle = "#09090b";
+      ctx.font = "bold 9.5px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("[BAT] 2S Li-Ion 18650 TRAY", 36, bayY + 50);
+      ctx.font = "8.5px monospace";
+      ctx.fillStyle = txBattery < 7.0 ? "#dc2626" : "#166534";
+      ctx.fillText(`POWER: ${txBattery.toFixed(1)}V (${Math.round(((txBattery - 6.4) / 2.0) * 100)}%) // JST-XH`, 36, bayY + 62);
+
+      // Lanyard Neck Strap Eyelet
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx - 14, cy + 148, 28, 12);
+      ctx.beginPath();
+      ctx.arc(cx, cy + 154, 3.5, 0, Math.PI * 2);
+      ctx.stroke();
 
       // 7. Gimbals (Mode 2 Architecture)
       const drawGimbal = (gx, gy, stickX, stickY, label1, label2, isLeft) => {
@@ -2417,8 +2710,34 @@ class DroneSimulations {
       ctx.textAlign = "center";
       ctx.fillText("CRSF 250Hz  100%LQ", cx, scr.y + 14);
 
-      ctx.font = "8px monospace";
-      ctx.fillText("BAT 8.2V  RSSI -68", cx, scr.y + 27);
+      // Prominent LCD Battery Gauge & Readout
+      const batX = cx - 46;
+      const batY = scr.y + 20;
+      const batW = 22;
+      const batH = 9;
+
+      // Battery Outline & Nipple
+      ctx.strokeStyle = txBattery < 7.0 ? "#dc2626" : "#18181b";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(batX, batY, batW, batH);
+      ctx.fillStyle = txBattery < 7.0 ? "#dc2626" : "#18181b";
+      ctx.fillRect(batX + batW, batY + 2, 2, 5);
+
+      // Battery Segments Fill
+      const bars = txBattery >= 8.2 ? 4 : (txBattery >= 7.6 ? 3 : (txBattery >= 7.1 ? 2 : 1));
+      const segW = (batW - 5) / 4;
+      for (let s = 0; s < bars; s++) {
+        ctx.fillStyle = txBattery < 7.0 ? "#dc2626" : "#18181b";
+        ctx.fillRect(batX + 1.5 + (s * (segW + 1)), batY + 1.5, segW, batH - 3);
+      }
+
+      ctx.fillStyle = txBattery < 7.0 ? "#dc2626" : "#18181b";
+      ctx.font = "bold 8px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(`${txBattery.toFixed(1)}V`, batX + batW + 5, batY + 7.5);
+
+      ctx.textAlign = "right";
+      ctx.fillText("RSSI -68", cx + 46, batY + 7.5);
 
       const flightModeText = sb === 0 ? "MODE: ANGLE" : (sb === 1 ? "MODE: HORIZON" : "MODE: ACRO");
       ctx.fillText(flightModeText, cx, scr.y + 40);

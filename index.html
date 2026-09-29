@@ -311,9 +311,9 @@
             </div>
             <div class="hour-media">
               <div class="media-frame">
-                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80" alt="Electronics circuit board">
+                <img src="https://images.unsplash.com/photo-1609743522653-52354461eb27?auto=format&fit=crop&w=1000&q=80" alt="High-discharge rechargeable lithium battery cells">
               </div>
-              <div class="media-caption">High-power MOSFET circuits and electrical management components.</div>
+              <div class="media-caption">High-discharge multi-cell lithium battery chemistry with dedicated power leads.</div>
               <div class="sim-launch-card">
                 <p>Launch the interactive LiPo discharge curve visualizer:</p>
                 <button class="btn-secondary" data-open-sim="sim-lipo-monitor">Open LiPo Monitor</button>
@@ -1311,6 +1311,20 @@
                     </div>
                     <input type="range" class="control-slider" id="ctrl-s1" min="1000" max="2000" step="10" value="1500">
                   </div>
+
+                  <!-- Transmitter Internal Battery (2S Li-Ion) -->
+                  <div class="control-group" style="border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                    <div class="control-label">
+                      <span>TX Battery [2S 18650 Li-Ion Bay]</span>
+                      <span id="ctrl-tx-bat-val" style="font-family: var(--font-mono); font-weight: 700; color: #166534;">8.2 V (85%)</span>
+                    </div>
+                    <input type="range" class="control-slider" id="ctrl-tx-bat" min="6.4" max="8.4" step="0.1" value="8.2">
+                    <div class="switch-toggle-row" style="margin-top: 4px;">
+                      <button class="switch-btn" id="tx-bat-btn-full" type="button">Full (8.4V)</button>
+                      <button class="switch-btn active" id="tx-bat-btn-nom" type="button">Nominal (7.4V)</button>
+                      <button class="switch-btn" id="tx-bat-btn-low" type="button">Low Alarm (6.8V)</button>
+                    </div>
+                  </div>
                 </div>
 
                 <!-- Live Channel Output Monitor -->
@@ -1420,6 +1434,15 @@
                   <div class="glossary-desc">
                     <strong>Rotary Potentiometers:</strong> S1 &amp; S2 provide smooth analog 1000–2000µs control for motorized FPV camera tilt, VTX transmission power selection, or dynamic PID profile switching.<br>
                     <strong>High-Speed Telemetry:</strong> CRSF and ELRS stream bi-directional telemetry back to the controller's LCD at up to 1000Hz (battery voltage, current draw, GPS satellites, and Link Quality LQ).
+                  </div>
+                </div>
+
+                <div class="glossary-card">
+                  <div class="glossary-term">Transmitter Power Architecture: 2S 18650 Li-Ion Battery Bay</div>
+                  <div class="glossary-desc">
+                    <strong>Chemistry:</strong> Dual cylindrical 18650 or 21700 Lithium-Ion cells connected in series (2S1P).<br>
+                    <strong>Voltage Scale:</strong> 8.4V Fully Charged (4.20V/cell) • 7.4V Nominal Operating (3.70V/cell) • 6.8V Low Battery Acoustic Alarm • 6.4V Critical Shutdown.<br>
+                    <strong>Connection &amp; Charging:</strong> Internal 2-pin JST-XH power harness feeding onboard buck-boost regulator and USB-C 2A Fast Charge circuit. Delivers 8+ hours of continuous flight operation.
                   </div>
                 </div>
               </div>
