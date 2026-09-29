@@ -18,6 +18,7 @@ class DroneSimulations {
     this.initWaypointMissionSim();
     this.initTroubleshootingSim();
     this.initRfLinkSim();
+    this.initRadioBlueprintSim();
   }
 
   initEventListeners() {
@@ -1498,6 +1499,940 @@ class DroneSimulations {
       ctx.textAlign = "left";
       ctx.fillText(`Path Loss (FSPL): -${data.fspl.toFixed(1)} dB • Polarization Loss: -${data.polLoss.toFixed(1)} dB`, 24, 28);
       ctx.fillText(`Link Margin: ${data.marginDb >= 0 ? '+' : ''}${data.marginDb} dB (Floor: ${data.sensitivityDbm} dBm)`, 24, 48);
+
+      requestAnimationFrame(render);
+    };
+
+    render();
+  }
+
+  // =========================================================================
+  // 10. RADIO CONTROLLER BLUEPRINT & SWITCH MATRIX SIMULATOR
+  // =========================================================================
+  initRadioBlueprintSim() {
+    const canvas = document.getElementById('canvas-radio-blueprint');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const statusEl = document.getElementById('radio-blueprint-status');
+    const saReadout = document.getElementById('sa-readout');
+    const sbReadout = document.getElementById('sb-readout');
+    const scReadout = document.getElementById('sc-readout');
+    const sdReadout = document.getElementById('sd-readout');
+
+    const sliderThrottle = document.getElementById('ctrl-throttle');
+    const sliderYaw = document.getElementById('ctrl-yaw');
+    const sliderPitch = document.getElementById('ctrl-pitch');
+    const sliderRoll = document.getElementById('ctrl-roll');
+    const sliderS1 = document.getElementById('ctrl-s1');
+
+    const valThrottle = document.getElementById('ctrl-throttle-val');
+    const valYaw = document.getElementById('ctrl-yaw-val');
+    const valPitch = document.getElementById('ctrl-pitch-val');
+    const valRoll = document.getElementById('ctrl-roll-val');
+    const valS1 = document.getElementById('ctrl-s1-val');
+
+    // Switch state
+    let sa = 0; // 0 = Disarm (1000us), 1 = Arm (2000us)
+    let sb = 0; // 0 = Angle (1000us), 1 = Horizon (1500us), 2 = Acro (2000us)
+    let sc = 0; // 0 = Normal (1000us), 1 = Pos Hold (1500us), 2 = GPS RTH (2000us)
+    let sd = 0; // 0 = Silent (1000us), 1 = Beep Alarm (2000us)
+    let s1 = 1500; // Analog dial S1
+    let throttle = 1000;
+    let yaw = 1500;
+    let pitch = 1500;
+    let roll = 1500;
+
+    let armingBlocked = false;
+    let isDraggingLeftStick = false;
+    let isDraggingRightStick = false;
+    let wavePulse = 0;
+
+    // Geometric coordinates on 800x620 canvas
+    const cx = 400;
+    const cy = 340;
+
+    const coords = {
+      antenna: { x: cx, y: cy - 165, tipY: cy - 275 },
+      sa: { x: cx - 165, y: cy - 145, r: 24 },
+      sb: { x: cx - 95, y: cy - 130, r: 22 },
+      sc: { x: cx + 95, y: cy - 130, r: 22 },
+      sd: { x: cx + 165, y: cy - 145, r: 24 },
+      s1: { x: cx - 42, y: cy - 150, r: 16 },
+      s2: { x: cx + 42, y: cy - 150, r: 16 },
+      leftGimbal: { x: cx - 120, y: cy + 30, r: 52 },
+      rightGimbal: { x: cx + 120, y: cy + 30, r: 52 },
+      screen: { x: cx - 56, y: cy - 15, w: 112, h: 78 }
+    };
+
+    // Update Status Readout
+    const updateDiagnostics = () => {
+      if (!statusEl) return;
+      if (sa === 1 && !armingBlocked) {
+        statusEl.textContent = `SYSTEM ARMED [MOTORS LIVE] • THROTTLE AT ${Math.round((throttle - 1000) / 10)}% (${throttle}µs) • DANGER: PROPELLERS WILL SPIN`;
+        statusEl.style.color = "#dc2626";
+      } else if (armingBlocked) {
+        statusEl.textContent = `ARMING PREVENTED: THROTTLE IS AT ${throttle}µs (>1050µs SAFETY LIMIT). Pull throttle stick all the way down to 1000µs before arming.`;
+        statusEl.style.color = "#b91c1c";
+      } else {
+        if (throttle === 1000) {
+          statusEl.textContent = "STATUS: SAFE [DISARMED] • THROTTLE AT ZERO (1000µs) • READY TO ARM ON SWITCH SA";
+          statusEl.style.color = "#166534";
+        } else {
+          statusEl.textContent = `STATUS: SAFE [DISARMED] • THROTTLE AT ${throttle}µs • MUST LOWER TO ZERO (1000µs) TO ARM SAFELY`;
+          statusEl.style.color = "#92400e";
+        }
+      }
+    };
+
+    // Update UI controls and live Channel Monitor
+    const updateUI = () => {
+      // Channel Values
+      const ch1 = roll;
+      const ch2 = pitch;
+      const ch3 = throttle;
+      const ch4 = yaw;
+      const ch5 = (sa === 1 && !armingBlocked) ? 2000 : 1000;
+      const ch6 = sb === 0 ? 1000 : (sb === 1 ? 1500 : 2000);
+      const ch7 = sc === 0 ? 1000 : (sc === 1 ? 1500 : 2000);
+      const ch8 = sd === 1 ? 2000 : 1000;
+
+      const channels = [
+        { id: 'ch1', val: ch1 },
+        { id: 'ch2', val: ch2 },
+        { id: 'ch3', val: ch3 },
+        { id: 'ch4', val: ch4 },
+        { id: 'ch5', val: ch5 },
+        { id: 'ch6', val: ch6 },
+        { id: 'ch7', val: ch7 },
+        { id: 'ch8', val: ch8 }
+      ];
+
+      channels.forEach(ch => {
+        const bar = document.getElementById(`bar-${ch.id}`);
+        const valSpan = document.getElementById(`val-${ch.id}`);
+        if (bar) {
+          const pct = Math.max(0, Math.min(100, ((ch.val - 1000) / 1000) * 100));
+          bar.style.width = `${pct}%`;
+          if (ch.id === 'ch5') {
+            bar.style.backgroundColor = ch.val === 2000 ? "#dc2626" : "#18181b";
+          }
+        }
+        if (valSpan) {
+          valSpan.textContent = `${ch.val} µs`;
+        }
+      });
+
+      // Switch SA buttons
+      document.querySelectorAll('#sa-toggle-row .switch-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.getAttribute('data-pos'), 10) === sa);
+      });
+      if (saReadout) {
+        saReadout.textContent = sa === 0 ? "DISARM (1000µs)" : (armingBlocked ? "REFUSED (>1050µs)" : "ARM MOTORS (2000µs)");
+        saReadout.style.color = (sa === 1 && !armingBlocked) ? "#dc2626" : "var(--text-primary)";
+      }
+
+      // Switch SB buttons
+      document.querySelectorAll('#sb-toggle-row .switch-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.getAttribute('data-pos'), 10) === sb);
+      });
+      if (sbReadout) {
+        const modes = ["ANGLE (1000µs)", "HORIZON (1500µs)", "ACRO (2000µs)"];
+        sbReadout.textContent = modes[sb];
+      }
+
+      // Switch SC buttons
+      document.querySelectorAll('#sc-toggle-row .switch-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.getAttribute('data-pos'), 10) === sc);
+      });
+      if (scReadout) {
+        const rescue = ["NORMAL (1000µs)", "POS HOLD (1500µs)", "GPS RTH (2000µs)"];
+        scReadout.textContent = rescue[sc];
+      }
+
+      // Switch SD buttons
+      document.querySelectorAll('#sd-toggle-row .switch-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.getAttribute('data-pos'), 10) === sd);
+      });
+      if (sdReadout) {
+        sdReadout.textContent = sd === 0 ? "SILENT (1000µs)" : "BEEP ALARM (2000µs)";
+        sdReadout.style.color = sd === 1 ? "#dc2626" : "var(--text-primary)";
+      }
+
+      // Sliders & Readouts
+      if (sliderThrottle) sliderThrottle.value = throttle;
+      if (valThrottle) valThrottle.textContent = `${throttle} µs (${Math.round((throttle - 1000) / 10)}%)`;
+
+      if (sliderYaw) sliderYaw.value = yaw;
+      if (valYaw) valYaw.textContent = `${yaw} µs ${yaw === 1500 ? '(Center)' : (yaw < 1500 ? '(Left)' : '(Right)')}`;
+
+      if (sliderPitch) sliderPitch.value = pitch;
+      if (valPitch) valPitch.textContent = `${pitch} µs ${pitch === 1500 ? '(Center)' : (pitch < 1500 ? '(Down)' : '(Up)')}`;
+
+      if (sliderRoll) sliderRoll.value = roll;
+      if (valRoll) valRoll.textContent = `${roll} µs ${roll === 1500 ? '(Center)' : (roll < 1500 ? '(Left)' : '(Right)')}`;
+
+      if (sliderS1) sliderS1.value = s1;
+      if (valS1) valS1.textContent = `${s1} µs (${Math.round((s1 - 1000) / 10)}%)`;
+
+      updateDiagnostics();
+    };
+
+    // Toggle switch SA logic with Betaflight safety interlock
+    const toggleSA = (targetPos) => {
+      if (targetPos === 1) {
+        if (throttle > 1050) {
+          sa = 0;
+          armingBlocked = true;
+        } else {
+          sa = 1;
+          armingBlocked = false;
+        }
+      } else {
+        sa = 0;
+        armingBlocked = false;
+      }
+      updateUI();
+    };
+
+    // Switch DOM Button Listeners
+    document.querySelectorAll('#sa-toggle-row .switch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        toggleSA(parseInt(e.currentTarget.getAttribute('data-pos'), 10));
+      });
+    });
+
+    document.querySelectorAll('#sb-toggle-row .switch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        sb = parseInt(e.currentTarget.getAttribute('data-pos'), 10);
+        updateUI();
+      });
+    });
+
+    document.querySelectorAll('#sc-toggle-row .switch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        sc = parseInt(e.currentTarget.getAttribute('data-pos'), 10);
+        updateUI();
+      });
+    });
+
+    document.querySelectorAll('#sd-toggle-row .switch-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        sd = parseInt(e.currentTarget.getAttribute('data-pos'), 10);
+        updateUI();
+      });
+    });
+
+    // Slider inputs
+    if (sliderThrottle) {
+      sliderThrottle.addEventListener('input', (e) => {
+        throttle = parseInt(e.target.value, 10);
+        if (armingBlocked && throttle <= 1050) {
+          armingBlocked = false;
+        }
+        updateUI();
+      });
+    }
+
+    if (sliderYaw) {
+      sliderYaw.addEventListener('input', (e) => {
+        yaw = parseInt(e.target.value, 10);
+        updateUI();
+      });
+    }
+
+    if (sliderPitch) {
+      sliderPitch.addEventListener('input', (e) => {
+        pitch = parseInt(e.target.value, 10);
+        updateUI();
+      });
+    }
+
+    if (sliderRoll) {
+      sliderRoll.addEventListener('input', (e) => {
+        roll = parseInt(e.target.value, 10);
+        updateUI();
+      });
+    }
+
+    if (sliderS1) {
+      sliderS1.addEventListener('input', (e) => {
+        s1 = parseInt(e.target.value, 10);
+        updateUI();
+      });
+    }
+
+    // Direct Canvas Mouse / Drag Interaction
+    const getCanvasMousePos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    };
+
+    const dist = (p1, p2) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
+
+    canvas.addEventListener('mousemove', (e) => {
+      const mouse = getCanvasMousePos(e);
+
+      if (isDraggingLeftStick) {
+        // Left Gimbal: Mode 2 Throttle (Y) and Yaw (X)
+        const dx = mouse.x - coords.leftGimbal.x;
+        const dy = mouse.y - coords.leftGimbal.y;
+        const maxRange = 36;
+
+        // Yaw: Left/Right (-36 to +36) -> 1000 to 2000
+        const clampedX = Math.max(-maxRange, Math.min(maxRange, dx));
+        yaw = Math.round(1500 + (clampedX / maxRange) * 500);
+
+        // Throttle: Bottom (clampedY = +36 -> 1000) to Top (clampedY = -36 -> 2000)
+        const clampedY = Math.max(-maxRange, Math.min(maxRange, dy));
+        throttle = Math.round(1500 - (clampedY / maxRange) * 500);
+        if (armingBlocked && throttle <= 1050) {
+          armingBlocked = false;
+        }
+        updateUI();
+        return;
+      }
+
+      if (isDraggingRightStick) {
+        // Right Gimbal: Mode 2 Pitch (Y) and Roll (X)
+        const dx = mouse.x - coords.rightGimbal.x;
+        const dy = mouse.y - coords.rightGimbal.y;
+        const maxRange = 36;
+
+        const clampedX = Math.max(-maxRange, Math.min(maxRange, dx));
+        roll = Math.round(1500 + (clampedX / maxRange) * 500);
+
+        const clampedY = Math.max(-maxRange, Math.min(maxRange, dy));
+        pitch = Math.round(1500 - (clampedY / maxRange) * 500);
+        updateUI();
+        return;
+      }
+
+      // Hover cursor checks
+      if (
+        dist(mouse, coords.sa) <= coords.sa.r ||
+        dist(mouse, coords.sb) <= coords.sb.r ||
+        dist(mouse, coords.sc) <= coords.sc.r ||
+        dist(mouse, coords.sd) <= coords.sd.r ||
+        dist(mouse, coords.s1) <= coords.s1.r
+      ) {
+        canvas.style.cursor = 'pointer';
+      } else if (dist(mouse, coords.leftGimbal) <= coords.leftGimbal.r || dist(mouse, coords.rightGimbal) <= coords.rightGimbal.r) {
+        canvas.style.cursor = 'grab';
+      } else {
+        canvas.style.cursor = 'crosshair';
+      }
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      const mouse = getCanvasMousePos(e);
+
+      // Check Left Gimbal Drag
+      if (dist(mouse, coords.leftGimbal) <= coords.leftGimbal.r) {
+        isDraggingLeftStick = true;
+        canvas.style.cursor = 'grabbing';
+        const dx = mouse.x - coords.leftGimbal.x;
+        const dy = mouse.y - coords.leftGimbal.y;
+        yaw = Math.round(1500 + (Math.max(-36, Math.min(36, dx)) / 36) * 500);
+        throttle = Math.round(1500 - (Math.max(-36, Math.min(36, dy)) / 36) * 500);
+        updateUI();
+        return;
+      }
+
+      // Check Right Gimbal Drag
+      if (dist(mouse, coords.rightGimbal) <= coords.rightGimbal.r) {
+        isDraggingRightStick = true;
+        canvas.style.cursor = 'grabbing';
+        const dx = mouse.x - coords.rightGimbal.x;
+        const dy = mouse.y - coords.rightGimbal.y;
+        roll = Math.round(1500 + (Math.max(-36, Math.min(36, dx)) / 36) * 500);
+        pitch = Math.round(1500 - (Math.max(-36, Math.min(36, dy)) / 36) * 500);
+        updateUI();
+        return;
+      }
+
+      // Click SA (Arm Toggle)
+      if (dist(mouse, coords.sa) <= coords.sa.r) {
+        toggleSA(sa === 0 ? 1 : 0);
+        return;
+      }
+
+      // Click SB (Flight Mode: Cycle 0 -> 1 -> 2 -> 0)
+      if (dist(mouse, coords.sb) <= coords.sb.r) {
+        sb = (sb + 1) % 3;
+        updateUI();
+        return;
+      }
+
+      // Click SC (Rescue: Cycle 0 -> 1 -> 2 -> 0)
+      if (dist(mouse, coords.sc) <= coords.sc.r) {
+        sc = (sc + 1) % 3;
+        updateUI();
+        return;
+      }
+
+      // Click SD (Beeper: Toggle 0 <-> 1)
+      if (dist(mouse, coords.sd) <= coords.sd.r) {
+        sd = sd === 0 ? 1 : 0;
+        updateUI();
+        return;
+      }
+
+      // Click S1 (Cycle tilt 1000 -> 1500 -> 2000)
+      if (dist(mouse, coords.s1) <= coords.s1.r) {
+        s1 = s1 === 1000 ? 1500 : (s1 === 1500 ? 2000 : 1000);
+        updateUI();
+        return;
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDraggingRightStick) {
+        // Mode 2 Right stick springs back to center (1500µs Pitch, 1500µs Roll)
+        pitch = 1500;
+        roll = 1500;
+        isDraggingRightStick = false;
+        canvas.style.cursor = 'grab';
+        updateUI();
+      }
+      if (isDraggingLeftStick) {
+        // Mode 2 Left stick: Yaw springs back to center (1500µs), Throttle stays at current value
+        yaw = 1500;
+        isDraggingLeftStick = false;
+        canvas.style.cursor = 'grab';
+        updateUI();
+      }
+    });
+
+    updateUI();
+
+    // -------------------------------------------------------------------------
+    // CANVAS RENDER LOOP: CAD Blueprint Architecture
+    // -------------------------------------------------------------------------
+    const render = () => {
+      if (this.activeSimId !== 'sim-radio-controller') {
+        requestAnimationFrame(render);
+        return;
+      }
+
+      wavePulse = (wavePulse + 0.04) % (Math.PI * 2);
+
+      const w = canvas.width = 800;
+      const h = canvas.height = 620;
+
+      // 1. Clean Architectural White Background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+
+      // 2. Blueprint Engineering Grid
+      // Fine Hairlines (20px)
+      ctx.strokeStyle = "#f4f4f5";
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 20) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+      }
+      for (let y = 0; y <= h; y += 20) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+      }
+      ctx.stroke();
+
+      // Major Grid Lines (100px)
+      ctx.strokeStyle = "#e4e4e7";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let x = 0; x <= w; x += 100) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+      }
+      for (let y = 0; y <= h; y += 100) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+      }
+      ctx.stroke();
+
+      // 3. Blueprint Border Frame
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(16, 16, w - 32, h - 32);
+      ctx.strokeStyle = "#71717a";
+      ctx.lineWidth = 0.75;
+      ctx.strokeRect(22, 22, w - 44, h - 44);
+
+      // Corner Datum Alignment Crosshairs
+      const drawDatum = (dx, dy) => {
+        ctx.strokeStyle = "#18181b";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(dx - 8, dy); ctx.lineTo(dx + 8, dy);
+        ctx.moveTo(dx, dy - 8); ctx.lineTo(dx, dy + 8);
+        ctx.stroke();
+        ctx.strokeRect(dx - 4, dy - 4, 8, 8);
+      };
+      drawDatum(22, 22);
+      drawDatum(w - 22, 22);
+      drawDatum(22, h - 22);
+      drawDatum(w - 22, h - 22);
+
+      // 4. CAD Technical Title Block (Bottom-Right)
+      const tbX = w - 300;
+      const tbY = h - 94;
+      const tbW = 276;
+      const tbH = 70;
+
+      ctx.fillStyle = "#fafafa";
+      ctx.fillRect(tbX, tbY, tbW, tbH);
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(tbX, tbY, tbW, tbH);
+
+      // Internal dividing lines
+      ctx.beginPath();
+      ctx.moveTo(tbX, tbY + 24); ctx.lineTo(tbX + tbW, tbY + 24);
+      ctx.moveTo(tbX, tbY + 46); ctx.lineTo(tbX + tbW, tbY + 46);
+      ctx.moveTo(tbX + 170, tbY + 24); ctx.lineTo(tbX + 170, tbY + tbH);
+      ctx.stroke();
+
+      // Title Block Text
+      ctx.fillStyle = "#09090b";
+      ctx.font = "bold 10px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("TITLE: RC TRANSMITTER BLUEPRINT (MODE 2)", tbX + 8, tbY + 16);
+
+      ctx.font = "9px monospace";
+      ctx.fillStyle = "#27272a";
+      ctx.fillText("PROTOCOL: CRSF / ELRS 2.4GHz", tbX + 8, tbY + 38);
+      ctx.fillText("STATUS: ACTIVE TELEMETRY", tbX + 8, tbY + 60);
+
+      ctx.fillText("SHEET: TX-01", tbX + 178, tbY + 38);
+      ctx.fillText("SCALE: 1:1 [MM]", tbX + 178, tbY + 60);
+
+      // 5. Radio Antenna & Electromagnetic Wavefronts
+      const antBaseX = coords.antenna.x;
+      const antBaseY = coords.antenna.y;
+      const antTipY = coords.antenna.tipY;
+
+      // Concentric Dashed RF Wavefronts
+      ctx.save();
+      for (let r = 1; r <= 3; r++) {
+        const radius = 25 + (r * 22) + ((Math.sin(wavePulse) + 1) * 3);
+        ctx.strokeStyle = (sa === 1 && !armingBlocked) ? "#dc2626" : "#71717a";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.arc(antBaseX, (antBaseY + antTipY) / 2, radius, -Math.PI * 0.8, -Math.PI * 0.2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Antenna Stalk
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(antBaseX - 6, antTipY, 12, antBaseY - antTipY, [4, 4, 0, 0]);
+      ctx.fill();
+      ctx.stroke();
+
+      // Antenna Tip & Knurled Hinge Nut
+      ctx.fillStyle = "#18181b";
+      ctx.fillRect(antBaseX - 8, antBaseY - 14, 16, 12);
+      ctx.strokeRect(antBaseX - 8, antBaseY - 14, 16, 12);
+
+      // Antenna Dimension Bracket
+      ctx.strokeStyle = "#71717a";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(antBaseX + 18, antTipY); ctx.lineTo(antBaseX + 28, antTipY);
+      ctx.moveTo(antBaseX + 23, antTipY); ctx.lineTo(antBaseX + 23, antBaseY);
+      ctx.moveTo(antBaseX + 18, antBaseY); ctx.lineTo(antBaseX + 28, antBaseY);
+      ctx.stroke();
+
+      ctx.font = "9px monospace";
+      ctx.fillStyle = "#52525b";
+      ctx.textAlign = "left";
+      ctx.fillText("↕ λ/4 = 30.6mm (2.4GHz)", antBaseX + 32, (antTipY + antBaseY) / 2);
+      ctx.fillText("50Ω COAX DIPOLE", antBaseX + 32, ((antTipY + antBaseY) / 2) + 12);
+
+      // 6. Radio Transmitter Ergonomic Body Shell
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 2.5;
+      ctx.fillStyle = "#ffffff";
+
+      ctx.beginPath();
+      // Ergonomic outer contour
+      ctx.moveTo(cx - 190, cy - 165);
+      ctx.lineTo(cx - 35, cy - 165);
+      ctx.lineTo(cx - 20, cy - 150);
+      ctx.lineTo(cx + 20, cy - 150);
+      ctx.lineTo(cx + 35, cy - 165);
+      ctx.lineTo(cx + 190, cy - 165);
+      ctx.arcTo(cx + 225, cy - 165, cx + 225, cy - 120, 24);
+      // Right Grip Flare
+      ctx.lineTo(cx + 225, cy + 90);
+      ctx.arcTo(cx + 230, cy + 165, cx + 180, cy + 165, 20);
+      ctx.lineTo(cx + 60, cy + 165);
+      // Bottom Center Lanyard Recess
+      ctx.lineTo(cx + 40, cy + 150);
+      ctx.lineTo(cx - 40, cy + 150);
+      ctx.lineTo(cx - 60, cy + 165);
+      // Left Grip Flare
+      ctx.lineTo(cx - 180, cy + 165);
+      ctx.arcTo(cx - 230, cy + 165, cx - 225, cy + 90, 20);
+      ctx.lineTo(cx - 225, cy - 120);
+      ctx.arcTo(cx - 225, cy - 165, cx - 190, cy - 165, 24);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Grip Hatching Textures (Left & Right Sides)
+      ctx.strokeStyle = "#d4d4d8";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 7; i++) {
+        const hy = cy - 40 + (i * 18);
+        // Left grip hatching
+        ctx.beginPath();
+        ctx.moveTo(cx - 220, hy);
+        ctx.lineTo(cx - 195, hy + 12);
+        ctx.stroke();
+
+        // Right grip hatching
+        ctx.beginPath();
+        ctx.moveTo(cx + 220, hy);
+        ctx.lineTo(cx + 195, hy + 12);
+        ctx.stroke();
+      }
+
+      // Lanyard Neck Strap Eyelet
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx - 14, cy + 120, 28, 14);
+      ctx.beginPath();
+      ctx.arc(cx, cy + 127, 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Power Button ⏻
+      ctx.strokeStyle = "#18181b";
+      ctx.fillStyle = (sa === 1 && !armingBlocked) ? "#fef2f2" : "#f4f4f5";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy + 85, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = (sa === 1 && !armingBlocked) ? "#dc2626" : "#18181b";
+      ctx.font = "bold 12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("⏻", cx, cy + 89);
+
+      // 7. Gimbals (Mode 2 Architecture)
+      const drawGimbal = (gx, gy, stickX, stickY, label1, label2, isLeft) => {
+        // Outer Gimbal Bezel
+        ctx.strokeStyle = "#18181b";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(gx, gy, 52, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner Recessed Ring
+        ctx.strokeStyle = "#a1a1aa";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(gx, gy, 44, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Crosshairs
+        ctx.strokeStyle = "#e4e4e7";
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(gx - 44, gy); ctx.lineTo(gx + 44, gy);
+        ctx.moveTo(gx, gy - 44); ctx.lineTo(gx, gy + 44);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Angular Degree Ticks
+        ctx.strokeStyle = "#71717a";
+        ctx.lineWidth = 1;
+        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 6) {
+          const x1 = gx + Math.cos(angle) * 44;
+          const y1 = gy + Math.sin(angle) * 44;
+          const x2 = gx + Math.cos(angle) * 49;
+          const y2 = gy + Math.sin(angle) * 49;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+        }
+
+        // Stick Center Post & Knurled Knob
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#18181b";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(stickX, stickY, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Diamond Milled Knurling on Stick Head
+        ctx.strokeStyle = "#52525b";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(stickX, stickY, 8, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(stickX - 8, stickY); ctx.lineTo(stickX + 8, stickY);
+        ctx.moveTo(stickX, stickY - 8); ctx.lineTo(stickX, stickY + 8);
+        ctx.stroke();
+
+        // Mode 2 Technical Labels & Microsecond Box
+        ctx.fillStyle = "#09090b";
+        ctx.font = "bold 9.5px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(label1, gx, gy + 68);
+
+        ctx.font = "8.5px monospace";
+        ctx.fillStyle = "#71717a";
+        ctx.fillText(label2, gx, gy + 80);
+
+        // Digital Trim Rockers (T1-T4)
+        if (isLeft) {
+          // Left: Vertical Trim T3 to the right
+          ctx.strokeRect(gx + 56, gy - 16, 7, 32);
+          ctx.fillText("T3", gx + 60, gy - 20);
+          // Left: Horizontal Trim T4 below
+          ctx.strokeRect(gx - 16, gy + 54, 32, 7);
+        } else {
+          // Right: Vertical Trim T2 to the left
+          ctx.strokeRect(gx - 63, gy - 16, 7, 32);
+          ctx.fillText("T2", gx - 60, gy - 20);
+          // Right: Horizontal Trim T1 below
+          ctx.strokeRect(gx - 16, gy + 54, 32, 7);
+        }
+      };
+
+      // Calculate Left Stick coordinates from Yaw & Throttle
+      const leftStickX = coords.leftGimbal.x + ((yaw - 1500) / 500) * 32;
+      const leftStickY = coords.leftGimbal.y - ((throttle - 1500) / 500) * 32;
+      drawGimbal(coords.leftGimbal.x, coords.leftGimbal.y, leftStickX, leftStickY, "THROTTLE & YAW", "CH3 & CH4 (MODE 2)", true);
+
+      // Calculate Right Stick coordinates from Roll & Pitch
+      const rightStickX = coords.rightGimbal.x + ((roll - 1500) / 500) * 32;
+      const rightStickY = coords.rightGimbal.y - ((pitch - 1500) / 500) * 32;
+      drawGimbal(coords.rightGimbal.x, coords.rightGimbal.y, rightStickX, rightStickY, "PITCH & ROLL", "CH2 & CH1 (SPRING)", false);
+
+      // 8. Toggle Switches (SA, SB, SC, SD)
+      const drawSwitch = (swX, swY, pos, maxPos, label, isArm, isMomentary) => {
+        // Hex Nut Collar
+        ctx.strokeStyle = "#18181b";
+        ctx.fillStyle = "#f4f4f5";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(swX, swY, 11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Switch Pivot Center
+        ctx.fillStyle = "#18181b";
+        ctx.beginPath();
+        ctx.arc(swX, swY, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Toggle Bat Lever (Angle based on position)
+        let leverAngle = -Math.PI / 4; // UP
+        if (maxPos === 2) {
+          leverAngle = pos === 0 ? -Math.PI / 4 : (pos === 1 ? 0 : Math.PI / 4);
+        } else {
+          leverAngle = pos === 0 ? -Math.PI / 4 : Math.PI / 4;
+        }
+
+        const leverLen = 18;
+        const tipX = swX + Math.sin(leverAngle) * leverLen;
+        const tipY = swY + Math.cos(leverAngle) * (pos === 0 ? -leverLen : leverLen);
+
+        ctx.strokeStyle = isArm && pos === 1 ? "#dc2626" : "#18181b";
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(swX, swY);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+
+        // Bat Handle Cap
+        ctx.fillStyle = isArm && pos === 1 ? "#dc2626" : "#18181b";
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Switch Badge
+        ctx.fillStyle = "#18181b";
+        ctx.font = "bold 11px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(label, swX, swY - 16);
+      };
+
+      // SA (Top-Left Shoulder, 2-Pos Arm)
+      drawSwitch(coords.sa.x, coords.sa.y, sa, 1, "SA", true, false);
+
+      // SA Leader Line & Annotation
+      ctx.strokeStyle = "#71717a";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(coords.sa.x - 14, coords.sa.y);
+      ctx.lineTo(cx - 280, coords.sa.y);
+      ctx.lineTo(cx - 280, coords.sa.y - 28);
+      ctx.stroke();
+
+      ctx.fillStyle = "#09090b";
+      ctx.font = "bold 9.5px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("[SA] 2-POS SAFETY ARM", 36, coords.sa.y - 32);
+      ctx.font = "8.5px monospace";
+      ctx.fillStyle = sa === 1 ? "#dc2626" : "#166534";
+      ctx.fillText(sa === 1 ? "CH5: 2000µs (ARMED)" : "CH5: 1000µs (SAFE DISARM)", 36, coords.sa.y - 20);
+
+      // SB (Left Face, 3-Pos Mode)
+      drawSwitch(coords.sb.x, coords.sb.y, sb, 2, "SB", false, false);
+
+      // SB Leader Line
+      ctx.strokeStyle = "#71717a";
+      ctx.beginPath();
+      ctx.moveTo(coords.sb.x, coords.sb.y - 12);
+      ctx.lineTo(coords.sb.x, cy - 195);
+      ctx.lineTo(cx - 180, cy - 195);
+      ctx.stroke();
+
+      ctx.fillStyle = "#09090b";
+      ctx.font = "bold 9.5px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("[SB] 3-POS FLIGHT MODE", 36, cy - 198);
+      ctx.font = "8.5px monospace";
+      ctx.fillStyle = "#71717a";
+      const modeStr = sb === 0 ? "ANGLE (1000µs)" : (sb === 1 ? "HORIZON (1500µs)" : "ACRO (2000µs)");
+      ctx.fillText(`CH6: ${modeStr}`, 36, cy - 186);
+
+      // SC (Right Face, 3-Pos Rescue)
+      drawSwitch(coords.sc.x, coords.sc.y, sc, 2, "SC", false, false);
+
+      // SC Leader Line
+      ctx.strokeStyle = "#71717a";
+      ctx.beginPath();
+      ctx.moveTo(coords.sc.x, coords.sc.y - 12);
+      ctx.lineTo(coords.sc.x, cy - 195);
+      ctx.lineTo(cx + 180, cy - 195);
+      ctx.stroke();
+
+      ctx.fillStyle = "#09090b";
+      ctx.font = "bold 9.5px monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("[SC] 3-POS GPS RESCUE", w - 36, cy - 198);
+      ctx.font = "8.5px monospace";
+      ctx.fillStyle = "#71717a";
+      const scStr = sc === 0 ? "NORMAL (1000µs)" : (sc === 1 ? "POS HOLD (1500µs)" : "GPS RTH (2000µs)");
+      ctx.fillText(`CH7: ${scStr}`, w - 36, cy - 186);
+
+      // SD (Top-Right Shoulder, 2-Pos Momentary)
+      drawSwitch(coords.sd.x, coords.sd.y, sd, 1, "SD", false, true);
+
+      // SD Leader Line
+      ctx.strokeStyle = "#71717a";
+      ctx.beginPath();
+      ctx.moveTo(coords.sd.x + 14, coords.sd.y);
+      ctx.lineTo(cx + 280, coords.sd.y);
+      ctx.lineTo(cx + 280, coords.sd.y - 28);
+      ctx.stroke();
+
+      ctx.fillStyle = "#09090b";
+      ctx.font = "bold 9.5px monospace";
+      ctx.textAlign = "right";
+      ctx.fillText("[SD] 2-POS MOMENTARY ⟲", w - 36, coords.sd.y - 32);
+      ctx.font = "8.5px monospace";
+      ctx.fillStyle = sd === 1 ? "#dc2626" : "#71717a";
+      ctx.fillText(sd === 1 ? "CH8: 2000µs (BEEP ALARM)" : "CH8: 1000µs (SILENT)", w - 36, coords.sd.y - 20);
+
+      // S1 & S2 Analog Rotary Dials
+      const drawPot = (px, py, val, label) => {
+        ctx.strokeStyle = "#18181b";
+        ctx.fillStyle = "#f4f4f5";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(px, py, 13, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Degree ticks
+        for (let a = -Math.PI * 0.75; a <= Math.PI * 0.75; a += Math.PI / 4) {
+          const x1 = px + Math.cos(a) * 13;
+          const y1 = py + Math.sin(a) * 13;
+          const x2 = px + Math.cos(a) * 16;
+          const y2 = py + Math.sin(a) * 16;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+          ctx.stroke();
+        }
+
+        // Pointer Dot
+        const angle = -Math.PI * 0.75 + ((val - 1000) / 1000) * (Math.PI * 1.5);
+        ctx.fillStyle = "#18181b";
+        ctx.beginPath();
+        ctx.arc(px + Math.cos(angle) * 8, py + Math.sin(angle) * 8, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(label, px, py - 18);
+      };
+
+      drawPot(coords.s1.x, coords.s1.y, s1, "S1");
+      drawPot(coords.s2.x, coords.s2.y, 1500, "S2");
+
+      // 9. Monochrome CAD LCD Screen
+      const scr = coords.screen;
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 2;
+      ctx.fillRect(scr.x, scr.y, scr.w, scr.h);
+      ctx.strokeRect(scr.x, scr.y, scr.w, scr.h);
+
+      // LCD Corner Screws
+      ctx.fillStyle = "#71717a";
+      ctx.beginPath();
+      ctx.arc(scr.x + 4, scr.y + 4, 1.5, 0, Math.PI * 2);
+      ctx.arc(scr.x + scr.w - 4, scr.y + 4, 1.5, 0, Math.PI * 2);
+      ctx.arc(scr.x + 4, scr.y + scr.h - 4, 1.5, 0, Math.PI * 2);
+      ctx.arc(scr.x + scr.w - 4, scr.y + scr.h - 4, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // LCD Content
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 8.5px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("CRSF 250Hz  100%LQ", cx, scr.y + 14);
+
+      ctx.font = "8px monospace";
+      ctx.fillText("BAT 8.2V  RSSI -68", cx, scr.y + 27);
+
+      const flightModeText = sb === 0 ? "MODE: ANGLE" : (sb === 1 ? "MODE: HORIZON" : "MODE: ACRO");
+      ctx.fillText(flightModeText, cx, scr.y + 40);
+
+      // Armed / Disarmed Banner
+      if (sa === 1 && !armingBlocked) {
+        ctx.fillStyle = "#dc2626";
+        ctx.fillRect(scr.x + 6, scr.y + 50, scr.w - 12, 18);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 8.5px monospace";
+        ctx.fillText("ARMED [LIVE]", cx, scr.y + 62);
+      } else {
+        ctx.strokeStyle = "#18181b";
+        ctx.strokeRect(scr.x + 6, scr.y + 50, scr.w - 12, 18);
+        ctx.fillStyle = "#18181b";
+        ctx.font = "bold 8.5px monospace";
+        ctx.fillText("DISARM [SAFE]", cx, scr.y + 62);
+      }
 
       requestAnimationFrame(render);
     };

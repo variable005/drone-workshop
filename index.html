@@ -40,7 +40,7 @@
       <button class="nav-tab-btn" data-tab="tab-day2">Day 2: Assembly & Wiring</button>
       <button class="nav-tab-btn" data-tab="tab-day3">Day 3: Sensors & PID Control</button>
       <button class="nav-tab-btn" data-tab="tab-day4">Day 4: Missions & Safety</button>
-      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (9)</button>
+      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (10)</button>
       <button class="nav-tab-btn" data-tab="tab-slides">Slide Deck Mode</button>
       <button class="nav-tab-btn" data-tab="tab-quizzes">Topic Quizzes (12)</button>
     </nav>
@@ -425,8 +425,9 @@
               </div>
               <div class="media-caption">Hall-sensor digital transmitter with high-gain dipole antenna.</div>
               <div class="sim-launch-card">
-                <p>Simulate antenna radiation patterns, cross-polarization losses, and LoRa link budgets:</p>
-                <button class="btn-secondary" data-open-sim="sim-rf-link">Open RF Link Simulator</button>
+                <p>Explore the full CAD technical schematic and live channel output of all switches & gimbals:</p>
+                <button class="btn-secondary" data-open-sim="sim-radio-controller">Open Controller Blueprint</button>
+                <button class="btn-secondary" style="margin-top: 8px;" data-open-sim="sim-rf-link">Open RF Link Simulator</button>
               </div>
             </div>
           </div>
@@ -764,6 +765,7 @@
           <button class="sim-tab-btn" data-sim-target="sim-waypoint-mission">7. Autonomous Waypoint Planner</button>
           <button class="sim-tab-btn" data-sim-target="sim-troubleshooting">8. Diagnostic Fault Matrix</button>
           <button class="sim-tab-btn" data-sim-target="sim-rf-link">9. RF Link Budget & Antennas</button>
+          <button class="sim-tab-btn" data-sim-target="sim-radio-controller">10. Transmitter Blueprint & Switches</button>
         </aside>
 
         <!-- Viewport -->
@@ -1193,6 +1195,232 @@
             </div>
           </div>
 
+          <!-- 10. RADIO CONTROLLER BLUEPRINT & SWITCH MATRIX -->
+          <div class="sim-panel" id="sim-radio-controller">
+            <div class="sim-panel-header">
+              <h3>Handheld Radio Controller Blueprint &amp; Switch Channel Matrix</h3>
+              <p>Interactive Black &amp; White technical CAD schematic of an OpenTX/EdgeTX digital transmitter (Mode 2). Interact directly with switches, dials, and gimbals on the blueprint to inspect real-time PWM microseconds (1000–2000µs), hardware channel mapping, and safety interlocks.</p>
+            </div>
+            <div class="sim-grid-layout" style="grid-template-columns: 1.35fr 1fr;">
+              <!-- Left Column: Blueprint Canvas Box -->
+              <div class="sim-canvas-box" style="position: relative;">
+                <canvas id="canvas-radio-blueprint" width="800" height="620" style="width: 100%; height: auto; display: block; background: #ffffff; cursor: crosshair;"></canvas>
+                <div class="status-callout" id="radio-blueprint-status" style="margin: 14px; font-weight: 600; font-family: var(--font-mono); font-size: 13px; line-height: 1.5;">
+                  STATUS: SAFE [DISARMED] • THROTTLE AT ZERO (1000µs) • READY TO ARM ON SWITCH SA
+                </div>
+              </div>
+
+              <!-- Right Column: Switch & Gimbal Controls -->
+              <div class="sim-controls-card">
+                <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">Hardware Switch Matrix</h4>
+
+                <!-- SA: Arm Switch -->
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Switch SA [Top-Left Shoulder] — Arming</span>
+                    <span id="sa-readout" style="font-family: var(--font-mono); font-weight: 700;">DISARM (1000µs)</span>
+                  </div>
+                  <div class="switch-toggle-row" id="sa-toggle-row">
+                    <button class="switch-btn active" data-sw="sa" data-pos="0">DISARM (1000µs)</button>
+                    <button class="switch-btn" data-sw="sa" data-pos="1">ARM MOTORS (2000µs)</button>
+                  </div>
+                </div>
+
+                <!-- SB: Flight Mode Switch -->
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Switch SB [Left Face] — Flight Mode</span>
+                    <span id="sb-readout" style="font-family: var(--font-mono); font-weight: 700;">ANGLE (1000µs)</span>
+                  </div>
+                  <div class="switch-toggle-row" id="sb-toggle-row">
+                    <button class="switch-btn active" data-sw="sb" data-pos="0">ANGLE (1000µs)</button>
+                    <button class="switch-btn" data-sw="sb" data-pos="1">HORIZON (1500µs)</button>
+                    <button class="switch-btn" data-sw="sb" data-pos="2">ACRO (2000µs)</button>
+                  </div>
+                </div>
+
+                <!-- SC: GPS Rescue / Turtle Switch -->
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Switch SC [Right Face] — Navigation / Rescue</span>
+                    <span id="sc-readout" style="font-family: var(--font-mono); font-weight: 700;">NORMAL (1000µs)</span>
+                  </div>
+                  <div class="switch-toggle-row" id="sc-toggle-row">
+                    <button class="switch-btn active" data-sw="sc" data-pos="0">NORMAL (1000µs)</button>
+                    <button class="switch-btn" data-sw="sc" data-pos="1">POS HOLD (1500µs)</button>
+                    <button class="switch-btn" data-sw="sc" data-pos="2">GPS RTH (2000µs)</button>
+                  </div>
+                </div>
+
+                <!-- SD: Beeper Switch -->
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Switch SD [Top-Right Shoulder] — Lost Model Beeper</span>
+                    <span id="sd-readout" style="font-family: var(--font-mono); font-weight: 700;">SILENT (1000µs)</span>
+                  </div>
+                  <div class="switch-toggle-row" id="sd-toggle-row">
+                    <button class="switch-btn active" data-sw="sd" data-pos="0">SILENT (1000µs)</button>
+                    <button class="switch-btn" data-sw="sd" data-pos="1">BEEP ALARM (2000µs)</button>
+                  </div>
+                </div>
+
+                <!-- Analog Gimbals (Mode 2) -->
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px; display: flex; flex-direction: column; gap: 10px;">
+                  <h4 style="margin: 0; font-size: 13.5px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">Gimbal Analog Sticks (Mode 2)</h4>
+                  
+                  <div class="control-group">
+                    <div class="control-label">
+                      <span>CH3: Throttle (Left Stick Y)</span>
+                      <span id="ctrl-throttle-val" style="font-family: var(--font-mono);">1000 µs (0%)</span>
+                    </div>
+                    <input type="range" class="control-slider" id="ctrl-throttle" min="1000" max="2000" step="5" value="1000">
+                  </div>
+
+                  <div class="control-group">
+                    <div class="control-label">
+                      <span>CH4: Yaw / Rudder (Left Stick X)</span>
+                      <span id="ctrl-yaw-val" style="font-family: var(--font-mono);">1500 µs (Center)</span>
+                    </div>
+                    <input type="range" class="control-slider" id="ctrl-yaw" min="1000" max="2000" step="5" value="1500">
+                  </div>
+
+                  <div class="control-group">
+                    <div class="control-label">
+                      <span>CH2: Pitch / Elevator (Right Stick Y)</span>
+                      <span id="ctrl-pitch-val" style="font-family: var(--font-mono);">1500 µs (Center)</span>
+                    </div>
+                    <input type="range" class="control-slider" id="ctrl-pitch" min="1000" max="2000" step="5" value="1500">
+                  </div>
+
+                  <div class="control-group">
+                    <div class="control-label">
+                      <span>CH1: Roll / Aileron (Right Stick X)</span>
+                      <span id="ctrl-roll-val" style="font-family: var(--font-mono);">1500 µs (Center)</span>
+                    </div>
+                    <input type="range" class="control-slider" id="ctrl-roll" min="1000" max="2000" step="5" value="1500">
+                  </div>
+
+                  <div class="control-group">
+                    <div class="control-label">
+                      <span>Dial S1: Analog Potentiometer (Camera Tilt)</span>
+                      <span id="ctrl-s1-val" style="font-family: var(--font-mono);">1500 µs (50%)</span>
+                    </div>
+                    <input type="range" class="control-slider" id="ctrl-s1" min="1000" max="2000" step="10" value="1500">
+                  </div>
+                </div>
+
+                <!-- Live Channel Output Monitor -->
+                <div style="border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+                  <h4 style="margin: 0 0 10px 0; font-size: 13.5px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">Live RC Channel Monitor</h4>
+                  <div class="channel-monitor-list">
+                    <div class="channel-row">
+                      <span class="ch-name">CH1 [Roll]</span>
+                      <div class="ch-bar-track"><div class="ch-bar-fill" id="bar-ch1" style="width: 50%;"></div></div>
+                      <span class="ch-val" id="val-ch1">1500 µs</span>
+                    </div>
+                    <div class="channel-row">
+                      <span class="ch-name">CH2 [Pitch]</span>
+                      <div class="ch-bar-track"><div class="ch-bar-fill" id="bar-ch2" style="width: 50%;"></div></div>
+                      <span class="ch-val" id="val-ch2">1500 µs</span>
+                    </div>
+                    <div class="channel-row">
+                      <span class="ch-name">CH3 [Throttle]</span>
+                      <div class="ch-bar-track"><div class="ch-bar-fill" id="bar-ch3" style="width: 0%;"></div></div>
+                      <span class="ch-val" id="val-ch3">1000 µs</span>
+                    </div>
+                    <div class="channel-row">
+                      <span class="ch-name">CH4 [Yaw]</span>
+                      <div class="ch-bar-track"><div class="ch-bar-fill" id="bar-ch4" style="width: 50%;"></div></div>
+                      <span class="ch-val" id="val-ch4">1500 µs</span>
+                    </div>
+                    <div class="channel-row">
+                      <span class="ch-name">CH5 [AUX1: Arm]</span>
+                      <div class="ch-bar-track"><div class="ch-bar-fill" id="bar-ch5" style="width: 0%;"></div></div>
+                      <span class="ch-val" id="val-ch5">1000 µs</span>
+                    </div>
+                    <div class="channel-row">
+                      <span class="ch-name">CH6 [AUX2: Mode]</span>
+                      <div class="ch-bar-track"><div class="ch-bar-fill" id="bar-ch6" style="width: 0%;"></div></div>
+                      <span class="ch-val" id="val-ch6">1000 µs</span>
+                    </div>
+                    <div class="channel-row">
+                      <span class="ch-name">CH7 [AUX3: Rescue]</span>
+                      <div class="ch-bar-track"><div class="ch-bar-fill" id="bar-ch7" style="width: 0%;"></div></div>
+                      <span class="ch-val" id="val-ch7">1000 µs</span>
+                    </div>
+                    <div class="channel-row">
+                      <span class="ch-name">CH8 [AUX4: Beep]</span>
+                      <div class="ch-bar-track"><div class="ch-bar-fill" id="bar-ch8" style="width: 0%;"></div></div>
+                      <span class="ch-val" id="val-ch8">1000 µs</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hardware Specification Cards -->
+            <div style="margin-top: 32px;">
+              <h4 style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary);">Hardware Switch, Gimbal &amp; Channel Specifications</h4>
+              <div class="glossary-grid">
+                <div class="glossary-card">
+                  <div class="glossary-term">Switch SA: Master Arming Safety Interlock</div>
+                  <div class="glossary-desc">
+                    <strong>Type:</strong> 2-Position Short Toggle Switch.<br>
+                    <strong>Channel Assignment:</strong> CH5 (AUX1).<br>
+                    <strong>Microsecond Output:</strong> Position 0 = 1000µs (Disarmed / Motors Safe) • Position 1 = 2000µs (Armed / Motors Active).<br>
+                    <strong>Firmware Logic:</strong> The single most critical switch on any aircraft. Must be flipped to immediately cut motor power in a crash. Betaflight enforces a safety interlock: arming is rejected if throttle is above 1050µs or if gyro calibration is pending.
+                  </div>
+                </div>
+
+                <div class="glossary-card">
+                  <div class="glossary-term">Switch SB: Primary Flight Modes</div>
+                  <div class="glossary-desc">
+                    <strong>Type:</strong> 3-Position Long Toggle Switch.<br>
+                    <strong>Channel Assignment:</strong> CH6 (AUX2).<br>
+                    <strong>Microsecond Output:</strong> Pos 0 (1000µs) = Angle Mode (self-leveling, max 45° tilt) • Pos 1 (1500µs) = Horizon Mode (self-leveling with acrobatic flip capability at full stick) • Pos 2 (2000µs) = Acro / Rate Mode (pure angular rate control, zero self-leveling).<br>
+                    <strong>Firmware Logic:</strong> Allows instant recovery to self-leveling if the pilot loses visual orientation.
+                  </div>
+                </div>
+
+                <div class="glossary-card">
+                  <div class="glossary-term">Switch SC: Navigation &amp; Failsafe Rescue</div>
+                  <div class="glossary-desc">
+                    <strong>Type:</strong> 3-Position Long Toggle Switch.<br>
+                    <strong>Channel Assignment:</strong> CH7 (AUX3).<br>
+                    <strong>Microsecond Output:</strong> Pos 0 (1000µs) = Manual / Normal • Pos 1 (1500µs) = Altitude &amp; Position Hold (Baro + GPS) • Pos 2 (2000µs) = GPS Return-to-Home (RTH) or Turtle Mode (Flip-Over-After-Crash).<br>
+                    <strong>Firmware Logic:</strong> Triggers autonomous climbing to safety altitude and flying back to the home coordinate if video or line-of-sight is lost.
+                  </div>
+                </div>
+
+                <div class="glossary-card">
+                  <div class="glossary-term">Switch SD: Lost-Model Beeper &amp; Blackbox</div>
+                  <div class="glossary-desc">
+                    <strong>Type:</strong> 2-Position Spring-Return Momentary Switch.<br>
+                    <strong>Channel Assignment:</strong> CH8 (AUX4).<br>
+                    <strong>Microsecond Output:</strong> Released = 1000µs (Silent / Inactive) • Pulled = 2000µs (Loud 110dB Piezo Buzzer + ESC Motor Beep active).<br>
+                    <strong>Firmware Logic:</strong> Momentary spring return prevents accidentally draining the battery while flying. Used to locate downed aircraft in tall grass or initiate blackbox flash logging.
+                  </div>
+                </div>
+
+                <div class="glossary-card">
+                  <div class="glossary-term">Mode 2 Gimbals &amp; Digital Trims</div>
+                  <div class="glossary-desc">
+                    <strong>Left Gimbal:</strong> Throttle (CH3, Y-Axis, 1000–2000µs, smooth friction ratchet, stays where placed) + Yaw (CH4, X-Axis, 1500µs spring-centered).<br>
+                    <strong>Right Gimbal:</strong> Pitch (CH2, Y-Axis, 1500µs spring-centered) + Roll (CH1, X-Axis, 1500µs spring-centered).<br>
+                    <strong>Digital Trims (T1–T4):</strong> Used on fixed-wing aircraft to correct aerodynamic drift; kept at exact zero (1500µs) for multirotors to avoid corrupting PID loop integral offsets.
+                  </div>
+                </div>
+
+                <div class="glossary-card">
+                  <div class="glossary-term">Analog Dials (S1/S2) &amp; Digital Telemetry</div>
+                  <div class="glossary-desc">
+                    <strong>Rotary Potentiometers:</strong> S1 &amp; S2 provide smooth analog 1000–2000µs control for motorized FPV camera tilt, VTX transmission power selection, or dynamic PID profile switching.<br>
+                    <strong>High-Speed Telemetry:</strong> CRSF and ELRS stream bi-directional telemetry back to the controller's LCD at up to 1000Hz (battery voltage, current draw, GPS satellites, and Link Quality LQ).
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
