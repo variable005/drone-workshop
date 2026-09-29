@@ -40,7 +40,7 @@
       <button class="nav-tab-btn" data-tab="tab-day2">Day 2: Assembly & Wiring</button>
       <button class="nav-tab-btn" data-tab="tab-day3">Day 3: Sensors & PID Control</button>
       <button class="nav-tab-btn" data-tab="tab-day4">Day 4: Missions & Safety</button>
-      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (12)</button>
+      <button class="nav-tab-btn" data-tab="tab-simulations">Interactive Simulations (13)</button>
       <button class="nav-tab-btn" data-tab="tab-slides">Slide Deck Mode</button>
       <button class="nav-tab-btn" data-tab="tab-quizzes">Topic Quizzes (12)</button>
     </nav>
@@ -464,8 +464,11 @@
               </div>
               <div class="media-caption">Soldering power cables onto high-current circuit distribution boards.</div>
               <div class="sim-launch-card">
-                <p>Test circuits with the interactive Smoke Stopper simulator:</p>
-                <button class="btn-secondary" data-open-sim="sim-wiring-test">Open Wiring Simulator</button>
+                <p>Test ESC 3-phase motor commutation and safe wiring:</p>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  <button class="btn-secondary" data-open-sim="sim-esc-commutation">Open ESC &amp; BLDC Motor Lab</button>
+                  <button class="btn-secondary" data-open-sim="sim-wiring-test">Open Wiring Simulator</button>
+                </div>
               </div>
             </div>
           </div>
@@ -772,6 +775,7 @@
           <button class="sim-tab-btn" data-sim-target="sim-radio-controller">10. Transmitter Blueprint & Switches</button>
           <button class="sim-tab-btn" data-sim-target="sim-gravity-thrust">11. Gravity, Thrust & Altitude Dynamics</button>
           <button class="sim-tab-btn" data-sim-target="sim-prop-aero">12. Propeller Aerodynamics & Ground Effect</button>
+          <button class="sim-tab-btn" data-sim-target="sim-esc-commutation">13. ESC &amp; 3-Phase BLDC Commutation</button>
         </aside>
 
         <!-- Viewport -->
@@ -1733,6 +1737,162 @@
                   <div class="glossary-term">Blade Count: 2-Blade vs. 3-Blade vs. 4-Blade</div>
                   <div class="glossary-desc">
                     <strong>Aerodynamic Trade-Off:</strong> 2-blade props provide the highest pure aerodynamic efficiency because each blade passes through cleaner air. 3-blade props offer superior low-end grip, smoother cornering authority, and compact disc diameter. 4-blade props maximize braking and heavy-lift thrust at the cost of higher electrical load.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 13. ESC & 3-PHASE BLDC MOTOR COMMUTATION LAB -->
+          <div class="sim-panel" id="sim-esc-commutation">
+            <div class="sim-panel-header">
+              <h3>13. Electronic Speed Controller (ESC) &amp; 3-Phase BLDC Commutation Lab</h3>
+              <p>Inspect how an ESC converts DC battery voltage into 3-phase AC power using a 6-MOSFET H-bridge inverter, 6-step trapezoidal commutation, and sensorless Back-EMF zero-crossing position detection.</p>
+            </div>
+            <div class="sim-grid-layout">
+              <div class="sim-canvas-box">
+                <canvas id="canvas-esc-commutation" width="800" height="520"></canvas>
+                <div class="status-callout" id="esc-status" style="margin: 12px;">
+                  ESC Initialized: High-side Q1 (Phase U) and Low-side Q4 (Phase V) conducting. Phase W is floating, generating Back-EMF zero-crossing signal.
+                </div>
+              </div>
+              <div class="sim-controls-card">
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Commutation Run Mode</span>
+                  </div>
+                  <div class="switch-toggle-row">
+                    <button class="switch-btn active" id="esc-mode-auto">Auto-Run (Continuous)</button>
+                    <button class="switch-btn" id="esc-mode-manual">Manual 6-Step Inverter</button>
+                  </div>
+                </div>
+
+                <div class="control-group" id="esc-manual-controls" style="display: none;">
+                  <div class="control-label">
+                    <span>Step Through 6-Step Sequence</span>
+                    <span id="esc-step-display" style="font-family: var(--font-mono); font-weight: 700;">Step 1 / 6</span>
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button class="btn-secondary" id="esc-btn-prev-step">← Previous Step</button>
+                    <button class="btn-secondary" id="esc-btn-next-step">Next Step →</button>
+                  </div>
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Motor Throttle / PWM Duty Cycle</span>
+                    <span id="esc-throttle-val">50% (14,400 RPM)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="esc-throttle-slider" min="0" max="100" value="50">
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Digital / Analog Input Protocol</span>
+                  </div>
+                  <select class="control-select" id="esc-protocol-select">
+                    <option value="dshot600" selected>DShot600 (Digital 600 kbps, 16-bit CRC Packet)</option>
+                    <option value="dshot300">DShot300 (Digital 300 kbps, Robust Long Traces)</option>
+                    <option value="multishot">MultiShot (Analog 5–25 µs Fast Pulse)</option>
+                    <option value="standard_pwm">Standard PWM (Legacy 1000–2000 µs @ 50Hz)</option>
+                  </select>
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>ESC PWM Switching Frequency</span>
+                  </div>
+                  <div class="switch-toggle-row">
+                    <button class="switch-btn active" id="esc-pwm-24k">24 kHz (High Torque)</button>
+                    <button class="switch-btn" id="esc-pwm-48k">48 kHz (High Efficiency)</button>
+                    <button class="switch-btn" id="esc-pwm-96k">96 kHz (Ultra Smooth)</button>
+                  </div>
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Motor Rotation Direction</span>
+                  </div>
+                  <div class="switch-toggle-row">
+                    <button class="switch-btn active" id="esc-dir-cw">Normal (CW)</button>
+                    <button class="switch-btn" id="esc-dir-ccw">Reversed (CCW - Swap 2 Phases)</button>
+                  </div>
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label">
+                    <span>Motor Timing Advance (Betaflight)</span>
+                    <span id="esc-timing-val">15° (Medium-High)</span>
+                  </div>
+                  <input type="range" class="control-slider" id="esc-timing-slider" min="0" max="30" step="1" value="15">
+                </div>
+
+                <div class="control-group">
+                  <div class="control-label"><span>Live Inverter Telemetry</span></div>
+                  <table class="readout-table">
+                    <tr>
+                      <td>Current Sequence Step</td>
+                      <td id="esc-tele-step">Step 1 of 6 (0°–60° Phase)</td>
+                    </tr>
+                    <tr>
+                      <td>Phase States (U / V / W)</td>
+                      <td id="esc-tele-phases">U: HIGH | V: LOW | W: FLOAT</td>
+                    </tr>
+                    <tr>
+                      <td>Conducting MOSFETs</td>
+                      <td id="esc-tele-mosfets">Q1 (High U) &amp; Q4 (Low V)</td>
+                    </tr>
+                    <tr>
+                      <td>Back-EMF Sensing Phase</td>
+                      <td id="esc-tele-bemf">Phase W (Zero-Crossing Active)</td>
+                    </tr>
+                    <tr>
+                      <td>Stator Magnetic Vector (B)</td>
+                      <td id="esc-tele-bvec">90.0° (Leads Rotor by 90°)</td>
+                    </tr>
+                    <tr>
+                      <td>Rotor Mechanical Speed</td>
+                      <td id="esc-tele-rpm">14,400 RPM</td>
+                    </tr>
+                    <tr>
+                      <td>Electrical Frequency</td>
+                      <td id="esc-tele-freq">1,680 Hz</td>
+                    </tr>
+                    <tr>
+                      <td>Active Protocol Frame</td>
+                      <td id="esc-tele-proto">DShot600 • CRC Valid</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Theory Cards -->
+            <div style="margin-top: 32px;">
+              <h4 style="font-size: 16px; margin-bottom: 16px; color: var(--text-primary); font-weight: 700;">ESC &amp; Motor Commutation Architecture</h4>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                <div class="glossary-card">
+                  <div class="glossary-term">The 6-MOSFET 3-Phase Inverter Bridge</div>
+                  <div class="glossary-desc">
+                    <strong>Electronic Commutator:</strong> Brushless motors eliminate physical mechanical carbon brushes. The ESC acts as a solid-state 3-phase inverter using 6 high-speed N-channel MOSFETs ($Q_1$–$Q_6$) arranged in three half-bridge legs. By switching pairs of MOSFETs ON and OFF thousands of times per second, it converts flat DC battery voltage into rotating 3-phase alternating stator magnetic fields.
+                  </div>
+                </div>
+                <div class="glossary-card">
+                  <div class="glossary-term">6-Step Trapezoidal Commutation (120°)</div>
+                  <div class="glossary-desc">
+                    <strong>Two Energized, One Floating:</strong> At any microsecond, exactly two phase wires carry current: one connected to $+V_{\text{BAT}}$ via a high-side MOSFET, and one connected to Ground via a low-side MOSFET. The third phase is left completely floating (disconnected) to serve as a passive sensor antenna detecting the rotor's permanent magnet positions.
+                  </div>
+                </div>
+                <div class="glossary-card">
+                  <div class="glossary-term">Sensorless Back-EMF Zero-Crossing Detection</div>
+                  <div class="glossary-desc">
+                    <strong>Position Sensing Without Hall Sensors:</strong> As the rotor's permanent neodymium magnets spin past the floating unpowered copper coil, they induce a voltage (Back-Electromotive Force). When this voltage crosses the virtual neutral point ($0\text{V}$ midpoint), the ESC comparator knows the rotor is exactly $30^\circ$ away from the next commutation point, scheduling the next MOSFET firing.
+                  </div>
+                </div>
+                <div class="glossary-card">
+                  <div class="glossary-term">DShot Digital Protocol vs. Legacy Analog PWM</div>
+                  <div class="glossary-desc">
+                    <strong>Digital Noise Immunity:</strong> Analog PWM (1000–2000µs) suffers from electrical ground loop noise and requires manual throttle calibration. Modern DShot transmits digital 16-bit serial frames directly from STM32 timer DMA at 600,000 baud ($600\text{ kbps}$) with an embedded 4-bit CRC checksum. Corrupted packets are rejected, eliminating motor stutter.
                   </div>
                 </div>
               </div>

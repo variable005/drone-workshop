@@ -21,6 +21,7 @@ class DroneSimulations {
     this.initRadioBlueprintSim();
     this.initGravityThrustSim();
     this.initPropAeroSim();
+    this.initEscCommutationSim();
   }
 
   initEventListeners() {
@@ -4174,6 +4175,804 @@ class DroneSimulations {
       ctx.fillText(`4x Quad:  ${(quadThrustGf / 1000).toFixed(2)} kgf`, barX, machY + 136);
       ctx.fillText(`Power:    ${powerWatts.toFixed(0)} W / motor`, barX, machY + 152);
       ctx.fillText(`Downwash: ${exitVelKmh.toFixed(0)} km/h`, barX, machY + 168);
+
+      requestAnimationFrame(render);
+    };
+
+    requestAnimationFrame(render);
+  }
+
+  // =========================================================================
+  // 13. ESC & 3-PHASE BLDC MOTOR COMMUTATION LAB
+  // =========================================================================
+  initEscCommutationSim() {
+    const canvas = document.getElementById('canvas-esc-commutation');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const modeAutoBtn = document.getElementById('esc-mode-auto');
+    const modeManualBtn = document.getElementById('esc-mode-manual');
+    const manualControls = document.getElementById('esc-manual-controls');
+    const stepDisplay = document.getElementById('esc-step-display');
+    const btnPrevStep = document.getElementById('esc-btn-prev-step');
+    const btnNextStep = document.getElementById('esc-btn-next-step');
+
+    const throttleSlider = document.getElementById('esc-throttle-slider');
+    const throttleVal = document.getElementById('esc-throttle-val');
+    const protocolSelect = document.getElementById('esc-protocol-select');
+    const btnPwm24k = document.getElementById('esc-pwm-24k');
+    const btnPwm48k = document.getElementById('esc-pwm-48k');
+    const btnPwm96k = document.getElementById('esc-pwm-96k');
+    const btnDirCw = document.getElementById('esc-dir-cw');
+    const btnDirCcw = document.getElementById('esc-dir-ccw');
+    const timingSlider = document.getElementById('esc-timing-slider');
+    const timingVal = document.getElementById('esc-timing-val');
+
+    const teleStep = document.getElementById('esc-tele-step');
+    const telePhases = document.getElementById('esc-tele-phases');
+    const teleMosfets = document.getElementById('esc-tele-mosfets');
+    const teleBemf = document.getElementById('esc-tele-bemf');
+    const teleBvec = document.getElementById('esc-tele-bvec');
+    const teleRpm = document.getElementById('esc-tele-rpm');
+    const teleFreq = document.getElementById('esc-tele-freq');
+    const teleProto = document.getElementById('esc-tele-proto');
+    const statusEl = document.getElementById('esc-status');
+
+    // 6-Step Trapezoidal Commutation Table
+    const commutationSteps = [
+      {
+        step: 1,
+        angleRange: '0°–60°',
+        u: 'HIGH', v: 'LOW', w: 'FLOAT',
+        mosfets: 'Q1 (High U) & Q4 (Low V)',
+        activeGates: { q1: true, q2: false, q3: false, q4: true, q5: false, q6: false },
+        floatingPhase: 'Phase W',
+        bemfPolarity: 'Falling (0V Crossing)',
+        bAngle: 90, // electrical degrees
+        desc: 'Phase U connected to +VBAT via Q1. Phase V connected to GND via Q4. Phase W floating for Back-EMF sensing.'
+      },
+      {
+        step: 2,
+        angleRange: '60°–120°',
+        u: 'HIGH', v: 'FLOAT', w: 'LOW',
+        mosfets: 'Q1 (High U) & Q6 (Low W)',
+        activeGates: { q1: true, q2: false, q3: false, q4: false, q5: false, q6: true },
+        floatingPhase: 'Phase V',
+        bemfPolarity: 'Rising (0V Crossing)',
+        bAngle: 150,
+        desc: 'Phase U connected to +VBAT via Q1. Phase W connected to GND via Q6. Phase V floating for Back-EMF sensing.'
+      },
+      {
+        step: 3,
+        angleRange: '120°–180°',
+        u: 'FLOAT', v: 'HIGH', w: 'LOW',
+        mosfets: 'Q3 (High V) & Q6 (Low W)',
+        activeGates: { q1: false, q2: false, q3: true, q4: false, q5: false, q6: true },
+        floatingPhase: 'Phase U',
+        bemfPolarity: 'Falling (0V Crossing)',
+        bAngle: 210,
+        desc: 'Phase V connected to +VBAT via Q3. Phase W connected to GND via Q6. Phase U floating for Back-EMF sensing.'
+      },
+      {
+        step: 4,
+        angleRange: '180°–240°',
+        u: 'LOW', v: 'HIGH', w: 'FLOAT',
+        mosfets: 'Q3 (High V) & Q2 (Low U)',
+        activeGates: { q1: false, q2: true, q3: true, q4: false, q5: false, q6: false },
+        floatingPhase: 'Phase W',
+        bemfPolarity: 'Rising (0V Crossing)',
+        bAngle: 270,
+        desc: 'Phase V connected to +VBAT via Q3. Phase U connected to GND via Q2. Phase W floating for Back-EMF sensing.'
+      },
+      {
+        step: 5,
+        angleRange: '240°–300°',
+        u: 'LOW', v: 'FLOAT', w: 'HIGH',
+        mosfets: 'Q5 (High W) & Q2 (Low U)',
+        activeGates: { q1: false, q2: true, q3: false, q4: false, q5: true, q6: false },
+        floatingPhase: 'Phase V',
+        bemfPolarity: 'Falling (0V Crossing)',
+        bAngle: 330,
+        desc: 'Phase W connected to +VBAT via Q5. Phase U connected to GND via Q2. Phase V floating for Back-EMF sensing.'
+      },
+      {
+        step: 6,
+        angleRange: '300°–360°',
+        u: 'FLOAT', v: 'LOW', w: 'HIGH',
+        mosfets: 'Q5 (High W) & Q4 (Low V)',
+        activeGates: { q1: false, q2: false, q3: false, q4: true, q5: true, q6: false },
+        floatingPhase: 'Phase U',
+        bemfPolarity: 'Rising (0V Crossing)',
+        bAngle: 30,
+        desc: 'Phase W connected to +VBAT via Q5. Phase V connected to GND via Q4. Phase U floating for Back-EMF sensing.'
+      }
+    ];
+
+    let mode = 'auto'; // 'auto' | 'manual'
+    let currentStepIdx = 0;
+    let throttle = 50; // 0 to 100
+    let direction = 1; // 1 = CW, -1 = CCW
+    let pwmFreq = '24k';
+    let protocol = 'dshot600';
+    let timingDeg = 15;
+
+    let rotorAngle = 0; // radians
+    let lastTime = performance.now();
+    let currentFlowParticles = [];
+    for (let i = 0; i < 30; i++) {
+      currentFlowParticles.push({
+        t: Math.random(),
+        speed: 0.8 + Math.random() * 0.4
+      });
+    }
+
+    const updateControlsUI = () => {
+      const rpm = Math.round((throttle / 100.0) * 28800);
+      if (throttleVal) throttleVal.textContent = `${throttle}% (${rpm.toLocaleString()} RPM)`;
+      if (timingVal) timingVal.textContent = `${timingDeg}° (${timingDeg < 10 ? 'Low' : (timingDeg <= 20 ? 'Medium-High' : 'Extreme')})`;
+      if (stepDisplay) stepDisplay.textContent = `Step ${currentStepIdx + 1} / 6 (${commutationSteps[currentStepIdx].angleRange})`;
+    };
+
+    if (modeAutoBtn && modeManualBtn) {
+      modeAutoBtn.addEventListener('click', () => {
+        mode = 'auto';
+        modeAutoBtn.classList.add('active');
+        modeManualBtn.classList.remove('active');
+        if (manualControls) manualControls.style.display = 'none';
+        if (statusEl) statusEl.textContent = 'Auto-Run Mode active: ESC closed-loop commutation spinning motor at speed determined by throttle.';
+      });
+
+      modeManualBtn.addEventListener('click', () => {
+        mode = 'manual';
+        modeManualBtn.classList.add('active');
+        modeAutoBtn.classList.remove('active');
+        if (manualControls) manualControls.style.display = 'flex';
+        updateControlsUI();
+        if (statusEl) statusEl.textContent = 'Manual Inverter Inspection active: Step through the 6-step trapezoidal commutation cycle one-by-one.';
+      });
+    }
+
+    if (btnPrevStep) {
+      btnPrevStep.addEventListener('click', () => {
+        if (mode === 'manual') {
+          currentStepIdx = (currentStepIdx - 1 + 6) % 6;
+          rotorAngle = (currentStepIdx * 60 * Math.PI) / 180.0 / 7.0;
+          updateControlsUI();
+          if (statusEl) statusEl.textContent = commutationSteps[currentStepIdx].desc;
+        }
+      });
+    }
+
+    if (btnNextStep) {
+      btnNextStep.addEventListener('click', () => {
+        if (mode === 'manual') {
+          currentStepIdx = (currentStepIdx + 1) % 6;
+          rotorAngle = (currentStepIdx * 60 * Math.PI) / 180.0 / 7.0;
+          updateControlsUI();
+          if (statusEl) statusEl.textContent = commutationSteps[currentStepIdx].desc;
+        }
+      });
+    }
+
+    if (throttleSlider) {
+      throttleSlider.addEventListener('input', (e) => {
+        throttle = parseInt(e.target.value, 10);
+        updateControlsUI();
+      });
+    }
+
+    if (protocolSelect) {
+      protocolSelect.addEventListener('change', (e) => {
+        protocol = e.target.value;
+        if (statusEl) {
+          const names = {
+            dshot600: 'DShot600 (Digital 600 kbps, 16-bit CRC Packet, zero calibration required)',
+            dshot300: 'DShot300 (Digital 300 kbps, resilient against signal line capacitance)',
+            multishot: 'MultiShot (Ultra-fast analog 5–25 µs pulse width)',
+            standard_pwm: 'Standard PWM (Legacy 1000–2000 µs analog pulse @ 50 Hz)'
+          };
+          statusEl.textContent = `Input protocol set to ${names[protocol]}.`;
+        }
+      });
+    }
+
+    const setPwmFreq = (freq) => {
+      pwmFreq = freq;
+      if (btnPwm24k) btnPwm24k.classList.toggle('active', freq === '24k');
+      if (btnPwm48k) btnPwm48k.classList.toggle('active', freq === '48k');
+      if (btnPwm96k) btnPwm96k.classList.toggle('active', freq === '96k');
+      if (statusEl) {
+        statusEl.textContent = `ESC switching frequency set to ${freq}Hz. ${freq === '24k' ? 'Maximum braking torque.' : (freq === '48k' ? 'Optimal efficiency & battery life.' : 'Ultra-smooth motor sound.')}`;
+      }
+    };
+
+    if (btnPwm24k) btnPwm24k.addEventListener('click', () => setPwmFreq('24k'));
+    if (btnPwm48k) btnPwm48k.addEventListener('click', () => setPwmFreq('48k'));
+    if (btnPwm96k) btnPwm96k.addEventListener('click', () => setPwmFreq('96k'));
+
+    if (btnDirCw && btnDirCcw) {
+      btnDirCw.addEventListener('click', () => {
+        direction = 1;
+        btnDirCw.classList.add('active');
+        btnDirCcw.classList.remove('active');
+        if (statusEl) statusEl.textContent = 'Motor rotation set to Normal (CW). Phase sequence: U → V → W.';
+      });
+      btnDirCcw.addEventListener('click', () => {
+        direction = -1;
+        btnDirCcw.classList.add('active');
+        btnDirCw.classList.remove('active');
+        if (statusEl) statusEl.textContent = 'Motor rotation set to Reversed (CCW). Phase V and W sequence inverted.';
+      });
+    }
+
+    if (timingSlider) {
+      timingSlider.addEventListener('input', (e) => {
+        timingDeg = parseInt(e.target.value, 10);
+        updateControlsUI();
+      });
+    }
+
+    updateControlsUI();
+
+    // Render & Physics Loop
+    const render = (timestamp) => {
+      const dt = Math.min((timestamp - lastTime) / 1000.0, 0.05);
+      lastTime = timestamp;
+
+      // Auto rotation physics
+      const rpm = (throttle / 100.0) * 28800;
+      const polePairs = 7; // standard 14P motor
+      const elecHz = (rpm / 60.0) * polePairs;
+
+      if (mode === 'auto') {
+        if (throttle > 0) {
+          const dTheta = (rpm * 2.0 * Math.PI / 60.0) * dt * direction;
+          rotorAngle += dTheta;
+
+          // Electrical cycle progress
+          const elecDeg = (((rotorAngle * 180.0 / Math.PI * polePairs) % 360) + 360) % 360;
+          let calculatedStep = Math.floor(elecDeg / 60.0) % 6;
+          if (direction === -1) {
+            calculatedStep = (5 - calculatedStep) % 6;
+          }
+          currentStepIdx = calculatedStep;
+        }
+      }
+
+      const activeStep = commutationSteps[currentStepIdx];
+
+      // Update Telemetry Elements
+      if (teleStep) teleStep.textContent = `Step ${activeStep.step} of 6 (${activeStep.angleRange})`;
+      if (telePhases) telePhases.textContent = `U: ${activeStep.u} | V: ${activeStep.v} | W: ${activeStep.w}`;
+      if (teleMosfets) teleMosfets.textContent = activeStep.mosfets;
+      if (teleBemf) teleBemf.textContent = `${activeStep.floatingPhase} (${activeStep.bemfPolarity})`;
+      if (teleBvec) teleBvec.textContent = `${activeStep.bAngle.toFixed(0)}° (Leads Rotor by 90°)`;
+      if (teleRpm) teleRpm.textContent = `${rpm.toFixed(0)} RPM`;
+      if (teleFreq) teleFreq.textContent = `${elecHz.toFixed(0)} Hz (Commutation)`;
+      if (teleProto) {
+        if (protocol.startsWith('dshot')) {
+          const dshotVal = Math.round((throttle / 100.0) * 2047);
+          teleProto.textContent = `${protocol.toUpperCase()} • T:${dshotVal} | CRC: OK`;
+        } else {
+          const usVal = Math.round(1000 + (throttle / 100.0) * 1000);
+          teleProto.textContent = `${protocol.toUpperCase()} • ${usVal} µs Pulse`;
+        }
+      }
+
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // 1. Technical Blueprint Canvas Background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+
+      // Subtle Background Grid
+      ctx.strokeStyle = "#f4f4f5";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 25) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 25) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      // =====================================================================
+      // LEFT SECTION: 6-MOSFET 3-PHASE INVERTER H-BRIDGE
+      // =====================================================================
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 11px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("6-MOSFET 3-PHASE INVERTER CIRCUIT (H-BRIDGE)", 30, 24);
+
+      const vbatY = 48;
+      const gndY = 360;
+      const legX = [95, 205, 315]; // U, V, W leg centerlines
+      const phaseNames = ['PHASE U', 'PHASE V', 'PHASE W'];
+
+      // DC+ Rail (VBAT)
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(40, vbatY);
+      ctx.lineTo(370, vbatY);
+      ctx.stroke();
+
+      ctx.fillStyle = "#dc2626";
+      ctx.font = "bold 9.5px monospace";
+      ctx.fillText("+VBAT (16.8V DC)", 40, vbatY - 8);
+
+      // DC- Rail (GND)
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(40, gndY);
+      ctx.lineTo(370, gndY);
+      ctx.stroke();
+
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 9.5px monospace";
+      ctx.fillText("GND (0.0V DC)", 40, gndY + 16);
+
+      // Draw a MOSFET switch component
+      const drawMosfet = (mx, my, name, isOn, isHighSide) => {
+        const mCol = isOn ? "#16a34a" : "#71717a";
+
+        // Body outline
+        ctx.strokeStyle = mCol;
+        ctx.fillStyle = isOn ? "#f0fdf4" : "#f4f4f5";
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(mx - 18, my - 22, 36, 44);
+        ctx.strokeRect(mx - 18, my - 22, 36, 44);
+
+        // Name
+        ctx.fillStyle = mCol;
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(name, mx, my - 8);
+
+        // State Badge
+        ctx.font = "bold 7.5px monospace";
+        ctx.fillText(isOn ? "ON [PWM]" : "OFF", mx, my + 14);
+
+        // Gate trigger indicator pin (left)
+        ctx.strokeStyle = mCol;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(mx - 18, my);
+        ctx.lineTo(mx - 28, my);
+        ctx.stroke();
+
+        ctx.fillStyle = mCol;
+        ctx.beginPath();
+        ctx.arc(mx - 28, my, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Switch channel line inside
+        ctx.strokeStyle = mCol;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (isOn) {
+          ctx.moveTo(mx + 6, my - 14);
+          ctx.lineTo(mx + 6, my + 14); // Closed contact
+        } else {
+          ctx.moveTo(mx + 6, my - 14);
+          ctx.lineTo(mx + 12, my + 6); // Open contact
+        }
+        ctx.stroke();
+      };
+
+      // Draw 3 Phase Legs
+      const gates = activeStep.activeGates;
+      const mosfetList = [
+        { name: 'Q1 (High U)', isOn: gates.q1, x: legX[0], y: 110, isHigh: true },
+        { name: 'Q2 (Low U)', isOn: gates.q2, x: legX[0], y: 295, isHigh: false },
+        { name: 'Q3 (High V)', isOn: gates.q3, x: legX[1], y: 110, isHigh: true },
+        { name: 'Q4 (Low V)', isOn: gates.q4, x: legX[1], y: 295, isHigh: false },
+        { name: 'Q5 (High W)', isOn: gates.q5, x: legX[2], y: 110, isHigh: true },
+        { name: 'Q6 (Low W)', isOn: gates.q6, x: legX[2], y: 295, isHigh: false }
+      ];
+
+      // Draw vertical bus wires for each leg
+      legX.forEach((lx, i) => {
+        // Wire from +VBAT to High-Side Drain
+        ctx.strokeStyle = "#71717a";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(lx, vbatY);
+        ctx.lineTo(lx, 110 - 22);
+        ctx.stroke();
+
+        // Wire between High-Side Source, Phase node, and Low-Side Drain
+        ctx.beginPath();
+        ctx.moveTo(lx, 110 + 22);
+        ctx.lineTo(lx, 295 - 22);
+        ctx.stroke();
+
+        // Wire from Low-Side Source to GND
+        ctx.beginPath();
+        ctx.moveTo(lx, 295 + 22);
+        ctx.lineTo(lx, gndY);
+        ctx.stroke();
+
+        // Center Phase Terminal Node (Y: 202)
+        const phaseY = 202;
+        ctx.fillStyle = "#18181b";
+        ctx.beginPath();
+        ctx.arc(lx, phaseY, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Phase Terminal Label & wire leading toward motor
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "center";
+        const pState = [activeStep.u, activeStep.v, activeStep.w][i];
+        let pCol = "#71717a";
+        if (pState === 'HIGH') pCol = "#16a34a";
+        else if (pState === 'LOW') pCol = "#dc2626";
+        else pCol = "#0284c7";
+
+        ctx.fillStyle = pCol;
+        ctx.fillText(phaseNames[i], lx, phaseY - 8);
+        ctx.font = "8px monospace";
+        ctx.fillText(`[ ${pState} ]`, lx, phaseY + 14);
+
+        // Lead wire leading right to motor interface
+        ctx.strokeStyle = pCol;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(lx + 4, phaseY);
+        ctx.lineTo(385, phaseY);
+        ctx.stroke();
+
+        // If Floating: Draw Back-EMF Sense Tap
+        if (pState === 'FLOAT') {
+          ctx.strokeStyle = "#0284c7";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(lx, phaseY);
+          ctx.lineTo(lx - 24, phaseY);
+          ctx.lineTo(lx - 24, 250);
+          ctx.stroke();
+
+          // Comparator Triangle
+          ctx.fillStyle = "#f0f9ff";
+          ctx.strokeStyle = "#0284c7";
+          ctx.beginPath();
+          ctx.moveTo(lx - 34, 242);
+          ctx.lineTo(lx - 14, 250);
+          ctx.lineTo(lx - 34, 258);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = "#0284c7";
+          ctx.font = "bold 7px monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("BEMF", lx - 24, 270);
+          ctx.fillText("0V ZERO CROSS", lx - 24, 279);
+        }
+      });
+
+      // Render all 6 MOSFETs
+      mosfetList.forEach(m => {
+        drawMosfet(m.x, m.y, m.name, m.isOn, m.isHigh);
+      });
+
+      // Animated Current Flow Tracers through the Inverter
+      if (throttle > 0 || mode === 'manual') {
+        currentFlowParticles.forEach(p => {
+          p.t = (p.t + 0.015 * p.speed) % 1.0;
+        });
+
+        // Identify high-side conducting leg and low-side conducting leg
+        let highX = null;
+        let lowX = null;
+        if (activeStep.u === 'HIGH') highX = legX[0];
+        else if (activeStep.v === 'HIGH') highX = legX[1];
+        else if (activeStep.w === 'HIGH') highX = legX[2];
+
+        if (activeStep.u === 'LOW') lowX = legX[0];
+        else if (activeStep.v === 'LOW') lowX = legX[1];
+        else if (activeStep.w === 'LOW') lowX = legX[2];
+
+        // Draw flow dots down high-side
+        if (highX !== null) {
+          ctx.fillStyle = "#16a34a";
+          for (let k = 0; k < 3; k++) {
+            const frac = (timestamp * 0.003 + k * 0.33) % 1.0;
+            const py = vbatY + frac * (202 - vbatY);
+            ctx.beginPath();
+            ctx.arc(highX, py, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // Draw flow dots down low-side to GND
+        if (lowX !== null) {
+          ctx.fillStyle = "#dc2626";
+          for (let k = 0; k < 3; k++) {
+            const frac = (timestamp * 0.003 + k * 0.33) % 1.0;
+            const py = 202 + frac * (gndY - 202);
+            ctx.beginPath();
+            ctx.arc(lowX, py, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      // =====================================================================
+      // RIGHT SECTION: BLDC MOTOR STATOR & PERMANENT MAGNET ROTOR
+      // =====================================================================
+      const motorCenterX = 595;
+      const motorCenterY = 195;
+      const statorR = 120;
+      const rotorR = 60;
+
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 11px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("BLDC MOTOR STATOR COILS & PERMANENT MAGNET ROTOR", motorCenterX, 24);
+
+      // Outer Aluminum Stator Ring
+      ctx.strokeStyle = "#52525b";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(motorCenterX, motorCenterY, statorR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Stator Teeth & Coils (6 Teeth at 0°, 60°, 120°, 180°, 240°, 300°)
+      const toothLabels = [
+        { angle: -90, name: 'U+', phase: 'U', pol: 1 },
+        { angle: -30, name: 'W-', phase: 'W', pol: -1 },
+        { angle: 30,  name: 'V+', phase: 'V', pol: 1 },
+        { angle: 90,  name: 'U-', phase: 'U', pol: -1 },
+        { angle: 150, name: 'W+', phase: 'W', pol: 1 },
+        { angle: 210, name: 'V-', phase: 'V', pol: -1 }
+      ];
+
+      toothLabels.forEach(t => {
+        const rad = (t.angle * Math.PI) / 180.0;
+        const tx = motorCenterX + Math.cos(rad) * (statorR - 22);
+        const ty = motorCenterY + Math.sin(rad) * (statorR - 22);
+
+        // Check if phase is energized
+        const pState = activeStep[t.phase.toLowerCase()];
+        let isEnergized = false;
+        let coilFill = "#f4f4f5";
+        let coilStroke = "#a1a1aa";
+        let textCol = "#71717a";
+
+        if (pState === 'HIGH') {
+          isEnergized = true;
+          coilFill = "#dcfce7";
+          coilStroke = "#16a34a";
+          textCol = "#166534";
+        } else if (pState === 'LOW') {
+          isEnergized = true;
+          coilFill = "#fee2e2";
+          coilStroke = "#dc2626";
+          textCol = "#991b1b";
+        } else {
+          // Floating
+          coilFill = "#f0f9ff";
+          coilStroke = "#0284c7";
+          textCol = "#0369a1";
+        }
+
+        // Coil bobbin box
+        ctx.save();
+        ctx.translate(tx, ty);
+        ctx.rotate(rad + Math.PI / 2);
+
+        ctx.fillStyle = coilFill;
+        ctx.strokeStyle = coilStroke;
+        ctx.lineWidth = isEnergized ? 2 : 1;
+        ctx.fillRect(-14, -10, 28, 20);
+        ctx.strokeRect(-14, -10, 28, 20);
+
+        // Coil winding lines
+        ctx.strokeStyle = coilStroke;
+        ctx.lineWidth = 1;
+        for (let l = -8; l <= 8; l += 4) {
+          ctx.beginPath();
+          ctx.moveTo(l, -9);
+          ctx.lineTo(l, 9);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = textCol;
+        ctx.font = "bold 8.5px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(t.name, 0, 3);
+
+        ctx.restore();
+      });
+
+      // Stator Net Magnetic Field Vector (B_stator)
+      const bAngleRad = ((activeStep.bAngle - 90) * Math.PI) / 180.0 * direction;
+      ctx.strokeStyle = "#d97706";
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(motorCenterX, motorCenterY);
+      ctx.lineTo(motorCenterX + Math.cos(bAngleRad) * 75, motorCenterY + Math.sin(bAngleRad) * 75);
+      ctx.stroke();
+
+      // Arrowhead for B vector
+      ctx.fillStyle = "#d97706";
+      const bTipX = motorCenterX + Math.cos(bAngleRad) * 82;
+      const bTipY = motorCenterY + Math.sin(bAngleRad) * 82;
+      ctx.beginPath();
+      ctx.arc(bTipX, bTipY, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#d97706";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText(`B_stator (${activeStep.bAngle}°)`, bTipX + 6, bTipY);
+
+      // Inner Permanent Magnet Rotor Bell
+      ctx.save();
+      ctx.translate(motorCenterX, motorCenterY);
+      ctx.rotate(rotorAngle);
+
+      // 4-Pole Magnetic Segments (N, S, N, S)
+      const numPoles = 4;
+      for (let p = 0; p < numPoles; p++) {
+        const startA = (p * 2 * Math.PI) / numPoles;
+        const endA = ((p + 1) * 2 * Math.PI) / numPoles;
+        const isNorth = (p % 2 === 0);
+
+        ctx.fillStyle = isNorth ? "#dc2626" : "#0284c7";
+        ctx.strokeStyle = "#18181b";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, rotorR, startA, endA);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Pole Letter
+        const midA = (startA + endA) / 2;
+        const lx = Math.cos(midA) * (rotorR * 0.65);
+        const ly = Math.sin(midA) * (rotorR * 0.65);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 13px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(isNorth ? "N" : "S", lx, ly + 4.5);
+      }
+
+      // Central Motor Shaft
+      ctx.fillStyle = "#18181b";
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(0, 0, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // Motor Direction & Status overlay
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 9.5px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(`ROTOR: ${direction === 1 ? 'CW (PROPS IN)' : 'CCW (PROPS OUT)'} • ${(rpm).toFixed(0)} RPM`, motorCenterX, 360);
+
+      // =====================================================================
+      // BOTTOM SECTION: 3-PHASE TRAPEZOIDAL VOLTAGE OSCILLOSCOPE
+      // =====================================================================
+      const scopeX = 30;
+      const scopeY = 400;
+      const scopeW = 740;
+      const scopeH = 105;
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(scopeX, scopeY, scopeW, scopeH);
+      ctx.strokeStyle = "#e4e4e7";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(scopeX, scopeY, scopeW, scopeH);
+
+      ctx.fillStyle = "#18181b";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("3-PHASE TRAPEZOIDAL COMMUTATION & BACK-EMF ZERO-CROSSING SCOPE (120°)", scopeX + 8, scopeY + 14);
+
+      // 6 Step Column Boundaries across Scope width
+      const trackLeft = scopeX + 80;
+      const trackRight = scopeX + scopeW - 20;
+      const trackWidth = trackRight - trackLeft;
+      const stepWidth = trackWidth / 6.0;
+
+      // Draw Step Column Grid & Labels
+      for (let s = 0; s < 6; s++) {
+        const sx = trackLeft + s * stepWidth;
+        ctx.strokeStyle = (s === currentStepIdx) ? "#18181b" : "#f4f4f5";
+        ctx.lineWidth = (s === currentStepIdx) ? 1.5 : 1;
+        ctx.strokeRect(sx, scopeY + 20, stepWidth, scopeH - 24);
+
+        if (s === currentStepIdx) {
+          ctx.fillStyle = "rgba(24, 24, 27, 0.05)";
+          ctx.fillRect(sx, scopeY + 20, stepWidth, scopeH - 24);
+        }
+
+        ctx.fillStyle = (s === currentStepIdx) ? "#18181b" : "#71717a";
+        ctx.font = (s === currentStepIdx) ? "bold 8.5px monospace" : "8px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(`Step ${s + 1}`, sx + stepWidth / 2, scopeY + scopeH - 6);
+      }
+
+      // 3 Phase Waveform Lanes
+      const lanes = [
+        { name: 'Phase U', col: '#16a34a', y: scopeY + 38 },
+        { name: 'Phase V', col: '#d97706', y: scopeY + 58 },
+        { name: 'Phase W', col: '#0284c7', y: scopeY + 78 }
+      ];
+
+      // Trapezoidal profile values per phase for steps 1-6 (1 = +VBAT, 0 = Float Zero-Cross, -1 = GND)
+      // Step:              1      2      3      4      5      6
+      const waveU = [1.0, 1.0, 0.0, -1.0, -1.0, 0.0];
+      const waveV = [-1.0, 0.0, 1.0, 1.0, 0.0, -1.0];
+      const waveW = [0.0, -1.0, -1.0, 0.0, 1.0, 1.0];
+      const waveData = [waveU, waveV, waveW];
+
+      lanes.forEach((lane, li) => {
+        ctx.fillStyle = lane.col;
+        ctx.font = "bold 8.5px monospace";
+        ctx.textAlign = "left";
+        ctx.fillText(lane.name, scopeX + 8, lane.y + 3);
+
+        const data = waveData[li];
+        ctx.strokeStyle = lane.col;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+
+        for (let s = 0; s < 6; s++) {
+          const xStart = trackLeft + s * stepWidth;
+          const xEnd = xStart + stepWidth;
+          const val = data[s];
+          const yPos = lane.y - val * 7; // +V is up (-7), GND is down (+7), Float is center (0)
+
+          if (s === 0) {
+            ctx.moveTo(xStart, yPos);
+          } else {
+            ctx.lineTo(xStart, yPos);
+          }
+          ctx.lineTo(xEnd, yPos);
+
+          // If this step is Float (Back-EMF Zero-Crossing), draw cross mark
+          if (val === 0) {
+            ctx.fillStyle = lane.col;
+            ctx.beginPath();
+            ctx.arc((xStart + xEnd) / 2, lane.y, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.stroke();
+      });
+
+      // Active Step Timeline Cursor Line
+      const cursorX = trackLeft + (currentStepIdx + 0.5) * stepWidth;
+      ctx.strokeStyle = "#18181b";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cursorX, scopeY + 18);
+      ctx.lineTo(cursorX, scopeY + scopeH - 14);
+      ctx.stroke();
+
+      ctx.fillStyle = "#18181b";
+      ctx.beginPath();
+      ctx.moveTo(cursorX, scopeY + 22);
+      ctx.lineTo(cursorX - 4, scopeY + 16);
+      ctx.lineTo(cursorX + 4, scopeY + 16);
+      ctx.closePath();
+      ctx.fill();
 
       requestAnimationFrame(render);
     };
