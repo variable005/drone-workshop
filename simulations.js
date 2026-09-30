@@ -5543,7 +5543,7 @@ class DroneSimulations {
       // 4. White Technical Title Block (Bottom Right)
       const tbW = 340;
       const tbH = 48;
-      const tbX = w - tbW - 18;
+      const tbX = (viewMode === 'airframe') ? 24 : w - tbW - 18;
       const tbY = h - tbH - 18;
 
       ctx.fillStyle = "#ffffff";
@@ -5560,578 +5560,1879 @@ class DroneSimulations {
       ctx.fillText(sub, tbX + 12, tbY + 34);
     };
 
-    // 1. RENDER FULL AIRFRAME VIEW (GIANT & ULTRA-DETAILED)
-    const renderAirframeView = (w, h) => {
-      drawWhiteBlueprintBackground(
-        w, h,
-        `F450 ARDUCOPTER (${selectedFC === 'pixhawk' ? 'PIXHAWK 2.4.8 (32-BIT)' : 'APM 2.8 (CLASSIC)'})`,
-        `STEP ${currentStep}/10 • ${stepsData[currentStep - 1].title.toUpperCase()}`
-      );
+    // 1. RENDER FULL AIRFRAME VIEW (PROGRESSIVE STEP-BY-STEP & F330 FRAME GEOMETRY)
+    // =========================================================================
 
+    // A. Helper: Draw User's F330 Center Plate (Elongated Tabs, Dual Vertical Slots, Gold "F330")
+    const drawF330Plate = (cx, cy, isTopPlate, step, showScrews) => {
       ctx.save();
-      // Apply Zoom & Pan Transform
-      ctx.translate(w / 2 + panX, h / 2 + panY);
-      ctx.scale(zoomLevel, zoomLevel);
-      ctx.translate(-w / 2, -h / 2);
-
-      const cx = w / 2;
-      const cy = h / 2 - 20;
-      const armLength = 290; // Big, expansive frame!
-
-      const isStep = (s) => currentStep === s;
-      const highlightAll = currentStep >= 10;
-
-      // 1. Heading Reference Arrow (Front / Nose)
-      ctx.fillStyle = "#0284c7";
+      // Outer profile: Chamfered octagonal center + extended front & rear tabs
       ctx.beginPath();
-      ctx.moveTo(cx, 30);
-      ctx.lineTo(cx - 14, 54);
-      ctx.lineTo(cx + 14, 54);
+      // Start at top-left of front tab
+      ctx.moveTo(cx - 38, cy - 114);
+      // Top edge of front tab
+      ctx.lineTo(cx + 38, cy - 114);
+      // Right edge of front tab down to main body
+      ctx.lineTo(cx + 38, cy - 70);
+      // Top-right chamfer corner to arm mount
+      ctx.lineTo(cx + 70, cy - 38);
+      // Right edge of main body
+      ctx.lineTo(cx + 70, cy + 38);
+      // Bottom-right chamfer to rear tab
+      ctx.lineTo(cx + 38, cy + 70);
+      // Right edge of rear tab
+      ctx.lineTo(cx + 38, cy + 114);
+      // Bottom edge of rear tab
+      ctx.lineTo(cx - 38, cy + 114);
+      // Left edge of rear tab up to main body
+      ctx.lineTo(cx - 38, cy + 70);
+      // Bottom-left chamfer to arm mount
+      ctx.lineTo(cx - 70, cy + 38);
+      // Left edge of main body
+      ctx.lineTo(cx - 70, cy - 38);
+      // Top-left chamfer back to front tab
+      ctx.lineTo(cx - 38, cy - 70);
+      ctx.closePath();
+
+      // FR4 Black fiberglass substrate
+      ctx.fillStyle = isTopPlate ? "#0f172a" : "#090d16";
+      ctx.fill();
+      // Exposed gold copper perimeter trace
+      ctx.strokeStyle = "#ca8a04";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Internal Front Tab: Two Vertical Rectangular Slots (for battery strap / camera)
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(cx - 20, cy - 104, 8, 26);
+      ctx.strokeRect(cx - 20, cy - 104, 8, 26);
+      ctx.fillRect(cx + 12, cy - 104, 8, 26);
+      ctx.strokeRect(cx + 12, cy - 104, 8, 26);
+
+      // Internal Rear Tab: Two Vertical Rectangular Slots
+      ctx.fillRect(cx - 20, cy + 78, 8, 26);
+      ctx.strokeRect(cx - 20, cy + 78, 8, 26);
+      ctx.fillRect(cx + 12, cy + 78, 8, 26);
+      ctx.strokeRect(cx + 12, cy + 78, 8, 26);
+
+      // Center Cutouts: Two horizontal slots + Gold "F330" Silkscreen
+      ctx.fillRect(cx - 22, cy - 22, 44, 8);
+      ctx.strokeRect(cx - 22, cy - 22, 44, 8);
+      ctx.fillRect(cx - 22, cy + 14, 44, 8);
+      ctx.strokeRect(cx - 22, cy + 14, 44, 8);
+
+      // 2 Side Rectangular Cutouts
+      ctx.fillRect(cx - 56, cy - 14, 8, 28);
+      ctx.strokeRect(cx - 56, cy - 14, 8, 28);
+      ctx.fillRect(cx + 48, cy - 14, 8, 28);
+      ctx.strokeRect(cx + 48, cy - 14, 8, 28);
+
+      // Gold Silkscreen "F330" text in center
+      ctx.fillStyle = "#eab308";
+      ctx.font = "bold 11px 'JetBrains Mono', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("F330", cx, cy + 3);
+
+      // Bottom PDB Copper Solder Pads (Only on Bottom Plate when step >= 2)
+      if (!isTopPlate && step >= 2) {
+        // 8 ESC Solder Pads (4 pairs of [+] and [-])
+        const padAngles = [
+          -Math.PI / 4 - 0.12, -Math.PI / 4 + 0.12,
+          -3 * Math.PI / 4 - 0.12, -3 * Math.PI / 4 + 0.12,
+          Math.PI / 4 - 0.12, Math.PI / 4 + 0.12,
+          3 * Math.PI / 4 - 0.12, 3 * Math.PI / 4 + 0.12
+        ];
+
+        padAngles.forEach((ang, idx) => {
+          const isPos = (idx % 2 === 0);
+          const pr = 52;
+          const px = cx + pr * Math.cos(ang);
+          const py = cy + pr * Math.sin(ang);
+
+          // Copper pad
+          ctx.fillStyle = (step === 2 && animTimer % 1.2 > 0.6) ? "#facc15" : "#ca8a04";
+          ctx.fillRect(px - 6, py - 4, 12, 8);
+          ctx.strokeStyle = isPos ? "#dc2626" : "#0f172a";
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(px - 6, py - 4, 12, 8);
+
+          // Shiny Solder Fillet dome
+          ctx.fillStyle = "#e2e8f0";
+          ctx.beginPath();
+          ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = isPos ? "#dc2626" : "#0f172a";
+          ctx.font = "bold 7px monospace";
+          ctx.fillText(isPos ? "+" : "-", px, py - 6);
+        });
+
+        // 2 Main Battery Pads at Center Rear
+        const mainPadY = cy + 48;
+        // Battery [+] Pad
+        ctx.fillStyle = "#ca8a04";
+        ctx.fillRect(cx - 24, mainPadY - 5, 16, 10);
+        ctx.strokeStyle = "#dc2626";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx - 24, mainPadY - 5, 16, 10);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 7px monospace";
+        ctx.fillText("+BAT", cx - 16, mainPadY + 3);
+
+        // Battery [-] Pad
+        ctx.fillStyle = "#ca8a04";
+        ctx.fillRect(cx + 8, mainPadY - 5, 16, 10);
+        ctx.strokeStyle = "#0f172a";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx + 8, mainPadY - 5, 16, 10);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText("-GND", cx + 16, mainPadY + 3);
+      }
+
+      // 16 Arm Mounting Screw Holes (4 per Arm)
+      const armAngles = [-Math.PI / 4, -3 * Math.PI / 4, Math.PI / 4, 3 * Math.PI / 4];
+      armAngles.forEach((ang, armIdx) => {
+        // 2 inner screws, 2 outer screws
+        const holeConfigs = [
+          { r: 48, dAng: -0.16 },
+          { r: 48, dAng: 0.16 },
+          { r: 68, dAng: -0.12 },
+          { r: 68, dAng: 0.12 }
+        ];
+
+        holeConfigs.forEach((h, hIdx) => {
+          const hx = cx + h.r * Math.cos(ang + h.dAng);
+          const hy = cy + h.r * Math.sin(ang + h.dAng);
+
+          if (step === 1 || showScrews) {
+            // M2.5 Screw Head (Hex Socket Head Cap)
+            ctx.fillStyle = "#cbd5e1";
+            ctx.beginPath();
+            ctx.arc(hx, hy, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = (step === 1) ? "#0284c7" : "#475569";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 6-Sided Hex Socket in screw center
+            ctx.fillStyle = "#0f172a";
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const hexAng = (i * Math.PI) / 3;
+              const px = hx + 2 * Math.cos(hexAng);
+              const py = hy + 2 * Math.sin(hexAng);
+              if (i === 0) ctx.moveTo(px, py);
+              else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+            ctx.fill();
+
+            // Active blue pulse ring on Step 1
+            if (step === 1) {
+              ctx.strokeStyle = "#0284c7";
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.arc(hx, hy, 7, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          } else {
+            // Standard screw hole / brass insert
+            ctx.fillStyle = "#ca8a04";
+            ctx.beginPath();
+            ctx.arc(hx, hy, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "#0f172a";
+            ctx.beginPath();
+            ctx.arc(hx, hy, 1.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      });
+
+      // Step 1 Specific: Draw 2.0mm Allen Key Screwing into Front-Right Arm
+      if (step === 1) {
+        const toolAng = -Math.PI / 4 + 0.12;
+        const toolX = cx + 68 * Math.cos(toolAng);
+        const toolY = cy + 68 * Math.sin(toolAng);
+
+        // Rotating Clockwise Arrow around screw
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(toolX, toolY, 14, 0, Math.PI * 1.5);
+        ctx.stroke();
+        // Arrow tip
+        ctx.fillStyle = "#0284c7";
+        ctx.beginPath();
+        ctx.moveTo(toolX + 14, toolY);
+        ctx.lineTo(toolX + 11, toolY - 6);
+        ctx.lineTo(toolX + 18, toolY - 3);
+        ctx.closePath();
+        ctx.fill();
+
+        // 2.0mm Allen Key Graphic
+        ctx.save();
+        ctx.translate(toolX, toolY);
+        ctx.rotate(animTimer * 1.5);
+        ctx.strokeStyle = "#334155";
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(24, -20);
+        ctx.lineTo(46, -14);
+        ctx.stroke();
+        ctx.restore();
+
+        // Callout Flag
+        ctx.fillStyle = "#0284c7";
+        ctx.fillRect(toolX + 22, toolY - 44, 185, 24);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("2.0mm HEX KEY: SNUG TIGHT", toolX + 28, toolY - 28);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(toolX, toolY);
+        ctx.lineTo(toolX + 22, toolY - 32);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    };
+
+    // B. Helper: Draw Molded Arm with Authentic Triangular Truss Lattice & Brass Inserts
+    const drawF330Arm = (cx, cy, arm, armLength, step) => {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(arm.angle);
+
+      // Arm Outer Structural Contour
+      ctx.fillStyle = arm.armFill;
+      ctx.strokeStyle = arm.armBorder;
+      ctx.lineWidth = 2.5;
+
+      ctx.beginPath();
+      // Arm Base Width 38px
+      ctx.moveTo(46, -19);
+      // Taper down to neck at armLength - 34
+      ctx.lineTo(armLength - 34, -13);
+      ctx.lineTo(armLength - 34, 13);
+      ctx.lineTo(46, 19);
       ctx.closePath();
       ctx.fill();
+      ctx.stroke();
 
-      ctx.fillStyle = "#0369a1";
-      ctx.font = "bold 13px var(--font-sans)";
-      ctx.textAlign = "center";
-      ctx.fillText("FRONT NOSE (FORWARD FLIGHT HEADING)", cx, 74);
-      ctx.textAlign = "left";
+      // Open Lattice Triangular Webbing (Matching user photo!)
+      ctx.fillStyle = arm.isFront ? "#fee2e2" : "#f1f5f9";
+      ctx.strokeStyle = arm.armBorder;
+      ctx.lineWidth = 1.5;
 
-      // 2. F450 4 Detailed Molded Arms
-      const arms = [
-        { id: 1, name: "Motor 1 (FR)", angle: -Math.PI / 4, spin: "CCW", nut: "Black Nut", armFill: "#ef4444", armBorder: "#b91c1c", isFront: true },
-        { id: 2, name: "Motor 2 (RL)", angle: 3 * Math.PI / 4, spin: "CCW", nut: "Black Nut", armFill: "#f8fafc", armBorder: "#475569", isFront: false },
-        { id: 3, name: "Motor 3 (FL)", angle: -3 * Math.PI / 4, spin: "CW", nut: "Silver Nut", armFill: "#ef4444", armBorder: "#b91c1c", isFront: true },
-        { id: 4, name: "Motor 4 (RR)", angle: Math.PI / 4, spin: "CW", nut: "Silver Nut", armFill: "#f8fafc", armBorder: "#475569", isFront: false },
-      ];
+      // 6 Realistic Alternating Triangular Cutouts
+      const trussStart = 68;
+      const trussEnd = armLength - 44;
+      const trussStep = 26;
 
-      arms.forEach(a => {
-        const mx = cx + armLength * Math.cos(a.angle);
-        const my = cy + armLength * Math.sin(a.angle);
-
-        // Detailed Molded Arm with Structural Ribs
-        ctx.save();
-        ctx.strokeStyle = a.armBorder;
-        ctx.fillStyle = a.armFill;
-        ctx.lineWidth = 2.5;
-
-        ctx.translate(cx, cy);
-        ctx.rotate(a.angle);
-
-        // Arm Body Contour
+      for (let tx = trussStart; tx < trussEnd; tx += trussStep) {
         ctx.beginPath();
-        ctx.moveTo(55, -18);
-        ctx.lineTo(armLength - 30, -14);
-        ctx.lineTo(armLength - 30, 14);
-        ctx.lineTo(55, 18);
+        if (((tx - trussStart) / trussStep) % 2 === 0) {
+          // Triangle pointing outwards
+          ctx.moveTo(tx, -8);
+          ctx.lineTo(tx + 20, 0);
+          ctx.lineTo(tx, 8);
+        } else {
+          // Inverted triangle pointing inwards
+          ctx.moveTo(tx + 20, -8);
+          ctx.lineTo(tx, 0);
+          ctx.lineTo(tx + 20, 8);
+        }
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
-
-        // Structural Truss Cutouts
-        ctx.fillStyle = a.isFront ? "#fee2e2" : "#f1f5f9";
-        for (let tr = 80; tr < armLength - 45; tr += 38) {
-          ctx.beginPath();
-          ctx.moveTo(tr, -7);
-          ctx.lineTo(tr + 22, 0);
-          ctx.lineTo(tr, 7);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-        }
-
-        // Circular Motor Mount Pad at Arm Tip
-        ctx.fillStyle = a.isFront ? "#dc2626" : "#e2e8f0";
-        ctx.beginPath();
-        ctx.arc(armLength, 0, 36, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.restore();
-
-        // 3. ESC Mounted on Arm
-        const escDist = armLength * 0.48;
-        const escX = cx + escDist * Math.cos(a.angle);
-        const escY = cy + escDist * Math.sin(a.angle);
-
-        ctx.save();
-        ctx.translate(escX, escY);
-        ctx.rotate(a.angle);
-
-        // ESC Body (Dark Sleek Case)
-        ctx.fillStyle = (isStep(2) || isStep(4) || isStep(7) || highlightAll) ? "#1e293b" : "#475569";
-        ctx.fillRect(-30, -17, 60, 34);
-        ctx.strokeStyle = (isStep(2) || isStep(4) || isStep(7) || highlightAll) ? "#0284c7" : "#334155";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(-30, -17, 60, 34);
-
-        // Aluminum Heatsink Plate
-        ctx.fillStyle = "#cbd5e1";
-        ctx.fillRect(-22, -13, 44, 7);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 9px 'JetBrains Mono', monospace";
-        ctx.textAlign = "center";
-        ctx.fillText(`ESC ${a.id} (30A)`, 0, 8);
-        ctx.restore();
-
-        // Heavy DC Power Wires from ESC to PDB (Red & Black)
-        ctx.strokeStyle = (isStep(2) || highlightAll) ? "#dc2626" : "#64748b";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(escX - 10 * Math.cos(a.angle), escY - 10 * Math.sin(a.angle) - 4);
-        ctx.lineTo(cx + 45 * Math.cos(a.angle), cy + 45 * Math.sin(a.angle) - 4);
-        ctx.stroke();
-
-        ctx.strokeStyle = (isStep(2) || highlightAll) ? "#0f172a" : "#475569";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(escX - 10 * Math.cos(a.angle), escY - 10 * Math.sin(a.angle) + 4);
-        ctx.lineTo(cx + 45 * Math.cos(a.angle), cy + 45 * Math.sin(a.angle) + 4);
-        ctx.stroke();
-
-        // 3 Motor Phase Bullet Wires (Blue, Yellow, Red)
-        const pColors = (isStep(4) || highlightAll) ? ["#2563eb", "#ca8a04", "#dc2626"] : ["#94a3b8", "#94a3b8", "#94a3b8"];
-        for (let i = -1; i <= 1; i++) {
-          ctx.strokeStyle = pColors[i + 1];
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.moveTo(escX + 22 * Math.cos(a.angle) + i * 4, escY + 22 * Math.sin(a.angle) + i * 4);
-          ctx.lineTo(mx - 20 * Math.cos(a.angle) + i * 4, my - 20 * Math.sin(a.angle) + i * 4);
-          ctx.stroke();
-
-          // Gold 3.5mm bullet connector dot
-          ctx.fillStyle = "#eab308";
-          ctx.beginPath();
-          ctx.arc(escX + 28 * Math.cos(a.angle) + i * 4, escY + 28 * Math.sin(a.angle) + i * 4, 3, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // ESC Servo Signal Ribbon to FC
-        if (isStep(7) || highlightAll) {
-          ctx.strokeStyle = "#f59e0b";
-          ctx.lineWidth = 2;
-          ctx.setLineDash([5, 4]);
-          ctx.beginPath();
-          ctx.moveTo(escX, escY);
-          ctx.lineTo(cx + 20 * Math.cos(a.angle), cy + 20 * Math.sin(a.angle));
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-
-        // 4. Brushless Motor Bell & Stator Coils
-        ctx.fillStyle = "#0f172a";
-        ctx.beginPath();
-        ctx.arc(mx, my, 32, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = (isStep(3) || isStep(4) || isStep(10) || highlightAll) ? "#0284c7" : "#64748b";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // 12 Realistic Copper Stator Teeth
-        ctx.strokeStyle = "#b45309";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(mx, my, 19, 0, Math.PI * 2);
-        ctx.stroke();
-
-        for (let th = 0; th < Math.PI * 2; th += Math.PI / 6) {
-          ctx.strokeStyle = "#d97706";
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(mx + 14 * Math.cos(th), my + 14 * Math.sin(th));
-          ctx.lineTo(mx + 23 * Math.cos(th), my + 23 * Math.sin(th));
-          ctx.stroke();
-        }
-
-        // Center Threaded Shaft & Bullet Nut
-        ctx.fillStyle = a.spin === "CCW" ? "#09090b" : "#e2e8f0";
-        ctx.beginPath();
-        ctx.arc(mx, my, 8, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#475569";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Direction Spin Arrow
-        ctx.save();
-        ctx.translate(mx, my);
-        ctx.strokeStyle = a.spin === "CCW" ? "#0284c7" : "#db2777";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        if (a.spin === "CCW") {
-          ctx.arc(0, 0, 42, -Math.PI * 0.8, Math.PI * 0.4);
-          ctx.stroke();
-          ctx.fillStyle = ctx.strokeStyle;
-          ctx.beginPath();
-          ctx.moveTo(42 * Math.cos(-Math.PI * 0.8), 42 * Math.sin(-Math.PI * 0.8));
-          ctx.lineTo(42 * Math.cos(-Math.PI * 0.8) + 8, 42 * Math.sin(-Math.PI * 0.8) + 4);
-          ctx.lineTo(42 * Math.cos(-Math.PI * 0.8) - 1, 42 * Math.sin(-Math.PI * 0.8) + 9);
-          ctx.closePath();
-          ctx.fill();
-        } else {
-          ctx.arc(0, 0, 42, -Math.PI * 0.2, Math.PI * 1.0);
-          ctx.stroke();
-          ctx.fillStyle = ctx.strokeStyle;
-          ctx.beginPath();
-          ctx.moveTo(42 * Math.cos(-Math.PI * 0.2), 42 * Math.sin(-Math.PI * 0.2));
-          ctx.lineTo(42 * Math.cos(-Math.PI * 0.2) - 8, 42 * Math.sin(-Math.PI * 0.2) + 4);
-          ctx.lineTo(42 * Math.cos(-Math.PI * 0.2) + 1, 42 * Math.sin(-Math.PI * 0.2) + 9);
-          ctx.closePath();
-          ctx.fill();
-        }
-        ctx.restore();
-
-        // Motor High-Contrast Spec Label
-        ctx.fillStyle = "#0f172a";
-        ctx.font = "bold 11px var(--font-sans)";
-        ctx.textAlign = "center";
-        const labelRadius = armLength + 48;
-        const lx = cx + labelRadius * Math.cos(a.angle);
-        const ly = cy + labelRadius * Math.sin(a.angle);
-        ctx.fillText(`${a.name}`, lx, ly);
-
-        ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
-        ctx.fillStyle = a.spin === "CCW" ? "#0284c7" : "#db2777";
-        ctx.fillText(`${a.spin} • ${a.nut}`, lx, ly + 14);
-        ctx.textAlign = "left";
-      });
-
-      // 5. F450 Integrated Bottom PDB Plate (Heavy Copper Ground Plane)
-      ctx.fillStyle = "#1e293b";
-      ctx.beginPath();
-      for (let i = 0; i < 8; i++) {
-        const ang = (i * Math.PI) / 4;
-        const r = 70;
-        const px = cx + r * Math.cos(ang);
-        const py = cy + r * Math.sin(ang);
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
       }
-      ctx.closePath();
+
+      // Circular Motor Mount Pad at Arm Tip
+      ctx.fillStyle = arm.isFront ? "#dc2626" : "#e2e8f0";
+      ctx.strokeStyle = arm.armBorder;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(armLength, 0, 34, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = "#475569";
-      ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // 8 Gleaming Gold Copper Solder Pads on PDB
-      const padAngles = [
-        -Math.PI / 4, -Math.PI / 4 + 0.15,
-        -3 * Math.PI / 4, -3 * Math.PI / 4 + 0.15,
-        Math.PI / 4, Math.PI / 4 + 0.15,
-        3 * Math.PI / 4, 3 * Math.PI / 4 + 0.15
-      ];
-      padAngles.forEach((ang, idx) => {
-        const isPos = idx % 2 === 0;
-        const pr = 54;
-        const px = cx + pr * Math.cos(ang);
-        const py = cy + pr * Math.sin(ang);
-
-        // Gold pad
-        ctx.fillStyle = (isStep(2) || highlightAll) ? "#ca8a04" : "#eab308";
-        ctx.fillRect(px - 6, py - 4, 12, 8);
-        ctx.strokeStyle = isPos ? "#dc2626" : "#0f172a";
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(px - 6, py - 4, 12, 8);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 7px 'JetBrains Mono', monospace";
-        ctx.textAlign = "center";
-        ctx.fillText(isPos ? "+" : "-", px, py + 2.5);
-      });
-      ctx.textAlign = "left";
-
-      // 6. Central Flight Controller (Pixhawk 2.4.8 or APM 2.8)
-      const fcW = 120;
-      const fcH = 120;
-      const fcX = cx - fcW / 2;
-      const fcY = cy - fcH / 2;
-
-      ctx.fillStyle = selectedFC === 'pixhawk' ? "#0f172a" : "#1e293b";
-      ctx.fillRect(fcX, fcY, fcW, fcH);
-      ctx.strokeStyle = (isStep(5) || highlightAll) ? "#0284c7" : "#64748b";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(fcX, fcY, fcW, fcH);
-
-      // FC Silkscreen Heading Arrow
-      ctx.fillStyle = "#0284c7";
-      ctx.beginPath();
-      ctx.moveTo(cx, fcY + 12);
-      ctx.lineTo(cx - 9, fcY + 28);
-      ctx.lineTo(cx + 9, fcY + 28);
-      ctx.closePath();
-      ctx.fill();
-
+      // Center 8mm Shaft Clearance Hole
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 11px var(--font-sans)";
-      ctx.textAlign = "center";
-      ctx.fillText(selectedFC === 'pixhawk' ? "PIXHAWK 2.4.8" : "APM 2.8", cx, cy - 8);
-
-      ctx.font = "bold 8.5px 'JetBrains Mono', monospace";
-      ctx.fillStyle = "#38bdf8";
-      ctx.fillText(selectedFC === 'pixhawk' ? "32-BIT ARM CPU" : "8-BIT AVR ATMEGA", cx, cy + 6);
-
-      // Central Notification LED / Status Prism
-      ctx.fillStyle = (animTimer % 2 > 1) ? "#10b981" : "#0284c7";
       ctx.beginPath();
-      ctx.arc(cx, cy + 24, 7, 0, Math.PI * 2);
+      ctx.arc(armLength, 0, 6, 0, Math.PI * 2);
       ctx.fill();
-      ctx.strokeStyle = "#ffffff";
+      ctx.strokeStyle = "#475569";
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Port labels on FC body
-      if (selectedFC === 'pixhawk') {
-        ctx.fillStyle = isStep(6) ? "#10b981" : "#334155";
-        ctx.fillRect(fcX + 8, cy + 38, 30, 9);
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 7px monospace";
-        ctx.fillText("POWER", fcX + 23, cy + 45);
+      // 4 Cross-Pattern Curved M3 Screw Slots on Tip Pad
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 2;
+      const slotDists = [16, 19];
+      slotDists.forEach(sd => {
+        [0, Math.PI / 2, Math.PI, 3 * Math.PI / 2].forEach(sang => {
+          const sx = armLength + sd * Math.cos(sang);
+          const sy = sd * Math.sin(sang);
+          ctx.beginPath();
+          ctx.arc(sx, sy, 2.5, 0, Math.PI * 2);
+          ctx.stroke();
+        });
+      });
 
-        ctx.fillStyle = isStep(7) ? "#f59e0b" : "#334155";
-        ctx.fillRect(fcX + fcW - 38, cy + 38, 30, 9);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText("OUT 1-4", fcX + fcW - 23, cy + 45);
+      // 4 Molded Brass Inserts at Arm Base (Visible in Step 1)
+      if (step === 1) {
+        ctx.fillStyle = "#ca8a04";
+        ctx.strokeStyle = "#eab308";
+        ctx.lineWidth = 1;
+        const baseHoles = [
+          { x: 48, y: -9 }, { x: 48, y: 9 },
+          { x: 68, y: -8 }, { x: 68, y: 8 }
+        ];
+        baseHoles.forEach(bh => {
+          ctx.beginPath();
+          ctx.arc(bh.x, bh.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#0f172a";
+          ctx.beginPath();
+          ctx.arc(bh.x, bh.y, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = "#ca8a04";
+        });
+      }
 
-        ctx.fillStyle = isStep(8) ? "#38bdf8" : "#334155";
-        ctx.fillRect(fcX + 8, cy + 50, 30, 9);
+      ctx.restore();
+    };
+
+    // C. Helper: Draw Soldered ESC Leads & Heavy DC Power Lines (Step >= 2)
+    const drawEscPowerWiring = (cx, cy, arm, armLength, step) => {
+      if (step < 2) return;
+
+      const escDist = armLength * 0.46;
+      const escX = cx + escDist * Math.cos(arm.angle);
+      const escY = cy + escDist * Math.sin(arm.angle);
+
+      // Pad coordinates on PDB
+      const padDist = 52;
+      const posPadX = cx + padDist * Math.cos(arm.angle - 0.12);
+      const posPadY = cy + padDist * Math.sin(arm.angle - 0.12);
+      const negPadX = cx + padDist * Math.cos(arm.angle + 0.12);
+      const negPadY = cy + padDist * Math.sin(arm.angle + 0.12);
+
+      // Red Wire [+] (16AWG High-Flex Silicone)
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(escX - 10 * Math.cos(arm.angle), escY - 10 * Math.sin(arm.angle) - 4);
+      ctx.lineTo(posPadX, posPadY);
+      ctx.stroke();
+
+      // Black Wire [-] (16AWG High-Flex Silicone)
+      ctx.strokeStyle = "#0f172a";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(escX - 10 * Math.cos(arm.angle), escY - 10 * Math.sin(arm.angle) + 4);
+      ctx.lineTo(negPadX, negPadY);
+      ctx.stroke();
+
+      // Soldering Joints on Pads (Mirror Shiny Solder Dome)
+      ctx.fillStyle = "#e2e8f0";
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(posPadX, posPadY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(negPadX, negPadY, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Step 2 Specific: Solder Iron Graphic on Motor 1 ESC Pad
+      if (step === 2 && arm.id === 1) {
+        ctx.save();
+        ctx.translate(posPadX, posPadY);
+
+        // Soldering Iron Shaft & Tip (380°C)
+        ctx.strokeStyle = "#64748b";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(45, -35);
+        ctx.lineTo(6, -5);
+        ctx.stroke();
+
+        // Heated Copper/Nickel Tip
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(8, -6);
+        ctx.lineTo(0, 0);
+        ctx.stroke();
+
+        // Rosin Flux Smoke Wisps
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -2);
+        ctx.quadraticCurveTo(-10, -18, -4, -30);
+        ctx.stroke();
+
+        // Callout Badge
+        ctx.fillStyle = "#dc2626";
+        ctx.fillRect(20, -68, 175, 24);
         ctx.fillStyle = "#ffffff";
-        ctx.fillText("RC IN", fcX + 23, cy + 57);
-      } else {
-        ctx.fillStyle = isStep(6) ? "#10b981" : "#334155";
-        ctx.fillRect(fcX + 8, cy + 38, 26, 9);
+        ctx.font = "bold 9px 'JetBrains Mono', monospace";
+        ctx.fillText("SOLDERING IRON: 380°C-400°C", 26, -52);
+        ctx.restore();
+      }
+    };
+
+    // D. Helper: Draw 2212 Brushless Motors on Arm Tips (Step >= 3)
+    const drawMotorOnArm = (cx, cy, arm, armLength, step) => {
+      if (step < 3) return;
+
+      const mx = cx + armLength * Math.cos(arm.angle);
+      const my = cy + armLength * Math.sin(arm.angle);
+
+      // Step 3 Specific: Exploded Screwdriver & M3x6mm Screw on Motor 1
+      if (step === 3 && arm.id === 1) {
+        ctx.save();
+        ctx.translate(mx, my);
+
+        // Blue Loctite 242 Drop Graphic
+        ctx.fillStyle = "#0284c7";
+        ctx.beginPath();
+        ctx.arc(36, 18, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Screwdriver Driving M3 Screw
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(60, 50);
+        ctx.lineTo(24, 18);
+        ctx.stroke();
+
+        // Screwdriver Handle (Rubber Grip)
+        ctx.fillStyle = "#0284c7";
+        ctx.fillRect(52, 44, 30, 10);
+
+        // Warning Label Box
         ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 7px monospace";
-        ctx.fillText("PM", fcX + 21, cy + 45);
+        ctx.fillRect(55, -28, 205, 34);
+        ctx.strokeStyle = "#dc2626";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(55, -28, 205, 34);
 
         ctx.fillStyle = "#dc2626";
-        ctx.fillRect(fcX + fcW - 32, cy + 38, 24, 9);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText("JP1", fcX + fcW - 20, cy + 45);
-
-        ctx.fillStyle = "#db2777";
-        ctx.fillRect(fcX + fcW - 32, cy + 50, 24, 9);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillText("MAG", fcX + fcW - 20, cy + 57);
+        ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("M3 x 6mm MAX SCREW LENGTH!", 62, -14);
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "8.5px 'JetBrains Mono', monospace";
+        ctx.fillText("Long screws puncture copper stator coils!", 62, -2);
+        ctx.restore();
       }
-      ctx.textAlign = "left";
 
-      // 7. Power Module & Battery at Rear
-      const pmX = cx - 45;
-      const pmY = cy + 180;
-      const batX = cx - 65;
-      const batY = cy + 250;
-
-      // LiPo Battery
+      // Outer Rotor Bell (Black Aluminum 2212)
       ctx.fillStyle = "#0f172a";
-      ctx.fillRect(batX, batY, 130, 52);
-      ctx.strokeStyle = "#475569";
+      ctx.beginPath();
+      ctx.arc(mx, my, 28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = (step === 3) ? "#0284c7" : "#475569";
       ctx.lineWidth = 2.5;
-      ctx.strokeRect(batX, batY, 130, 52);
+      ctx.stroke();
 
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 11px var(--font-sans)";
+      // 12 Copper Stator Teeth
+      ctx.strokeStyle = "#b45309";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(mx, my, 17, 0, Math.PI * 2);
+      ctx.stroke();
+
+      for (let th = 0; th < Math.PI * 2; th += Math.PI / 6) {
+        ctx.strokeStyle = "#d97706";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(mx + 12 * Math.cos(th), my + 12 * Math.sin(th));
+        ctx.lineTo(mx + 20 * Math.cos(th), my + 20 * Math.sin(th));
+        ctx.stroke();
+      }
+
+      // Center Threaded Shaft & Bullet Nut (Black vs Silver Nut)
+      ctx.fillStyle = (arm.spin === "CCW") ? "#18181b" : "#f1f5f9";
+      ctx.beginPath();
+      ctx.arc(mx, my, 7.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = (arm.spin === "CCW") ? "#3f3f46" : "#94a3b8";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Rotation Spin Arrow (Visible step >= 4)
+      if (step >= 4) {
+        ctx.save();
+        ctx.translate(mx, my);
+        ctx.strokeStyle = (arm.spin === "CCW") ? "#0284c7" : "#db2777";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        if (arm.spin === "CCW") {
+          ctx.arc(0, 0, 36, -Math.PI * 0.8, Math.PI * 0.4);
+          ctx.stroke();
+          ctx.fillStyle = ctx.strokeStyle;
+          ctx.beginPath();
+          ctx.moveTo(36 * Math.cos(-Math.PI * 0.8), 36 * Math.sin(-Math.PI * 0.8));
+          ctx.lineTo(36 * Math.cos(-Math.PI * 0.8) + 7, 36 * Math.sin(-Math.PI * 0.8) + 4);
+          ctx.lineTo(36 * Math.cos(-Math.PI * 0.8) - 1, 36 * Math.sin(-Math.PI * 0.8) + 8);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.arc(0, 0, 36, -Math.PI * 0.2, Math.PI * 1.0);
+          ctx.stroke();
+          ctx.fillStyle = ctx.strokeStyle;
+          ctx.beginPath();
+          ctx.moveTo(36 * Math.cos(-Math.PI * 0.2), 36 * Math.sin(-Math.PI * 0.2));
+          ctx.lineTo(36 * Math.cos(-Math.PI * 0.2) - 7, 36 * Math.sin(-Math.PI * 0.2) + 4);
+          ctx.lineTo(36 * Math.cos(-Math.PI * 0.2) + 1, 36 * Math.sin(-Math.PI * 0.2) + 8);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // Motor High-Contrast Specification Label
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 10px var(--font-sans)";
       ctx.textAlign = "center";
-      ctx.fillText("LiPo Battery (3S / 4S 2200mAh)", cx, batY + 20);
+      const labelRadius = armLength + 46;
+      const lx = cx + labelRadius * Math.cos(arm.angle);
+      const ly = cy + labelRadius * Math.sin(arm.angle);
+      ctx.fillText(arm.name, lx, ly);
+
+      ctx.font = "bold 8.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = (arm.spin === "CCW") ? "#0284c7" : "#db2777";
+      ctx.fillText(`${arm.spin} • ${arm.nut}`, lx, ly + 13);
+      ctx.textAlign = "left";
+    };
+
+    // E. Helper: Draw ESCs & 3-Phase Motor Bullet Connectors (Step >= 4)
+    const drawEscAndBullets = (cx, cy, arm, armLength, step) => {
+      if (step < 4) return;
+
+      const escDist = armLength * 0.46;
+      const escX = cx + escDist * Math.cos(arm.angle);
+      const escY = cy + escDist * Math.sin(arm.angle);
+      const mx = cx + armLength * Math.cos(arm.angle);
+      const my = cy + armLength * Math.sin(arm.angle);
+
+      // ESC Body Mounted on Arm
+      ctx.save();
+      ctx.translate(escX, escY);
+      ctx.rotate(arm.angle);
+
+      // Dark Case
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(-26, -14, 52, 28);
+      ctx.strokeStyle = (step === 4) ? "#0284c7" : "#475569";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-26, -14, 52, 28);
+
+      // Aluminum Heatsink Bar
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillRect(-18, -10, 36, 5);
+
+      // Label
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 8px 'JetBrains Mono', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(`ESC ${arm.id}`, 0, 7);
+
+      // 2 Nylon Zip-Ties Securing ESC to Arm
+      ctx.fillStyle = "#09090b";
+      ctx.fillRect(-22, -16, 3, 32);
+      ctx.fillRect(19, -16, 3, 32);
+      ctx.restore();
+
+      // 3-Phase AC Bullet Wires (Blue, Yellow, Red)
+      const phaseColors = ["#2563eb", "#ca8a04", "#dc2626"];
+      const isReversalDemo = (step === 4 && arm.id === 3);
+
+      for (let i = -1; i <= 1; i++) {
+        // In Step 4 on Motor 3, illustrate 2-wire reversal swap
+        let colorIdx = i + 1;
+        let startOffset = i * 4;
+        let endOffset = i * 4;
+        if (isReversalDemo && i === -1) {
+          endOffset = 1 * 4; // Cross wire!
+        } else if (isReversalDemo && i === 1) {
+          endOffset = -1 * 4; // Cross wire!
+        }
+
+        ctx.strokeStyle = phaseColors[colorIdx];
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(escX + 26 * Math.cos(arm.angle) + startOffset, escY + 26 * Math.sin(arm.angle) + startOffset);
+        ctx.lineTo(mx - 22 * Math.cos(arm.angle) + endOffset, my - 22 * Math.sin(arm.angle) + endOffset);
+        ctx.stroke();
+
+        // 3.5mm Gold Bullet Connector Joint
+        ctx.fillStyle = "#eab308";
+        ctx.beginPath();
+        ctx.arc(escX + 32 * Math.cos(arm.angle) + startOffset, escY + 32 * Math.sin(arm.angle) + startOffset, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Step 4 Specific: Reversal Callout Badge on Motor 3 (FL)
+      if (isReversalDemo) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(escX - 145, escY - 58, 205, 30);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(escX - 145, escY - 58, 205, 30);
+
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 9px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("2-WIRE SWAP REVERSES SPIN!", escX - 138, escY - 44);
+        ctx.fillStyle = "#475569";
+        ctx.font = "8px 'JetBrains Mono', monospace";
+        ctx.fillText("Swap any 2 wires to reverse rotation", escX - 138, escY - 33);
+      }
+    };
+
+    // F. Helper: Draw Flight Controller & Center Top Plate (Step >= 5)
+    const drawFlightControllerMount = (cx, cy, step, selectedFC) => {
+      if (step < 5) return;
+
+      // Center Top Plate Installed (with 16 M2.5 Screws into arm tops)
+      drawF330Plate(cx, cy, true, step, true);
+
+      // High-Density Grey 3M Anti-Vibration Foam Pad
+      ctx.fillStyle = "#475569";
+      ctx.fillRect(cx - 36, cy - 36, 72, 72);
+      ctx.strokeStyle = "#64748b";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx - 36, cy - 36, 72, 72);
+
+      // Flight Controller Enclosure Body
+      const fcW = (selectedFC === 'pixhawk') ? 92 : 82;
+      const fcH = (selectedFC === 'pixhawk') ? 92 : 82;
+      const fcX = cx - fcW / 2;
+      const fcY = cy - fcH / 2;
+
+      ctx.fillStyle = (selectedFC === 'pixhawk') ? "#0f172a" : "#1e293b";
+      ctx.fillRect(fcX, fcY, fcW, fcH);
+      ctx.strokeStyle = (step === 5) ? "#0284c7" : "#475569";
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(fcX, fcY, fcW, fcH);
+
+      // Forward Silkscreen Heading Arrow (MUST POINT TO RED NOSE ARMS)
+      ctx.fillStyle = "#0284c7";
+      ctx.beginPath();
+      ctx.moveTo(cx, fcY + 8);
+      ctx.lineTo(cx - 8, fcY + 22);
+      ctx.lineTo(cx + 8, fcY + 22);
+      ctx.closePath();
+      ctx.fill();
+
+      // Controller Title Text
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 9px var(--font-sans)";
+      ctx.textAlign = "center";
+      ctx.fillText((selectedFC === 'pixhawk') ? "PIXHAWK 2.4.8" : "APM 2.8", cx, cy - 6);
+
+      ctx.font = "bold 7.5px 'JetBrains Mono', monospace";
       ctx.fillStyle = "#38bdf8";
-      ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
-      ctx.fillText("11.1V – 14.8V • XT60", cx, batY + 38);
+      ctx.fillText((selectedFC === 'pixhawk') ? "32-BIT ARM" : "8-BIT AVR", cx, cy + 6);
+
+      // Central Multicolor Status LED / Notification Prism
+      ctx.fillStyle = (animTimer % 2 > 1) ? "#10b981" : "#0284c7";
+      ctx.beginPath();
+      ctx.arc(cx, cy + 20, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Step 5 Specific: Heading Alignment Callout
+      if (step === 5) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(cx - 130, fcY - 38, 260, 26);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx - 130, fcY - 38, 260, 26);
+
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("FORWARD ARROW MUST ALIGN WITH RED ARMS", cx, fcY - 22);
+      }
+    };
+
+    // G. Helper: Draw Power Module & Battery at Rear (Step >= 6)
+    const drawPowerModuleAndBattery = (cx, cy, step, selectedFC) => {
+      if (step < 6) return;
+
+      const fcW = (selectedFC === 'pixhawk') ? 92 : 82;
+      const pmX = cx - 36;
+      const pmY = cy + 130;
+      const batX = cx - 52;
+      const batY = cy + 185;
 
       // 3DR Power Module
       ctx.fillStyle = "#0284c7";
-      ctx.fillRect(pmX, pmY, 90, 40);
+      ctx.fillRect(pmX, pmY, 72, 30);
       ctx.strokeStyle = "#0369a1";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(pmX, pmY, 90, 40);
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(pmX, pmY, 72, 30);
 
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 9.5px var(--font-sans)";
-      ctx.fillText("3DR POWER MODULE", cx, pmY + 16);
-      ctx.font = "8.5px 'JetBrains Mono', monospace";
-      ctx.fillText("5.3V Clean DC / 90A", cx, pmY + 30);
+      ctx.font = "bold 8px var(--font-sans)";
+      ctx.textAlign = "center";
+      ctx.fillText("3DR POWER MODULE", cx, pmY + 12);
+      ctx.font = "7px 'JetBrains Mono', monospace";
+      ctx.fillText("5.3V Clean DC / 90A", cx, pmY + 23);
+
+      // LiPo Battery Pack
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(batX, batY, 104, 38);
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(batX, batY, 104, 38);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 9px var(--font-sans)";
+      ctx.fillText("LiPo 3S 2200mAh", cx, batY + 16);
+      ctx.fillStyle = "#38bdf8";
+      ctx.font = "bold 8px 'JetBrains Mono', monospace";
+      ctx.fillText("11.1V • XT60", cx, batY + 28);
+
+      // Battery Strap looping through rear vertical slots
+      ctx.fillStyle = "#ca8a04";
+      ctx.fillRect(cx - 24, cy + 86, 48, 4);
 
       // Heavy DC Leads from Battery to Power Module
       ctx.strokeStyle = "#dc2626";
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(cx - 15, batY); ctx.lineTo(cx - 15, pmY + 40);
+      ctx.moveTo(cx - 10, batY); ctx.lineTo(cx - 10, pmY + 30);
       ctx.stroke();
 
       ctx.strokeStyle = "#0f172a";
       ctx.beginPath();
-      ctx.moveTo(cx + 15, batY); ctx.lineTo(cx + 15, pmY + 40);
+      ctx.moveTo(cx + 10, batY); ctx.lineTo(cx + 10, pmY + 30);
       ctx.stroke();
 
       // Heavy DC Leads from Power Module to PDB
-      ctx.strokeStyle = (isStep(2) || highlightAll) ? "#dc2626" : "#64748b";
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#dc2626";
       ctx.beginPath();
-      ctx.moveTo(cx - 15, pmY); ctx.lineTo(cx - 15, cy + 70);
+      ctx.moveTo(cx - 10, pmY); ctx.lineTo(cx - 10, cy + 54);
       ctx.stroke();
 
-      ctx.strokeStyle = (isStep(2) || highlightAll) ? "#0f172a" : "#64748b";
+      ctx.strokeStyle = "#0f172a";
       ctx.beginPath();
-      ctx.moveTo(cx + 15, pmY); ctx.lineTo(cx + 15, cy + 70);
+      ctx.moveTo(cx + 10, pmY); ctx.lineTo(cx + 10, cy + 54);
       ctx.stroke();
 
-      // 6-Pin Ribbon Cable to FC POWER / PM Port
-      if (isStep(6) || highlightAll) {
-        ctx.strokeStyle = "#10b981";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(cx - 28, pmY);
-        ctx.lineTo(cx - 28, cy + 60);
-        ctx.stroke();
+      // 6-Pin Twisted DF13 Cable from Power Module to FC POWER / PM Port
+      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(cx - 22, pmY);
+      ctx.lineTo(cx - 22, cy + fcW / 2);
+      ctx.stroke();
 
-        ctx.fillStyle = "#059669";
-        ctx.font = "bold 10px 'JetBrains Mono', monospace";
-        ctx.fillText("6-PIN 5.3V DC", cx - 110, pmY - 20);
+      // Step 6 Specific: APM JP1 Jumper Alert Box
+      if (step === 6 && selectedFC === 'apm') {
+        ctx.fillStyle = "#fef2f2";
+        ctx.fillRect(cx + 42, cy - 12, 185, 34);
+        ctx.strokeStyle = "#dc2626";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx + 42, cy - 12, 185, 34);
+
+        ctx.fillStyle = "#dc2626";
+        ctx.font = "bold 9px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("REMOVE JP1 JUMPER ON APM!", cx + 48, cy + 2);
+        ctx.fillStyle = "#475569";
+        ctx.font = "7.5px 'JetBrains Mono', monospace";
+        ctx.fillText("Prevents burning 3.3V chip!", cx + 48, cy + 14);
       }
+    };
 
-      // 8. Elevated GPS & Compass Mast (Left Side)
-      const mastBaseX = cx - 140;
+    // H. Helper: Draw ESC Servo Signal Wires to FC Output Rail (Step >= 7)
+    const drawEscServoWires = (cx, cy, arm, armLength, step, selectedFC) => {
+      if (step < 7) return;
+
+      const escDist = armLength * 0.46;
+      const escX = cx + escDist * Math.cos(arm.angle);
+      const escY = cy + escDist * Math.sin(arm.angle);
+      const fcW = (selectedFC === 'pixhawk') ? 92 : 82;
+
+      // Signal ribbon routing along arm into FC servo rail
+      ctx.strokeStyle = "#f59e0b";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(escX, escY);
+      ctx.lineTo(cx + (fcW / 2 - 8) * Math.cos(arm.angle), cy + (fcW / 2 - 8) * Math.sin(arm.angle));
+      ctx.stroke();
+      ctx.setLineDash([]);
+    };
+
+    // I. Helper: Draw Radio Receiver & 90° Antennas (Step >= 8)
+    const drawRadioReceiver = (cx, cy, step, selectedFC) => {
+      if (step < 8) return;
+
+      const rxX = cx + 80;
+      const rxY = cy + 100;
+      const fcW = (selectedFC === 'pixhawk') ? 92 : 82;
+
+      // FlySky FS-iA6B Case
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(rxX, rxY, 56, 32);
+      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(rxX, rxY, 56, 32);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 8.5px var(--font-sans)";
+      ctx.textAlign = "center";
+      ctx.fillText("RC RECEIVER", rxX + 28, rxY + 13);
+      ctx.fillStyle = "#34d399";
+      ctx.font = "bold 7.5px 'JetBrains Mono', monospace";
+      ctx.fillText("FS-iA6B", rxX + 28, rxY + 24);
+
+      // Dual 90-degree Spatial Diversity Antennas
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(rxX + 48, rxY + 12);
+      ctx.lineTo(rxX + 90, rxY - 20);
+      ctx.moveTo(rxX + 48, rxY + 20);
+      ctx.lineTo(rxX + 90, rxY + 50);
+      ctx.stroke();
+
+      ctx.fillStyle = "#059669";
+      ctx.font = "bold 8px 'JetBrains Mono', monospace";
+      ctx.fillText("90° V-Antenna", rxX + 92, rxY + 16);
+
+      // 3-Pin PPM / i-Bus Cable to FC RC IN
+      ctx.strokeStyle = "#10b981";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(rxX, rxY + 16);
+      ctx.lineTo(cx + fcW / 2, cy + 20);
+      ctx.stroke();
+    };
+
+    // J. Helper: Draw Elevated GPS Mast (Step >= 9)
+    const drawGpsMast = (cx, cy, step, selectedFC) => {
+      if (step < 9) return;
+
+      const mastBaseX = cx - 110;
       const mastBaseY = cy;
-      const puckX = 260;
-      const puckY = 240;
+      const puckX = cx - 210;
+      const puckY = cy - 140;
+      const fcW = (selectedFC === 'pixhawk') ? 92 : 82;
 
-      // Mast Elevation Stem
-      ctx.strokeStyle = "#64748b";
-      ctx.lineWidth = 5;
+      // Mast Elevation Stem (Carbon Fiber Tube)
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(mastBaseX, mastBaseY);
       ctx.lineTo(puckX, puckY);
       ctx.stroke();
 
-      // GPS Puck (White Dome)
+      // GPS Puck Dome (White Enclosure)
       ctx.fillStyle = "#ffffff";
       ctx.beginPath();
-      ctx.arc(puckX, puckY, 32, 0, Math.PI * 2);
+      ctx.arc(puckX, puckY, 26, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = "#0284c7";
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
 
-      // Forward Arrow on GPS Puck
+      // Forward Heading Arrow on GPS Dome
       ctx.fillStyle = "#0284c7";
       ctx.beginPath();
-      ctx.moveTo(puckX, puckY - 18);
-      ctx.lineTo(puckX - 7, puckY - 4);
-      ctx.lineTo(puckX + 7, puckY - 4);
+      ctx.moveTo(puckX, puckY - 14);
+      ctx.lineTo(puckX - 6, puckY - 3);
+      ctx.lineTo(puckX + 6, puckY - 3);
       ctx.closePath();
       ctx.fill();
 
       ctx.fillStyle = "#0f172a";
-      ctx.font = "bold 10px var(--font-sans)";
+      ctx.font = "bold 8px var(--font-sans)";
       ctx.textAlign = "center";
-      ctx.fillText("NEO-M8N GPS", puckX, puckY + 10);
+      ctx.fillText("NEO-M8N", puckX, puckY + 9);
       ctx.fillStyle = "#64748b";
-      ctx.font = "bold 8.5px 'JetBrains Mono', monospace";
-      ctx.fillText("+ I2C COMPASS", puckX, puckY + 22);
+      ctx.font = "bold 7px 'JetBrains Mono', monospace";
+      ctx.fillText("GPS + MAG", puckX, puckY + 18);
 
-      // GPS Cables to FC
-      if (isStep(9) || highlightAll) {
-        ctx.strokeStyle = "#0284c7";
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(puckX + 22, puckY + 10);
-        ctx.quadraticCurveTo(cx - 90, cy - 50, cx - fcW / 2, cy - 10);
-        ctx.stroke();
-
-        ctx.strokeStyle = "#db2777";
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(puckX + 22, puckY + 18);
-        ctx.quadraticCurveTo(cx - 85, cy - 30, cx - fcW / 2, cy);
-        ctx.stroke();
-
-        // Mast Height Annotation
-        ctx.fillStyle = "#0284c7";
-        ctx.font = "bold 11px 'JetBrains Mono', monospace";
-        ctx.fillText("14cm Mast: Isolates 60A PDB EMF", puckX, puckY + 54);
-      }
-
-      // 9. Radio Receiver (FlySky FS-iA6B)
-      const rxX = cx + 110;
-      const rxY = cy + 130;
-
-      ctx.fillStyle = "#0f172a";
-      ctx.fillRect(rxX, rxY, 68, 38);
-      ctx.strokeStyle = (isStep(8) || highlightAll) ? "#10b981" : "#64748b";
-      ctx.lineWidth = 2.5;
-      ctx.strokeRect(rxX, rxY, 68, 38);
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 10px var(--font-sans)";
-      ctx.textAlign = "center";
-      ctx.fillText("RC RECEIVER", rxX + 34, rxY + 15);
-      ctx.fillStyle = "#34d399";
-      ctx.font = "bold 8.5px 'JetBrains Mono', monospace";
-      ctx.fillText("FS-iA6B", rxX + 34, rxY + 28);
-
-      // Dual 90-degree Antennas
-      ctx.strokeStyle = "#475569";
-      ctx.lineWidth = 2.5;
+      // GPS & I2C Cables to FC Ports
+      ctx.strokeStyle = "#0284c7";
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(rxX + 58, rxY + 18);
-      ctx.lineTo(rxX + 110, rxY - 15);
-      ctx.moveTo(rxX + 58, rxY + 28);
-      ctx.lineTo(rxX + 110, rxY + 60);
+      ctx.moveTo(puckX + 18, puckY + 8);
+      ctx.quadraticCurveTo(cx - 70, cy - 40, cx - fcW / 2, cy - 8);
       ctx.stroke();
 
-      ctx.fillStyle = "#475569";
-      ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
-      ctx.fillText("90° V-Antenna", rxX + 114, rxY + 24);
+      ctx.strokeStyle = "#db2777";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(puckX + 18, puckY + 14);
+      ctx.quadraticCurveTo(cx - 65, cy - 25, cx - fcW / 2, cy);
+      ctx.stroke();
 
-      if (isStep(8) || highlightAll) {
-        ctx.strokeStyle = "#10b981";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(rxX, rxY + 20);
-        ctx.lineTo(cx + fcW / 2, cy + 30);
-        ctx.stroke();
-      }
+      // EMF Clearance Cone Indicator
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.arc(cx, cy, 110, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-      // 10. Pixhawk Safety Switch & Buzzer
+      ctx.fillStyle = "#dc2626";
+      ctx.font = "bold 8px 'JetBrains Mono', monospace";
+      ctx.fillText("14cm Mast Isolates Compass from 60A PDB EMF Noise", puckX + 30, puckY + 36);
+    };
+
+    // K. Helper: Draw Safety Switch, Buzzer & Propellers (Step >= 10)
+    const drawSafetyAndProps = (cx, cy, armLength, step, selectedFC) => {
+      if (step < 10) return;
+
+      const fcW = (selectedFC === 'pixhawk') ? 92 : 82;
+
+      // Pixhawk Safety Switch & Piezo Buzzer
       if (selectedFC === 'pixhawk') {
-        const swX = cx + 140;
-        const swY = cy - 30;
-
-        ctx.fillStyle = (isStep(9) || highlightAll) ? "#dc2626" : "#991b1b";
+        const swX = cx + 110;
+        const swY = cy - 24;
+        ctx.fillStyle = (animTimer % 1.5 > 0.75) ? "#dc2626" : "#7f1d1d";
         ctx.beginPath();
-        ctx.arc(swX, swY, 17, 0, Math.PI * 2);
+        ctx.arc(swX, swY, 13, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = "#f87171";
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 7.5px var(--font-sans)";
-        ctx.fillText("SAFETY", swX, swY + 3);
-
-        const bzX = swX;
-        const bzY = cy + 30;
-        ctx.fillStyle = "#0f172a";
-        ctx.beginPath();
-        ctx.arc(bzX, bzY, 15, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = "#64748b";
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.fillStyle = "#cbd5e1";
-        ctx.font = "bold 7.5px var(--font-sans)";
-        ctx.fillText("BUZZER", bzX, bzY + 3);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 6.5px var(--font-sans)";
+        ctx.textAlign = "center";
+        ctx.fillText("SAFETY", swX, swY + 2.5);
 
-        if (isStep(9) || highlightAll) {
-          ctx.strokeStyle = "#dc2626";
-          ctx.lineWidth = 2;
+        // Buzzer
+        const bzX = swX;
+        const bzY = cy + 24;
+        ctx.fillStyle = "#0f172a";
+        ctx.beginPath();
+        ctx.arc(bzX, bzY, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#64748b";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = "#cbd5e1";
+        ctx.font = "bold 6.5px var(--font-sans)";
+        ctx.fillText("BUZZER", bzX, bzY + 2.5);
+      }
+
+      // 4 Carbon-Nylon Propellers (1045) on Motors
+      const propAngles = [-Math.PI / 4, 3 * Math.PI / 4, -3 * Math.PI / 4, Math.PI / 4];
+      propAngles.forEach((ang, idx) => {
+        const isCCW = (idx < 2);
+        const mx = cx + armLength * Math.cos(ang);
+        const my = cy + armLength * Math.sin(ang);
+
+        ctx.save();
+        ctx.translate(mx, my);
+        ctx.rotate(ang + (isCCW ? animTimer * 2 : -animTimer * 2));
+
+        // Propeller Blades (10-Inch Span)
+        ctx.fillStyle = "rgba(15, 23, 42, 0.75)";
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 1.5;
+
+        ctx.beginPath();
+        ctx.ellipse(0, -42, 10, 40, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.ellipse(0, 42, 10, 40, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+      });
+
+      // Bench Safety Warning Banner at Bottom
+      ctx.fillStyle = "#fef2f2";
+      ctx.fillRect(cx - 200, cy + 245, 400, 30);
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx - 200, cy + 245, 400, 30);
+
+      ctx.fillStyle = "#dc2626";
+      ctx.font = "bold 10px 'JetBrains Mono', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("CRITICAL RULE: PROPELLERS OFF DURING BENCH TESTING!", cx, cy + 264);
+    };
+
+    // L. Fixed Step Workbench HUD on Right Side of Canvas
+    const drawStepWorkbenchHUD = (w, h, step, selectedFC, stepsData) => {
+      const hx = 860;
+      const hy = 18;
+      const hw = 472;
+      const hh = 784;
+
+      // Solid White Card with Crisp Slate/Blue Border
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(hx, hy, hw, hh);
+      ctx.strokeStyle = "#0284c7";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(hx, hy, hw, hh);
+
+      // Top Title Bar
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(hx, hy, hw, 48);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 13px var(--font-sans)";
+      ctx.textAlign = "left";
+      ctx.fillText(`STEP ${step}/10: ${stepsData[step - 1].title.toUpperCase()}`, hx + 14, hy + 24);
+
+      ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillText(`${stepsData[step - 1].phase.toUpperCase()} • ${selectedFC.toUpperCase()}`, hx + 14, hy + 40);
+
+      // Inset Diagram Box (y: hy + 58 to hy + 398, height: 340px)
+      const dx = hx + 12;
+      const dy = hy + 58;
+      const dw = hw - 24;
+      const dh = 340;
+
+      ctx.fillStyle = "#f8fafc";
+      ctx.fillRect(dx, dy, dw, dh);
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(dx, dy, dw, dh);
+
+      // Render Step-Specific High-Resolution Exploded Mechanical / Electrical Diagram
+      renderStepDiagram(dx, dy, dw, dh, step, selectedFC);
+
+      // 3 Action Steps (y: hy + 408 to hy + 648)
+      const data = stepsData[step - 1];
+      const ax = hx + 14;
+      let ay = hy + 416;
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 11px 'JetBrains Mono', monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("STEP EXECUTION PROTOCOL:", ax, ay);
+      ay += 18;
+
+      data.actions.forEach(act => {
+        // Number badge
+        ctx.fillStyle = "#0284c7";
+        ctx.fillRect(ax, ay, 20, 20);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 11px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(`${act.num}`, ax + 10, ay + 14);
+
+        // Action title
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 11px var(--font-sans)";
+        ctx.textAlign = "left";
+        ctx.fillText(act.title, ax + 28, ay + 14);
+
+        // Action description
+        ctx.font = "10px var(--font-sans)";
+        ctx.fillStyle = "#475569";
+        // Simple word wrap
+        const words = act.desc.split(" ");
+        let line = "";
+        let lineY = ay + 30;
+        words.forEach(word => {
+          const testLine = line + word + " ";
+          if (ctx.measureText(testLine).width > dw - 36) {
+            ctx.fillText(line, ax + 28, lineY);
+            line = word + " ";
+            lineY += 14;
+          } else {
+            line = testLine;
+          }
+        });
+        ctx.fillText(line, ax + 28, lineY);
+
+        ay = lineY + 16;
+      });
+
+      // Pitfall Alert Box at Bottom (y: hy + 665 to hy + 768)
+      const pboxY = hy + 665;
+      const pboxH = hh - 680;
+      ctx.fillStyle = "#fef2f2";
+      ctx.fillRect(hx + 12, pboxY, dw, pboxH);
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(hx + 12, pboxY, dw, pboxH);
+
+      ctx.fillStyle = "#dc2626";
+      ctx.font = "bold 10.5px 'JetBrains Mono', monospace";
+      ctx.textAlign = "left";
+      ctx.fillText("CRITICAL PITFALL TO AVOID:", hx + 22, pboxY + 20);
+
+      ctx.font = "10px var(--font-sans)";
+      ctx.fillStyle = "#7f1d1d";
+      // Wrap pitfall text
+      const pitWords = data.pitfall.split(" ");
+      let pLine = "";
+      let pLineY = pboxY + 38;
+      pitWords.forEach(wrd => {
+        const testLine = pLine + wrd + " ";
+        if (ctx.measureText(testLine).width > dw - 24) {
+          ctx.fillText(pLine, hx + 22, pLineY);
+          pLine = wrd + " ";
+          pLineY += 15;
+        } else {
+          pLine = testLine;
+        }
+      });
+      ctx.fillText(pLine, hx + 22, pLineY);
+    };
+
+    // M. Specific Exploded Engineering Diagrams for each Step
+    const renderStepDiagram = (dx, dy, dw, dh, step, selectedFC) => {
+      const cx = dx + dw / 2;
+      const cy = dy + dh / 2;
+
+      ctx.save();
+
+      if (step === 1) {
+        // STEP 1: HOW TO SCREW ARMS TO BOTTOM PDB PLATE
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("EXPLODED CROSS-SECTION: ARM TO PDB MOUNT", cx, dy + 22);
+
+        // 1. Arm Plastic Base Cross-Section
+        ctx.fillStyle = "#fee2e2";
+        ctx.fillRect(cx - 90, cy - 80, 180, 50);
+        ctx.strokeStyle = "#b91c1c";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 90, cy - 80, 180, 50);
+        ctx.fillStyle = "#b91c1c";
+        ctx.font = "bold 10px monospace";
+        ctx.fillText("F330 MOLDED POLYAMIDE ARM (RED/WHITE)", cx, cy - 52);
+
+        // Molded Brass Threaded Insert inside arm
+        ctx.fillStyle = "#ca8a04";
+        ctx.fillRect(cx - 18, cy - 65, 36, 35);
+        ctx.strokeStyle = "#eab308";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx - 18, cy - 65, 36, 35);
+        // Thread ridges
+        ctx.strokeStyle = "#ffffff";
+        for (let ty = cy - 60; ty < cy - 35; ty += 6) {
           ctx.beginPath();
-          ctx.moveTo(swX - 17, swY); ctx.lineTo(cx + fcW / 2, cy - 14);
-          ctx.moveTo(bzX - 15, bzY); ctx.lineTo(cx + fcW / 2, cy + 6);
+          ctx.moveTo(cx - 14, ty); ctx.lineTo(cx + 14, ty);
           ctx.stroke();
         }
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 8px monospace";
+        ctx.fillText("BRASS", cx, cy - 44);
+
+        // 2. Bottom Fiberglass PDB Plate
+        ctx.fillStyle = "#090d16";
+        ctx.fillRect(cx - 140, cy - 20, 280, 20);
+        ctx.strokeStyle = "#ca8a04";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 140, cy - 20, 280, 20);
+        ctx.fillStyle = "#eab308";
+        ctx.font = "bold 9px monospace";
+        ctx.fillText("F330 BOTTOM PDB FIBERGLASS PLATE (1.6mm)", cx, cy - 6);
+
+        // Clearance hole through PDB
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillRect(cx - 12, cy - 20, 24, 20);
+
+        // 3. M2.5 x 6mm Hex Socket Head Screw coming from underneath
+        const screwY = cy + 15;
+        ctx.fillStyle = "#cbd5e1";
+        // Screw Shank & Threads
+        ctx.fillRect(cx - 7, screwY, 14, 30);
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx - 7, screwY, 14, 30);
+
+        // Screw Button Head
+        ctx.fillRect(cx - 18, screwY + 30, 36, 14);
+        ctx.strokeRect(cx - 18, screwY + 30, 36, 14);
+        // 2.0mm Hex Socket
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(cx - 6, screwY + 34, 12, 10);
+
+        // 2.0mm Allen Key with Rotation Arrow
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(cx, screwY + 44);
+        ctx.lineTo(cx, screwY + 80);
+        ctx.lineTo(cx + 45, screwY + 80);
+        ctx.stroke();
+
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 10px monospace";
+        ctx.fillText("2.0mm HEX KEY", cx + 78, screwY + 83);
+
+        // Clockwise Snug Tight arrow
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(cx, screwY + 44, 24, 0, Math.PI * 1.4);
+        ctx.stroke();
+
+        // Technical specs box
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+        ctx.fillText("• 16x M2.5 Screws: 4 per arm from underside", cx, dy + dh - 32);
+        ctx.fillStyle = "#b45309";
+        ctx.fillText("• Hand-tight snug (0.6 Nm) • Never overtighten brass!", cx, dy + dh - 16);
+
+      } else if (step === 2) {
+        // STEP 2: HOW TO SOLDER PDB PADS & CONTINUITY TEST
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("PDB SOLDERING PROCEDURE & MULTIMETER TEST", cx, dy + 22);
+
+        // Copper Pad with Shiny Solder Fillet
+        ctx.fillStyle = "#ca8a04";
+        ctx.fillRect(cx - 130, cy - 70, 110, 45);
+        ctx.strokeStyle = "#dc2626";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 130, cy - 70, 110, 45);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 11px monospace";
+        ctx.fillText("[+] 12V DC PAD", cx - 75, cy - 42);
+
+        // Shiny Solder Dome
+        ctx.fillStyle = "#e2e8f0";
+        ctx.beginPath();
+        ctx.arc(cx - 45, cy - 48, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#94a3b8";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Soldering Iron Tip Touching Pad
+        ctx.strokeStyle = "#64748b";
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(cx - 10, cy - 110);
+        ctx.lineTo(cx - 40, cy - 54);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cx - 38, cy - 58);
+        ctx.lineTo(cx - 45, cy - 48);
+        ctx.stroke();
+
+        ctx.fillStyle = "#dc2626";
+        ctx.font = "bold 9px monospace";
+        ctx.fillText("380°C - 400°C", cx - 75, cy - 18);
+
+        // Multimeter Continuity Mode Display on Right
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(cx + 30, cy - 90, 120, 90);
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx + 30, cy - 90, 120, 90);
+
+        ctx.fillStyle = "#10b981";
+        ctx.font = "bold 13px 'JetBrains Mono', monospace";
+        ctx.fillText("0L / NO BEEP", cx + 90, cy - 52);
+        ctx.font = "8px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#cbd5e1";
+        ctx.fillText("CONTINUITY TEST", cx + 90, cy - 34);
+        ctx.fillText("NO SHORT CIRCUIT", cx + 90, cy - 20);
+
+        // Red & Black Probes touching pads
+        ctx.strokeStyle = "#dc2626";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx + 45, cy); ctx.lineTo(cx - 20, cy + 30);
+        ctx.stroke();
+
+        ctx.strokeStyle = "#0f172a";
+        ctx.beginPath();
+        ctx.moveTo(cx + 105, cy); ctx.lineTo(cx + 50, cy + 30);
+        ctx.stroke();
+
+        // Bottom Soldering Rules
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+        ctx.fillText("1. Pre-tin pads with shiny solder dome first", cx, dy + dh - 42);
+        ctx.fillText("2. Strip wire exactly 4mm • No stray whiskers", cx, dy + dh - 26);
+        ctx.fillStyle = "#dc2626";
+        ctx.fillText("3. Multimeter test: MUST NOT BEEP before plugging battery!", cx, dy + dh - 10);
+
+      } else if (step === 3) {
+        // STEP 3: HOW TO SCREW MOTORS TO ARM TIPS (SCREW LENGTH WARNING)
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("MOTOR BASE MOUNTING & STATOR WINDING CLEARANCE", cx, dy + 22);
+
+        // Motor Cross-Section Showing Internal Stator Copper Windings
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(cx - 95, cy - 85, 190, 55);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 95, cy - 85, 190, 55);
+
+        // Stator Copper Coils
+        ctx.fillStyle = "#b45309";
+        ctx.fillRect(cx - 75, cy - 70, 50, 25);
+        ctx.fillRect(cx + 25, cy - 70, 50, 25);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 8px monospace";
+        ctx.fillText("COPPER WINDINGS", cx - 50, cy - 54);
+        ctx.fillText("COPPER WINDINGS", cx + 50, cy - 54);
+
+        // Motor Base Plate with M3 Threaded Hole
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(cx - 95, cy - 30, 190, 14);
+
+        // Arm Tip Circular Plastic Plate
+        ctx.fillStyle = "#fee2e2";
+        ctx.fillRect(cx - 110, cy - 16, 220, 14);
+        ctx.strokeStyle = "#dc2626";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx - 110, cy - 16, 220, 14);
+
+        // Safe M3 x 6mm Screw entering from below
+        ctx.fillStyle = "#10b981";
+        ctx.fillRect(cx - 45, cy - 28, 8, 38);
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(cx - 52, cy + 10, 22, 10);
+        ctx.fillStyle = "#10b981";
+        ctx.font = "bold 8px monospace";
+        ctx.fillText("M3x6mm [OK]", cx - 41, cy + 32);
+
+        // Dangerous 8mm+ Screw Puncturing Stator Coil
+        ctx.fillStyle = "#ef4444";
+        ctx.fillRect(cx + 35, cy - 58, 8, 68);
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(cx + 28, cy + 10, 22, 10);
+        ctx.fillStyle = "#dc2626";
+        ctx.font = "bold 8px monospace";
+        ctx.fillText(">6mm [FATAL!]", cx + 39, cy + 32);
+
+        // Threadlocker Drop
+        ctx.fillStyle = "#0284c7";
+        ctx.beginPath();
+        ctx.arc(cx - 58, cy, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = "bold 8px monospace";
+        ctx.fillText("Loctite 242", cx - 60, cy + 12);
+
+        // Bottom Motor Nut Color Rules
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 10px 'JetBrains Mono', monospace";
+        ctx.fillText("BLACK NUT (CW Thread): M1 (FR) & M2 (RL) - CCW Spin", cx, dy + dh - 36);
+        ctx.fillStyle = "#475569";
+        ctx.fillText("SILVER NUT (CCW Thread): M3 (FL) & M4 (RR) - CW Spin", cx, dy + dh - 20);
+
+      } else if (step === 4) {
+        // STEP 4: MOTOR BULLET WIRES & 2-WIRE REVERSAL SWAP
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("3-PHASE AC BULLET CONNECTORS & REVERSAL SWAP", cx, dy + 22);
+
+        // ESC Female Sockets on Left
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(cx - 150, cy - 65, 80, 95);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 150, cy - 65, 80, 95);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 10px monospace";
+        ctx.fillText("ESC 30A", cx - 110, cy - 45);
+
+        // Motor Bullet Plugs on Right
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(cx + 70, cy - 65, 80, 95);
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx + 70, cy - 65, 80, 95);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 10px monospace";
+        ctx.fillText("2212 MOTOR", cx + 110, cy - 45);
+
+        // 3 Phase Wires: Blue, Yellow, Red
+        const wireData = [
+          { y: cy - 25, color: "#2563eb", name: "Phase A (Blue)" },
+          { y: cy - 5, color: "#ca8a04", name: "Phase B (Yellow)" },
+          { y: cy + 15, color: "#dc2626", name: "Phase C (Red)" }
+        ];
+
+        wireData.forEach(wd => {
+          ctx.strokeStyle = wd.color;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(cx - 70, wd.y); ctx.lineTo(cx + 70, wd.y);
+          ctx.stroke();
+
+          // Gold 3.5mm bullet connector dot
+          ctx.fillStyle = "#eab308";
+          ctx.beginPath();
+          ctx.arc(cx, wd.y, 5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // The 2-Wire Swap Rule Explanation Box
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(cx - 160, cy + 45, 320, 60);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 160, cy + 45, 320, 60);
+
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 10.5px 'JetBrains Mono', monospace";
+        ctx.fillText("THE 2-WIRE REVERSAL PRINCIPLE:", cx, cy + 64);
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "9px 'JetBrains Mono', monospace";
+        ctx.fillText("If motor spins backward, simply SWAP ANY 2 WIRES!", cx, cy + 80);
+        ctx.fillStyle = "#475569";
+        ctx.fillText("Reverses AC magnetic commutation angle by 120°.", cx, cy + 94);
+
+      } else if (step === 5) {
+        // STEP 5: FLIGHT CONTROLLER VIBRATION ISOLATION & TOP PLATE
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("3M ANTI-VIBRATION FOAM & HEADING ALIGNMENT", cx, dy + 22);
+
+        // Stack Exploded View: Top Plate -> 3M Foam -> Pixhawk/APM
+        // 1. Top Plate
+        ctx.fillStyle = "#090d16";
+        ctx.fillRect(cx - 120, cy + 40, 240, 16);
+        ctx.strokeStyle = "#ca8a04";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 120, cy + 40, 240, 16);
+        ctx.fillStyle = "#eab308";
+        ctx.font = "bold 9px monospace";
+        ctx.fillText("F330 TOP CENTER PLATE (16 M2.5 SCREWS)", cx, cy + 52);
+
+        // 2. 3M Damping Foam
+        ctx.fillStyle = "#475569";
+        ctx.fillRect(cx - 70, cy + 10, 140, 18);
+        ctx.strokeStyle = "#64748b";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx - 70, cy + 10, 140, 18);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 8.5px monospace";
+        ctx.fillText("3M HIGH-DENSITY DAMPING FOAM (10mm)", cx, cy + 22);
+
+        // 3. Flight Controller Case
+        ctx.fillStyle = (selectedFC === 'pixhawk') ? "#0f172a" : "#1e293b";
+        ctx.fillRect(cx - 80, cy - 65, 160, 60);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2.5;
+        ctx.strokeRect(cx - 80, cy - 65, 160, 60);
+
+        // Forward Nose Arrow
+        ctx.fillStyle = "#0284c7";
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 58);
+        ctx.lineTo(cx - 10, cy - 42);
+        ctx.lineTo(cx + 10, cy - 42);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 10px var(--font-sans)";
+        ctx.fillText((selectedFC === 'pixhawk') ? "PIXHAWK 2.4.8" : "APM 2.8", cx, cy - 24);
+
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+        ctx.fillText("CRITICAL: Arrow MUST point between 2 Red front arms!", cx, dy + dh - 32);
+        ctx.fillStyle = "#475569";
+        ctx.fillText("Never bolt FC rigidly with metal standoffs (causes gyro clipping)", cx, dy + dh - 16);
+
+      } else if (step === 6) {
+        // STEP 6: POWER MODULE WIRING & APM JP1 JUMPER
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("POWER MODULE 6-PIN WIRING & REGULATOR ISOLATION", cx, dy + 22);
+
+        // 6-Pin Connector Pinout
+        const pins = [
+          "Pin 1: VCC (+5.3V Clean DC)",
+          "Pin 2: VCC (+5.3V Clean DC)",
+          "Pin 3: Current Sense (0-3.3V ADC)",
+          "Pin 4: Voltage Sense (0-3.3V ADC)",
+          "Pin 5: GND (Ground 0V)",
+          "Pin 6: GND (Ground 0V)"
+        ];
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(cx - 150, cy - 80, 300, 110);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 150, cy - 80, 300, 110);
+
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 10px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("6-PIN MOLEX / DF13 CONNECTOR:", cx - 138, cy - 62);
+
+        ctx.font = "9px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#0f172a";
+        pins.forEach((p, idx) => {
+          ctx.fillText(p, cx - 138, cy - 44 + idx * 16);
+        });
+
+        // APM JP1 Jumper Alert
+        if (selectedFC === 'apm') {
+          ctx.fillStyle = "#fef2f2";
+          ctx.fillRect(cx - 150, cy + 42, 300, 52);
+          ctx.strokeStyle = "#dc2626";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(cx - 150, cy + 42, 300, 52);
+
+          ctx.fillStyle = "#dc2626";
+          ctx.font = "bold 10px 'JetBrains Mono', monospace";
+          ctx.fillText("MANDATORY: REMOVE APM 2.8 JP1 JUMPER!", cx - 138, cy + 62);
+          ctx.fillStyle = "#7f1d1d";
+          ctx.font = "8.5px 'JetBrains Mono', monospace";
+          ctx.fillText("Leaving JP1 connects ESC 5V and burns 3.3V chip!", cx - 138, cy + 80);
+        } else {
+          ctx.fillStyle = "#f0fdf4";
+          ctx.fillRect(cx - 150, cy + 42, 300, 52);
+          ctx.strokeStyle = "#10b981";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(cx - 150, cy + 42, 300, 52);
+
+          ctx.fillStyle = "#059669";
+          ctx.font = "bold 10px 'JetBrains Mono', monospace";
+          ctx.fillText("PIXHAWK POWER RAIL ISOLATION:", cx - 138, cy + 62);
+          ctx.fillStyle = "#14532d";
+          ctx.font = "8.5px 'JetBrains Mono', monospace";
+          ctx.fillText("Internal ideal diode selects clean Power Module DC.", cx - 138, cy + 80);
+        }
+
+      } else if (step === 7) {
+        // STEP 7: ESC SERVO SIGNAL WIRES & QUAD-X MOTOR ORDER
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("SERVO RAIL PINOUT & QUAD-X MOTOR NUMBERING", cx, dy + 22);
+
+        // 3-Pin Header Diagram
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(cx - 145, cy - 80, 290, 85);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 145, cy - 80, 290, 85);
+
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 10px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("SERVO RAIL 3-PIN POLARITY:", cx - 132, cy - 62);
+
+        ctx.font = "9px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#0f172a";
+        ctx.fillText("• TOP ROW: GND (Black / Brown Wire)", cx - 132, cy - 44);
+        ctx.fillText("• MIDDLE ROW: +5V Power (Red Wire)", cx - 132, cy - 28);
+        ctx.fillText("• BOTTOM ROW: Signal PWM (White / Orange Wire)", cx - 132, cy - 12);
+
+        // Quad-X Ordering Box
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillRect(cx - 145, cy + 18, 290, 85);
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx - 145, cy + 18, 290, 85);
+
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 10px 'JetBrains Mono', monospace";
+        ctx.fillText("ARDUCOPTER QUAD-X MOTOR ORDER:", cx - 132, cy + 36);
+
+        ctx.font = "8.5px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#0284c7";
+        ctx.fillText("• Pin 1 -> Motor 1 (Front-Right, CCW ↺)", cx - 132, cy + 52);
+        ctx.fillText("• Pin 2 -> Motor 2 (Rear-Left, CCW ↺)", cx - 132, cy + 66);
+        ctx.fillStyle = "#db2777";
+        ctx.fillText("• Pin 3 -> Motor 3 (Front-Left, CW ↻)", cx - 132, cy + 80);
+        ctx.fillText("• Pin 4 -> Motor 4 (Rear-Right, CW ↻)", cx - 132, cy + 94);
+
+      } else if (step === 8) {
+        // STEP 8: FLYSKY RC RECEIVER & 90-DEGREE ANTENNA DIVERSITY
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("FLYSKY FS-iA6B PPM LINK & 90° DUAL ANTENNAS", cx, dy + 22);
+
+        // Receiver Body
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(cx - 120, cy - 70, 110, 60);
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 120, cy - 70, 110, 60);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 10px var(--font-sans)";
+        ctx.fillText("FLYSKY FS-iA6B", cx - 65, cy - 46);
+        ctx.fillStyle = "#34d399";
+        ctx.font = "8.5px 'JetBrains Mono', monospace";
+        ctx.fillText("2.4GHz AFHDS 2A", cx - 65, cy - 30);
+
+        // 90-Degree V-Antennas
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(cx - 10, cy - 40);
+        ctx.lineTo(cx + 80, cy - 80);
+        ctx.moveTo(cx - 10, cy - 40);
+        ctx.lineTo(cx + 80, cy);
+        ctx.stroke();
+
+        ctx.fillStyle = "#059669";
+        ctx.font = "bold 10px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("90° SPATIAL DIVERSITY", cx + 86, cy - 36);
+
+        // Instruction Box
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(cx - 150, cy + 20, 300, 85);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx - 150, cy + 20, 300, 85);
+
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 9.5px 'JetBrains Mono', monospace";
+        ctx.fillText("WHY 90° ANTENNA ORIENTATION?", cx - 138, cy + 38);
+
+        ctx.font = "8.5px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#0f172a";
+        ctx.fillText("• Prevents signal nulls when drone banks or rolls.", cx - 138, cy + 54);
+        ctx.fillText("• Single 3-pin cable carries all 6 channels via PPM.", cx - 138, cy + 70);
+        ctx.fillText("• Plug into RC IN (Pixhawk) or Input 1 (APM).", cx - 138, cy + 86);
+
+      } else if (step === 9) {
+        // STEP 9: 14CM GPS MAST & MAGNETIC FIELD CLEARANCE
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("14CM ELEVATED GPS MAST & COMPASS EMF ISOLATION", cx, dy + 22);
+
+        // 14cm Mast Carbon Tube
+        ctx.strokeStyle = "#334155";
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.moveTo(cx - 80, cy + 50);
+        ctx.lineTo(cx - 80, cy - 70);
+        ctx.stroke();
+
+        // GPS Puck Dome
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(cx - 80, cy - 70, 34, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Forward Arrow
+        ctx.fillStyle = "#0284c7";
+        ctx.beginPath();
+        ctx.moveTo(cx - 80, cy - 92);
+        ctx.lineTo(cx - 8, cy - 80);
+        ctx.lineTo(cx + 8, cy - 80);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 9.5px var(--font-sans)";
+        ctx.fillText("UBLOX NEO-M8N", cx - 80, cy - 64);
+        ctx.fillStyle = "#64748b";
+        ctx.font = "8px 'JetBrains Mono', monospace";
+        ctx.fillText("GPS + COMPASS", cx - 80, cy - 50);
+
+        // EMF Noise Zone on Frame Base
+        ctx.strokeStyle = "#dc2626";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.arc(cx - 80, cy + 50, 70, -Math.PI, 0);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = "#dc2626";
+        ctx.font = "bold 8.5px 'JetBrains Mono', monospace";
+        ctx.fillText("60A DC EMF NOISE", cx - 80, cy + 20);
+
+        // Explanation text on right
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 10px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("MAGNETOMETER ISOLATION:", cx + 10, cy - 40);
+        ctx.font = "8.5px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#475569";
+        ctx.fillText("• Earth magnetic field = 0.5 Gauss", cx + 10, cy - 22);
+        ctx.fillText("• Motor/PDB DC field = >2.0 Gauss", cx + 10, cy - 6);
+        ctx.fillText("• Mast elevation prevents toilet-bowl", cx + 10, cy + 10);
+        ctx.fillText("  flyaways and compass heading errors.", cx + 10, cy + 24);
+        ctx.fillText("• Arrow MUST point Nose direction!", cx + 10, cy + 40);
+
+      } else if (step === 10) {
+        // STEP 10: PRE-FLIGHT BENCH SAFETY & PROPELLERS
+        ctx.fillStyle = "#0284c7";
+        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("PRE-FLIGHT BENCH SAFETY & PROPELLER CHECK", cx, dy + 22);
+
+        // Red Warning Triangle
+        ctx.fillStyle = "#ef4444";
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 80);
+        ctx.lineTo(cx - 36, cy - 25);
+        ctx.lineTo(cx + 36, cy - 25);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 28px monospace";
+        ctx.fillText("!", cx, cy - 35);
+
+        ctx.fillStyle = "#dc2626";
+        ctx.font = "bold 12px 'JetBrains Mono', monospace";
+        ctx.fillText("PROPELLERS STRICTLY OFF ON BENCH!", cx, cy - 4);
+
+        // Checklist Box
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(cx - 150, cy + 12, 300, 95);
+        ctx.strokeStyle = "#0284c7";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx - 150, cy + 12, 300, 95);
+
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 10px 'JetBrains Mono', monospace";
+        ctx.textAlign = "left";
+        ctx.fillText("BENCH SAFETY CHECKLIST:", cx - 138, cy + 30);
+
+        ctx.font = "8.5px 'JetBrains Mono', monospace";
+        ctx.fillStyle = "#475569";
+        ctx.fillText("[ ] Multimeter continuity check: No beep on XT60", cx - 138, cy + 48);
+        ctx.fillText("[ ] First power-on using Smoke Stopper polyfuse", cx - 138, cy + 64);
+        ctx.fillText("[ ] Pixhawk Safety Switch: Press 2s for solid red", cx - 138, cy + 80);
+        ctx.fillText("[ ] Install propellers ONLY outside on open field!", cx - 138, cy + 96);
       }
 
       ctx.restore();
+    };
+
+    // N. Flagship Render Function
+    const renderAirframeView = (w, h) => {
+      drawWhiteBlueprintBackground(
+        w, h,
+        `F330 ARDUCOPTER (${selectedFC === 'pixhawk' ? 'PIXHAWK 2.4.8 (32-BIT)' : 'APM 2.8 (CLASSIC)'})`,
+        `STEP ${currentStep}/10 • ${stepsData[currentStep - 1].title.toUpperCase()}`
+      );
+
+      // 1. Render Left Airframe View with Pan & Zoom Transform
+      ctx.save();
+      ctx.translate(w / 2 + panX, h / 2 + panY);
+      ctx.scale(zoomLevel, zoomLevel);
+      ctx.translate(-w / 2, -h / 2);
+
+      // Airframe Center positioned cleanly in the left 60% of canvas
+      const cx = 430;
+      const cy = 405;
+      const armLength = 230;
+
+      // 4 Molded Arms (2 Red Front Nose, 2 White Rear Tail)
+      const arms = [
+        { id: 1, name: "Motor 1 (FR)", angle: -Math.PI / 4, spin: "CCW", nut: "Black Nut", armFill: "#dc2626", armBorder: "#991b1b", isFront: true },
+        { id: 2, name: "Motor 2 (RL)", angle: 3 * Math.PI / 4, spin: "CCW", nut: "Black Nut", armFill: "#f8fafc", armBorder: "#64748b", isFront: false },
+        { id: 3, name: "Motor 3 (FL)", angle: -3 * Math.PI / 4, spin: "CW", nut: "Silver Nut", armFill: "#dc2626", armBorder: "#991b1b", isFront: true },
+        { id: 4, name: "Motor 4 (RR)", angle: Math.PI / 4, spin: "CW", nut: "Silver Nut", armFill: "#f8fafc", armBorder: "#64748b", isFront: false },
+      ];
+
+      // 1. Heading Reference Arrow (Front / Nose)
+      ctx.fillStyle = "#0284c7";
+      ctx.beginPath();
+      ctx.moveTo(cx, 40);
+      ctx.lineTo(cx - 12, 60);
+      ctx.lineTo(cx + 12, 60);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "#0369a1";
+      ctx.font = "bold 12px var(--font-sans)";
+      ctx.textAlign = "center";
+      ctx.fillText("FRONT NOSE (FORWARD FLIGHT HEADING)", cx, 78);
+      ctx.textAlign = "left";
+
+      // 2. Draw 4 Molded Arms
+      arms.forEach(a => {
+        drawF330Arm(cx, cy, a, armLength, currentStep);
+      });
+
+      // 3. Draw Bottom F330 Center Plate with PDB
+      drawF330Plate(cx, cy, false, currentStep, currentStep === 1);
+
+      // 4. Draw ESC Power Wiring to PDB (Step >= 2)
+      arms.forEach(a => {
+        drawEscPowerWiring(cx, cy, a, armLength, currentStep);
+      });
+
+      // 5. Draw 2212 Motors on Arm Tips (Step >= 3)
+      arms.forEach(a => {
+        drawMotorOnArm(cx, cy, a, armLength, currentStep);
+      });
+
+      // 6. Draw ESC Bodies & 3-Phase Bullet Wires (Step >= 4)
+      arms.forEach(a => {
+        drawEscAndBullets(cx, cy, a, armLength, currentStep);
+      });
+
+      // 7. Draw ESC 3-Pin Servo Signal Ribbons (Step >= 7)
+      arms.forEach(a => {
+        drawEscServoWires(cx, cy, a, armLength, currentStep, selectedFC);
+      });
+
+      // 8. Draw Center Top Plate & Flight Controller (Step >= 5)
+      drawFlightControllerMount(cx, cy, currentStep, selectedFC);
+
+      // 9. Draw Power Module & Battery (Step >= 6)
+      drawPowerModuleAndBattery(cx, cy, currentStep, selectedFC);
+
+      // 10. Draw Radio Receiver & 90° Antennas (Step >= 8)
+      drawRadioReceiver(cx, cy, currentStep, selectedFC);
+
+      // 11. Draw Elevated GPS Mast (Step >= 9)
+      drawGpsMast(cx, cy, currentStep, selectedFC);
+
+      // 12. Draw Safety Switch, Buzzer & Props (Step >= 10)
+      drawSafetyAndProps(cx, cy, armLength, currentStep, selectedFC);
+
+      ctx.restore();
+
+      // 2. Render Fixed Step Workbench HUD on Right Side of Canvas (Not affected by Pan/Zoom)
+      drawStepWorkbenchHUD(w, h, currentStep, selectedFC, stepsData);
     };
 
     // 2. RENDER FLIGHT CONTROLLER PINOUT CLOSE-UP VIEW (MACRO SCHEMATIC)
