@@ -527,7 +527,7 @@ class DroneSimulations {
         ctx.fillStyle = "#dc2626";
         ctx.font = "bold 9.5px monospace";
         ctx.textAlign = "center";
-        ctx.fillText("⚠️ HAZARD: PUFFED / DAMAGED PACK (GAS GENERATION - DISCARD)", batX + batW / 2, batY + 14);
+        ctx.fillText("HAZARD: PUFFED / DAMAGED PACK (GAS GENERATION - DISCARD)", batX + batW / 2, batY + 14);
       } else {
         // Standard Crisp Rectangular LiPo Pouch
         ctx.beginPath();
@@ -1588,8 +1588,8 @@ class DroneSimulations {
       ctx.fillStyle = "#dc2626";
       ctx.font = "bold 10px system-ui";
       ctx.textAlign = "center";
-      ctx.fillText("▲ Tip Null", 0, -52);
-      ctx.fillText("▼ Tip Null", 0, 60);
+      ctx.fillText("Tip Null (Top)", 0, -52);
+      ctx.fillText("Tip Null (Bottom)", 0, 60);
 
       ctx.restore();
 
@@ -2414,7 +2414,7 @@ class DroneSimulations {
         ctx.stroke();
       }
 
-      // Power Button ⏻
+      // Power Button
       ctx.strokeStyle = "#18181b";
       ctx.fillStyle = (sa === 1 && !armingBlocked) ? "#fef2f2" : "#f4f4f5";
       ctx.lineWidth = 1.5;
@@ -2423,9 +2423,9 @@ class DroneSimulations {
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = (sa === 1 && !armingBlocked) ? "#dc2626" : "#18181b";
-      ctx.font = "bold 11px sans-serif";
+      ctx.font = "bold 8px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("⏻", cx, cy + 78);
+      ctx.fillText("PWR", cx, cy + 77);
 
       // -----------------------------------------------------------------------
       // TRANSMITTER BATTERY BAY (2S 18650 Li-Ion Cutaway Schematic)
@@ -2770,7 +2770,7 @@ class DroneSimulations {
       ctx.fillStyle = "#09090b";
       ctx.font = "bold 9.5px monospace";
       ctx.textAlign = "right";
-      ctx.fillText("[SD] 2-POS MOMENTARY ⟲", w - 36, coords.sd.y - 32);
+      ctx.fillText("[SD] 2-POS MOMENTARY", w - 36, coords.sd.y - 32);
       ctx.font = "8.5px monospace";
       ctx.fillStyle = sd === 1 ? "#dc2626" : "#71717a";
       if (showMicroseconds) {
@@ -5078,9 +5078,9 @@ class DroneSimulations {
         title: "Frame Assembly & Bottom Plate PDB",
         phase: "Phase 1: Mechanical Base",
         actions: [
-          { num: 1, title: "RED ARMS GO FRONT ➔", desc: "Mount the 2 Red arms facing forward (Nose). White/black arms go to the rear (Tail) for line-of-sight orientation." },
-          { num: 2, title: "INSERT 16 M2.5 SCREWS 🔩", desc: "Thread 4 screws per arm from underneath the bottom PDB plate into the brass arm inserts." },
-          { num: 3, title: "SNUG TIGHT ONLY ✋", desc: "Tighten snug with 2.0mm hex key. Never overtighten into brass threads. Leave top plate off for now." }
+          { num: 1, title: "RED ARMS FACING FRONT", desc: "Mount the 2 Red arms facing forward (Nose). White/black arms go to the rear (Tail) for line-of-sight orientation." },
+          { num: 2, title: "INSERT 16 M2.5 SCREWS", desc: "Thread 4 screws per arm from underneath the bottom PDB plate into the brass arm inserts." },
+          { num: 3, title: "SNUG TIGHT ONLY", desc: "Tighten snug with 2.0mm hex key. Never overtighten into brass threads. Leave top plate off for now." }
         ],
         pitfall: "Never install arms upside down! Landing leg tabs must point down. Do not overtighten screws into brass.",
         deepdive: "The F450 frame uses an integrated Power Distribution Board (PDB) on the bottom fiberglass plate. This eliminates wire harnesses by routing high DC current directly through heavy copper layers.",
@@ -5091,9 +5091,9 @@ class DroneSimulations {
         title: "Soldering Power Module & 4x ESC Leads",
         phase: "Phase 1: Power Foundation",
         actions: [
-          { num: 1, title: "FLUX & PRE-TIN PADS 🧈", desc: "Apply rosin flux and melt a clean, shiny dome of 63/37 solder onto all (+) and (-) copper pads first." },
-          { num: 2, title: "SOLDER XT60 LEADS 🔌", desc: "Strip 4mm of Power Module wire. Solder thick Red wire to (+) and thick Black wire to (-)." },
-          { num: 3, title: "SOLDER 4x ESC POWER ⚡", desc: "Route each ESC along an arm. Solder Red to (+) and Black to (-). Hold iron steady for 3 seconds." }
+          { num: 1, title: "FLUX & PRE-TIN PADS", desc: "Apply rosin flux and melt a clean, shiny dome of 63/37 solder onto all (+) and (-) copper pads first." },
+          { num: 2, title: "SOLDER XT60 LEADS", desc: "Strip 4mm of Power Module wire. Solder thick Red wire to (+) and thick Black wire to (-)." },
+          { num: 3, title: "SOLDER 4x ESC POWER", desc: "Route each ESC along an arm. Solder Red to (+) and Black to (-). Hold iron steady for 3 seconds." }
         ],
         pitfall: "Beware solder bridges! A single copper whisker bridging (+) and (-) creates a battery dead-short.",
         deepdive: "Soldering station should be set to 380°C–400°C for high-copper ground planes. Ensure joint cools naturally to form a concave, mirror-shiny molecular bond.",
@@ -5104,9 +5104,9 @@ class DroneSimulations {
         title: "Mounting 4x 2212 Motors (Screw Length!)",
         phase: "Phase 2: Propulsion System",
         actions: [
-          { num: 1, title: "MOUNT 4 MOTORS 🛞", desc: "M1 & M2 (Black Nut) on diagonal corners. M3 & M4 (Silver Nut) on opposite corners." },
-          { num: 2, title: "CHECK SCREW LENGTH ⚠️", desc: "Max 6mm screw length! Long screws pierce into stator copper coils and destroy motor & ESC!" },
-          { num: 3, title: "FREE SPIN TEST 🔄", desc: "Add drop of blue Loctite 242. Spin each motor by hand—must rotate smoothly with zero scraping." }
+          { num: 1, title: "MOUNT 4 MOTORS", desc: "M1 & M2 (Black Nut) on diagonal corners. M3 & M4 (Silver Nut) on opposite corners." },
+          { num: 2, title: "CHECK SCREW LENGTH", desc: "Max 6mm screw length! Long screws pierce into stator copper coils and destroy motor & ESC!" },
+          { num: 3, title: "FREE SPIN TEST", desc: "Add drop of blue Loctite 242. Spin each motor by hand—must rotate smoothly with zero scraping." }
         ],
         pitfall: "FATAL ERROR: M3 screws longer than 6mm will pierce motor copper windings, shorting the stator to frame ground!",
         deepdive: "Brushless 2212 motors have 14 neodymium magnets and 12 stator poles. The internal clearance between mounting base and copper wire is under 2mm.",
@@ -5117,9 +5117,9 @@ class DroneSimulations {
         title: "Motor 3-Phase Leads & Direction Swap",
         phase: "Phase 2: Propulsion System",
         actions: [
-          { num: 1, title: "PLUG 3 BULLET WIRES 🔌", desc: "Connect the 3 motor bullet connectors into the 3 matching ESC bullet sockets." },
-          { num: 2, title: "CHECK SPIN DIRECTION 🔄", desc: "Motors 1 & 2 spin Counter-Clockwise (CCW). Motors 3 & 4 spin Clockwise (CW)." },
-          { num: 3, title: "2-WIRE SWAP RULE 🔀", desc: "If motor spins backward, simply swap ANY TWO of its 3 wires! Reverses rotation instantly." }
+          { num: 1, title: "PLUG 3 BULLET WIRES", desc: "Connect the 3 motor bullet connectors into the 3 matching ESC bullet sockets." },
+          { num: 2, title: "CHECK SPIN DIRECTION", desc: "Motors 1 & 2 spin Counter-Clockwise (CCW). Motors 3 & 4 spin Clockwise (CW)." },
+          { num: 3, title: "2-WIRE SWAP RULE", desc: "If motor spins backward, simply swap ANY TWO of its 3 wires! Reverses rotation instantly." }
         ],
         pitfall: "Loose bullet connectors cause mid-air motor stall and violent death-roll flips. Secure with zip ties.",
         deepdive: "Brushless motors use 3-phase AC trapezoidal commutation generated by the 6-MOSFET ESC bridge. Reversing any two phases inverts the phase angle by 120°.",
@@ -5130,9 +5130,9 @@ class DroneSimulations {
         title: "Flight Controller Anti-Vibration Mounting",
         phase: "Phase 3: Brain Installation",
         actions: [
-          { num: 1, title: "PEEL VIBRATION FOAM 🧽", desc: "Stick high-density 3M foam pad directly in the center of the F450 top plate." },
-          { num: 2, title: "ARROW POINTS NOSE ➔", desc: `Mount the ${selectedFC === 'pixhawk' ? 'Pixhawk' : 'APM'} with its forward arrow pointing straight between the 2 Red arms.` },
-          { num: 3, title: "SCREW TOP PLATE 🔩", desc: "Secure the top plate to all 4 arms using 16 M2.5 screws. Keep wires clear of pinch points." }
+          { num: 1, title: "PEEL VIBRATION FOAM", desc: "Stick high-density 3M foam pad directly in the center of the F450 top plate." },
+          { num: 2, title: "ARROW POINTS NOSE", desc: `Mount the ${selectedFC === 'pixhawk' ? 'Pixhawk' : 'APM'} with its forward arrow pointing straight between the 2 Red arms.` },
+          { num: 3, title: "SCREW TOP PLATE", desc: "Secure the top plate to all 4 arms using 16 M2.5 screws. Keep wires clear of pinch points." }
         ],
         pitfall: "Never bolt flight controller rigidly to frame! Frame vibrations blind the gyro and cause violent toilet-bowling.",
         deepdive: "Internal IMUs sample accelerations at 1000Hz. Acoustic propeller frequencies (80Hz-250Hz) cause clipping if not isolated by damping foam.",
@@ -5143,9 +5143,9 @@ class DroneSimulations {
         title: "Power Module DF13 Cable to Controller",
         phase: "Phase 3: Brain Wiring",
         actions: [
-          { num: 1, title: "CONNECT 6-PIN CABLE 🔌", desc: `Plug the 6-pin twisted Power Module cable into the ${selectedFC === 'pixhawk' ? 'POWER' : 'PM'} port.` },
-          { num: 2, title: "CHECK POLARITY & 5.3V ⚡", desc: "Power module steps down 11.1V LiPo battery voltage into regulated 5.3V DC for the processor." },
-          { num: 3, title: selectedFC === 'pixhawk' ? "ISOLATED POWER RAIL ✅" : "REMOVE JP1 JUMPER ⚠️", desc: selectedFC === 'pixhawk' ? "Pixhawk has automatic power selection between Power Module and USB." : "MANDATORY: Remove JP1 jumper to prevent ESC 5V regulator fighting the Power Module!" }
+          { num: 1, title: "CONNECT 6-PIN CABLE", desc: `Plug the 6-pin twisted Power Module cable into the ${selectedFC === 'pixhawk' ? 'POWER' : 'PM'} port.` },
+          { num: 2, title: "CHECK POLARITY & 5.3V", desc: "Power module steps down 11.1V LiPo battery voltage into regulated 5.3V DC for the processor." },
+          { num: 3, title: selectedFC === 'pixhawk' ? "ISOLATED POWER RAIL" : "REMOVE JP1 JUMPER", desc: selectedFC === 'pixhawk' ? "Pixhawk has automatic power selection between Power Module and USB." : "MANDATORY: Remove JP1 jumper to prevent ESC 5V regulator fighting the Power Module!" }
         ],
         pitfall: selectedFC === 'pixhawk' ? "Do not plug Power Module into TELEM or GPS ports; pin voltage is incompatible!" : "CRITICAL: Leaving JP1 in place with both ESC BEC and Power Module burns out the 3.3V voltage regulator!",
         deepdive: "The Power Module uses an INA169 current shunt amplifier to send analog voltage and current telemetry to ADC channels.",
@@ -5156,9 +5156,9 @@ class DroneSimulations {
         title: "ESC Servo Signal Wires to Motor Rails",
         phase: "Phase 4: Control Wiring",
         actions: [
-          { num: 1, title: "MOTOR 1 ➔ PIN 1 🎯", desc: "Plug Front-Right ESC into Pin 1 (Signal wire facing inner rail, Ground to outer)." },
-          { num: 2, title: "MOTOR 2 ➔ PIN 2 🎯", desc: "Plug Rear-Left ESC into Pin 2. Motor 3 into Pin 3. Motor 4 into Pin 4." },
-          { num: 3, title: "CHECK GROUND WIRE ⬛", desc: "Always connect signal ground (brown/black) wire to prevent electrical noise jitter." }
+          { num: 1, title: "MOTOR 1 TO PIN 1", desc: "Plug Front-Right ESC into Pin 1 (Signal wire facing inner rail, Ground to outer)." },
+          { num: 2, title: "MOTOR 2 TO PIN 2", desc: "Plug Rear-Left ESC into Pin 2. Motor 3 into Pin 3. Motor 4 into Pin 4." },
+          { num: 3, title: "CHECK GROUND WIRE", desc: "Always connect signal ground (brown/black) wire to prevent electrical noise jitter." }
         ],
         pitfall: "Plugging Motor 1 into Pin 4 causes drone to violently flip upside down on takeoff instantly!",
         deepdive: "ArduCopter Quad-X motor numbering is: 1=Front-Right (CCW), 2=Rear-Left (CCW), 3=Front-Left (CW), 4=Rear-Right (CW).",
@@ -5169,9 +5169,9 @@ class DroneSimulations {
         title: "FlySky RC Receiver & Dual Antennas",
         phase: "Phase 4: RF Link",
         actions: [
-          { num: 1, title: "CONNECT RC IN CABLE 📻", desc: `Connect receiver PPM/i-Bus 3-pin cable to ${selectedFC === 'pixhawk' ? 'RC IN port' : 'INPUT 1'}.` },
-          { num: 2, title: "SET 90° V-ANTENNAS 📐", desc: "Mount dual receiver antennas at 90° angle (V-shape) away from carbon fiber and metal arms." },
-          { num: 3, title: "BIND WITH TRANSMITTER 📡", desc: "Power up with bind plug inserted; verify solid red link LED on FlySky FS-iA6B." }
+          { num: 1, title: "CONNECT RC IN CABLE", desc: `Connect receiver PPM/i-Bus 3-pin cable to ${selectedFC === 'pixhawk' ? 'RC IN port' : 'INPUT 1'}.` },
+          { num: 2, title: "SET 90 DEGREE V-ANTENNAS", desc: "Mount dual receiver antennas at 90° angle (V-shape) away from carbon fiber and metal arms." },
+          { num: 3, title: "BIND WITH TRANSMITTER", desc: "Power up with bind plug inserted; verify solid red link LED on FlySky FS-iA6B." }
         ],
         pitfall: "Antennas parallel to carbon fiber lose 80% signal range! Always maintain 90-degree spatial diversity.",
         deepdive: "90° antenna polarization ensures that when the drone banks at a 45° angle, at least one antenna remains aligned with transmitter signal waves.",
@@ -5182,9 +5182,9 @@ class DroneSimulations {
         title: "Elevated GPS Mast & External Compass",
         phase: "Phase 5: Navigation & Safety",
         actions: [
-          { num: 1, title: "RAISE 14cm MAST 🗼", desc: "Mount GPS folding mast on rear arm. Elevates puck away from high-current motor wires." },
-          { num: 2, title: "PLUG GPS & I2C CABLES 🧭", desc: `Plug 6-pin GPS cable into GPS port. Plug 4-pin compass cable into ${selectedFC === 'pixhawk' ? 'I2C port' : 'I2C socket'}.` },
-          { num: 3, title: "ARROW POINTS FORWARD ➔", desc: "Ensure arrow printed on top of the GPS puck points strictly toward the Red front arms!" }
+          { num: 1, title: "RAISE 14cm MAST", desc: "Mount GPS folding mast on rear arm. Elevates puck away from high-current motor wires." },
+          { num: 2, title: "PLUG GPS & I2C CABLES", desc: `Plug 6-pin GPS cable into GPS port. Plug 4-pin compass cable into ${selectedFC === 'pixhawk' ? 'I2C port' : 'I2C socket'}.` },
+          { num: 3, title: "ARROW POINTS FORWARD", desc: "Ensure arrow printed on top of the GPS puck points strictly toward the Red front arms!" }
         ],
         pitfall: "Mounting GPS flat on frame blinds compass with 60A motor electromagnetic noise, causing violent flyaways!",
         deepdive: "Earth's magnetic field is ~0.5 Gauss. High DC currents through the PDB create magnetic fields exceeding 2.0 Gauss, blinding the magnetometer without mast elevation.",
@@ -5195,9 +5195,9 @@ class DroneSimulations {
         title: "Safety Switch, Buzzer & Pre-Flight Check",
         phase: "Phase 5: Pre-Flight Safety",
         actions: [
-          { num: 1, title: selectedFC === 'pixhawk' ? "CONNECT SAFETY SWITCH 🔘" : "CONNECT BUZZER 📢", desc: selectedFC === 'pixhawk' ? "Plug red safety button into SWITCH port. Plug audio beeper into BUZZER port." : "Plug audio diagnostic beeper into BUZZER output." },
-          { num: 2, title: "CONTINUITY METER TEST ⚡", desc: "Test XT60 connector with digital multimeter in continuity mode. MUST NOT BEEP (No short circuit!)." },
-          { num: 3, title: "SMOKE STOPPER POWER-UP 🛡️", desc: "First LiPo plug-in MUST use inline Smoke Stopper polyfuse. Props strictly OFF on bench!" }
+          { num: 1, title: selectedFC === 'pixhawk' ? "CONNECT SAFETY SWITCH" : "CONNECT BUZZER", desc: selectedFC === 'pixhawk' ? "Plug red safety button into SWITCH port. Plug audio beeper into BUZZER port." : "Plug audio diagnostic beeper into BUZZER output." },
+          { num: 2, title: "CONTINUITY METER TEST", desc: "Test XT60 connector with digital multimeter in continuity mode. MUST NOT BEEP (No short circuit!)." },
+          { num: 3, title: "SMOKE STOPPER POWER-UP", desc: "First LiPo plug-in MUST use inline Smoke Stopper polyfuse. Props strictly OFF on bench!" }
         ],
         pitfall: "NEVER install propellers on the bench! A misconfigured motor can spin to 10,000 RPM in 0.1 seconds.",
         deepdive: "Pixhawk safety switch keeps motor PWM lines held low until pressed for 2 seconds, preventing accidental motor spins.",
@@ -5226,7 +5226,7 @@ class DroneSimulations {
         const pill = document.createElement('button');
         pill.className = `asm-step-pill ${s.step === currentStep ? 'active' : ''} ${completedSteps.has(s.step) ? 'completed' : ''}`;
         const isVerified = verifiedSteps.has(s.step);
-        pill.innerHTML = `<span>${s.step}</span>${isVerified ? '<span style="color:#10b981;font-weight:900;">✓</span>' : ''}`;
+        pill.innerHTML = `<span>${s.step}</span>${isVerified ? '<span style="color:#10b981;font-weight:900;margin-left:3px;">[OK]</span>' : ''}`;
         pill.title = `Step ${s.step}: ${s.title}`;
         pill.addEventListener('click', () => goToStep(s.step));
         stepPillsContainer.appendChild(pill);
@@ -5263,12 +5263,12 @@ class DroneSimulations {
       if (btnVerify && verifyIcon && verifyText) {
         if (verifiedSteps.has(currentStep)) {
           btnVerify.classList.add('verified');
-          verifyIcon.textContent = '✅';
-          verifyText.textContent = `Step ${currentStep} Verified Complete!`;
+          verifyIcon.textContent = '[OK] ';
+          verifyText.textContent = `Step ${currentStep} Verified Complete`;
         } else {
           btnVerify.classList.remove('verified');
-          verifyIcon.textContent = '⬜';
-          verifyText.textContent = `Tap to Verify Step ${currentStep} Completion`;
+          verifyIcon.textContent = '[ ] ';
+          verifyText.textContent = `Click to Verify Step ${currentStep} Completion`;
         }
       }
 
@@ -5593,7 +5593,7 @@ class DroneSimulations {
       ctx.fillStyle = "#0369a1";
       ctx.font = "bold 13px var(--font-sans)";
       ctx.textAlign = "center";
-      ctx.fillText("▲ FRONT NOSE (FORWARD FLIGHT HEADING)", cx, 74);
+      ctx.fillText("FRONT NOSE (FORWARD FLIGHT HEADING)", cx, 74);
       ctx.textAlign = "left";
 
       // 2. F450 4 Detailed Molded Arms
@@ -6174,7 +6174,7 @@ class DroneSimulations {
       ctx.fillText(selectedFC === 'pixhawk' ? "PIXHAWK 2.4.8 FLIGHT CONTROLLER DETAILED PINOUTS" : "APM 2.8 FLIGHT CONTROLLER PINOUTS & JUMPERS", px + pw / 2, py + 56);
       ctx.font = "bold 11px 'JetBrains Mono', monospace";
       ctx.fillStyle = "#0284c7";
-      ctx.fillText("▲ FORWARD FACING NOSE DIRECTION ▲", px + pw / 2, py + 74);
+      ctx.fillText("FORWARD FACING NOSE DIRECTION", px + pw / 2, py + 74);
 
       const drawPortBlock = (bx, by, bw, bh, title, pins, color) => {
         ctx.fillStyle = "#ffffff";
@@ -6615,7 +6615,7 @@ class DroneSimulations {
 
       ctx.fillStyle = "#dc2626";
       ctx.font = "bold 12px 'JetBrains Mono', monospace";
-      ctx.fillText("▲ 60A DC EMF NOISE ZONE (DEADLY TO COMPASS) ▲", cx - 240, cy + 60);
+      ctx.fillText("60A DC EMF NOISE ZONE (DEADLY TO COMPASS)", cx - 240, cy + 60);
 
       // FlySky Receiver Module on Right
       const rxX = cx + 140;

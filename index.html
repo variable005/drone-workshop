@@ -14,7 +14,6 @@
     <div class="site-topbar">
       <!-- Brand Identity -->
       <div class="brand-group">
-        <div class="brand-icon">🚁</div>
         <div class="brand-titles">
           <h1 class="brand-title-main">DRONE WORKSHOP</h1>
           <span class="brand-badge">4-DAY MASTERCLASS</span>
@@ -41,12 +40,10 @@
         <div class="nav-track-segment track-practical-segment">
           <span class="nav-segment-label practical">PRACTICAL</span>
           <button class="nav-tab-btn nav-tab-flagship" data-tab="tab-hardware-assembly">
-            <span>🛠️</span>
             <span>F450 Assembly Lab</span>
             <span class="flagship-chip">Pixhawk/APM</span>
           </button>
           <button class="nav-tab-btn" data-tab="tab-simulations">
-            <span>⚡</span>
             <span>Simulators (13)</span>
           </button>
         </div>
@@ -783,7 +780,7 @@
           <!-- Left: Lab Identity & Mode Toggle -->
           <div class="asm-studio-left">
             <div class="asm-studio-brand">
-              <span>🚁 F450 BUILD LAB</span>
+              <span>F450 BUILD LAB</span>
               <span class="badge-practical">PRACTICAL</span>
             </div>
 
@@ -792,11 +789,9 @@
             <!-- Mode Switcher: Practical vs Theory -->
             <div class="asm-mode-toggle" role="tablist" aria-label="Assembly Modes">
               <button class="asm-mode-btn active" id="btn-mode-practical">
-                <span>🛠️</span>
                 <span>Practical Build</span>
               </button>
               <button class="asm-mode-btn" id="btn-mode-theory">
-                <span>📖</span>
                 <span>Theory Pinouts</span>
               </button>
             </div>
@@ -819,10 +814,10 @@
             <div class="asm-control-group">
               <span class="asm-group-label">View:</span>
               <div class="compact-toggle">
-                <button class="switch-btn active" id="btn-view-airframe">🚁 Airframe</button>
-                <button class="switch-btn" id="btn-view-pinout">🔌 Pinouts</button>
-                <button class="switch-btn" id="btn-view-pdb">⚡ PDB</button>
-                <button class="switch-btn" id="btn-view-radio">📡 GPS/Rx</button>
+                <button class="switch-btn active" id="btn-view-airframe">Airframe</button>
+                <button class="switch-btn" id="btn-view-pinout">Pinouts</button>
+                <button class="switch-btn" id="btn-view-pdb">PDB Solder</button>
+                <button class="switch-btn" id="btn-view-radio">GPS &amp; Rx</button>
               </div>
             </div>
           </div>
@@ -833,8 +828,8 @@
             <div class="asm-control-group">
               <span class="asm-group-label">Layout:</span>
               <div class="compact-toggle">
-                <button class="switch-btn active" id="btn-layout-fullwidth" title="Giant Full-Width Blueprint">⛶ Full</button>
-                <button class="switch-btn" id="btn-layout-split" title="Split Screen Mode">◫ Split</button>
+                <button class="switch-btn active" id="btn-layout-fullwidth" title="Giant Full-Width Blueprint">Full-Width</button>
+                <button class="switch-btn" id="btn-layout-split" title="Split Screen Mode">Split</button>
               </div>
             </div>
 
@@ -843,8 +838,8 @@
             <!-- Step Navigation -->
             <div class="asm-control-group">
               <span id="asm-step-badge" class="asm-step-pill-badge">STEP 1/10</span>
-              <button class="btn-secondary compact-btn" id="btn-asm-prev">← Prev</button>
-              <button class="btn-primary compact-btn" id="btn-asm-next">Next →</button>
+              <button class="btn-secondary compact-btn" id="btn-asm-prev">&larr; Prev</button>
+              <button class="btn-primary compact-btn" id="btn-asm-next">Next &rarr;</button>
             </div>
           </div>
         </div>
@@ -863,10 +858,10 @@
               <!-- Floating Zoom & Fit Toolbar -->
               <div class="asm-canvas-floating-tools">
                 <span class="asm-group-label" style="font-size: 10px; margin-right: 2px;">ZOOM:</span>
-                <button class="asm-tool-btn" id="btn-zoom-in" title="Zoom In (+)">➕</button>
-                <button class="asm-tool-btn" id="btn-zoom-out" title="Zoom Out (-)">➖</button>
+                <button class="asm-tool-btn" id="btn-zoom-in" title="Zoom In (+)">+</button>
+                <button class="asm-tool-btn" id="btn-zoom-out" title="Zoom Out (-)">-</button>
                 <span id="asm-zoom-val" class="asm-zoom-indicator">100%</span>
-                <button class="asm-tool-btn" id="btn-zoom-reset" title="Reset Zoom &amp; Pan">⟲ Reset</button>
+                <button class="asm-tool-btn" id="btn-zoom-reset" title="Reset Zoom &amp; Pan">Reset</button>
               </div>
 
               <!-- Giant Canvas (1350 x 820 internal High-DPI resolution) -->
@@ -897,8 +892,8 @@
                 <!-- Deep Dive Dropdown for Instructors -->
                 <details class="asm-deepdive-details" style="margin-top: 4px;">
                   <summary class="asm-deepdive-summary">
-                    <span>📘 Instructor Engineering Notes &amp; Deep-Dive Details</span>
-                    <span style="font-size: 10px;">▼</span>
+                    <span>Instructor Notes &amp; Deep-Dive Details</span>
+                    <span style="font-size: 10px;">Details</span>
                   </summary>
                   <div id="asm-step-deepdive" class="asm-deepdive-content">
                     Detailed engineering instructions will appear here.
@@ -910,7 +905,7 @@
               <div class="asm-rack-side-col">
                 <!-- Danger Pitfall Alert Box -->
                 <div class="asm-danger-box">
-                  <div class="asm-danger-icon">🚫</div>
+                  <div class="asm-danger-icon">CRITICAL:</div>
                   <div id="asm-step-pitfall" class="asm-danger-text">
                     Never install arms upside down! Snug tight only into brass inserts.
                   </div>
@@ -919,7 +914,7 @@
                 <!-- Gamified Step Verification Button -->
                 <div class="asm-verify-box" style="margin: 0;">
                   <button id="btn-asm-verify" class="asm-verify-btn">
-                    <span id="asm-verify-icon">⬜</span>
+                    <span id="asm-verify-icon"></span>
                     <span id="asm-verify-text">Tap to Verify Step Completion</span>
                   </button>
                 </div>
@@ -950,7 +945,6 @@
             <!-- Theory 1: Motor Physics -->
             <div class="asm-theory-card">
               <div class="asm-theory-card-header">
-                <span class="asm-theory-card-icon">🛞</span>
                 <span class="asm-theory-card-title">1. Brushless Motor (BLDC) 3-Phase Physics &amp; Reversal Law</span>
               </div>
               <div class="asm-theory-card-body">
@@ -967,15 +961,14 @@
             <!-- Theory 2: Propeller Threads -->
             <div class="asm-theory-card">
               <div class="asm-theory-card-header">
-                <span class="asm-theory-card-icon">🌪️</span>
                 <span class="asm-theory-card-title">2. CW vs. CCW Propeller Threads &amp; Self-Tightening Physics</span>
               </div>
               <div class="asm-theory-card-body">
                 <p>During sudden throttle bursts, motor acceleration generates rotational inertia on the propeller nut.</p>
                 <table class="asm-theory-table">
                   <tr><th>Motor Position</th><th>Rotation</th><th>Nut Color &amp; Thread</th><th>Self-Tightening Dynamic</th></tr>
-                  <tr><td>Motor 1 (FR) &amp; Motor 2 (RL)</td><td>Counter-Clockwise (CCW ↺)</td><td><strong>Black Nut</strong> (Standard Right-Hand Thread)</td><td>Motor spins CCW, inertia spins nut CW (tightens nut automatically).</td></tr>
-                  <tr><td>Motor 3 (FL) &amp; Motor 4 (RR)</td><td>Clockwise (CW ↻)</td><td><strong>Silver Nut</strong> (Reverse Left-Hand Thread)</td><td>Motor spins CW, inertia spins nut CCW (tightens nut automatically).</td></tr>
+                  <tr><td>Motor 1 (FR) &amp; Motor 2 (RL)</td><td>Counter-Clockwise (CCW)</td><td><strong>Black Nut</strong> (Standard Right-Hand Thread)</td><td>Motor spins CCW, inertia spins nut CW (tightens nut automatically).</td></tr>
+                  <tr><td>Motor 3 (FL) &amp; Motor 4 (RR)</td><td>Clockwise (CW)</td><td><strong>Silver Nut</strong> (Reverse Left-Hand Thread)</td><td>Motor spins CW, inertia spins nut CCW (tightens nut automatically).</td></tr>
                 </table>
               </div>
             </div>
@@ -983,7 +976,6 @@
             <!-- Theory 3: ESC Architecture -->
             <div class="asm-theory-card">
               <div class="asm-theory-card-header">
-                <span class="asm-theory-card-icon">⚡</span>
                 <span class="asm-theory-card-title">3. ESC Architecture: Gate Drivers, MOSFETs &amp; PWM Signals</span>
               </div>
               <div class="asm-theory-card-body">
@@ -999,7 +991,6 @@
             <!-- Theory 4: Pixhawk vs APM 2.8 Comparison -->
             <div class="asm-theory-card">
               <div class="asm-theory-card-header">
-                <span class="asm-theory-card-icon">🧠</span>
                 <span class="asm-theory-card-title">4. Silicon Architecture: Pixhawk 2.4.8 vs. APM 2.8</span>
               </div>
               <div class="asm-theory-card-body">
@@ -1018,7 +1009,6 @@
             <!-- Theory 5: GPS Mast Magnetic Physics -->
             <div class="asm-theory-card">
               <div class="asm-theory-card-header">
-                <span class="asm-theory-card-icon">📡</span>
                 <span class="asm-theory-card-title">5. Magnetic Interference Physics: Why GPS Masts Are Mandatory</span>
               </div>
               <div class="asm-theory-card-body">
@@ -1034,7 +1024,6 @@
             <!-- Theory 6: Bench Safety Laws -->
             <div class="asm-theory-card">
               <div class="asm-theory-card-header">
-                <span class="asm-theory-card-icon">🛡️</span>
                 <span class="asm-theory-card-title">6. Golden Bench Safety Rules &amp; Smoke Stopper Protocol</span>
               </div>
               <div class="asm-theory-card-body">
@@ -1066,7 +1055,7 @@
         <aside class="sim-sidebar">
           <div class="sim-sidebar-header">
             <h3>Simulation Tools</h3>
-            <button id="btn-collapse-sidebar" class="sidebar-collapse-btn" title="Collapse Sidebar" aria-label="Collapse Sidebar">◀</button>
+            <button id="btn-collapse-sidebar" class="sidebar-collapse-btn" title="Collapse Sidebar" aria-label="Collapse Sidebar">&lt;</button>
           </div>
           <button class="sim-tab-btn active" data-sim-target="sim-flight-physics">1. 3D Flight Physics & Motors</button>
           <button class="sim-tab-btn" data-sim-target="sim-thrust-calc">2. Thrust-to-Weight Calculator</button>
@@ -1086,7 +1075,7 @@
 
         <!-- Viewport -->
         <div class="sim-viewport">
-          <button id="btn-expand-sidebar" class="sidebar-expand-btn" style="display: none;">▶ Show Simulations List (14)</button>
+          <button id="btn-expand-sidebar" class="sidebar-expand-btn" style="display: none;">Show Simulations (14)</button>
 
           <!-- 1. FLIGHT PHYSICS -->
           <div class="sim-panel active" id="sim-flight-physics">
@@ -2211,13 +2200,13 @@
             <div class="hero-card" style="text-align: center; padding: 48px 24px; border: 1px solid var(--border-medium); border-radius: var(--radius-lg); background-color: var(--bg-card);">
               <span class="day-badge" style="background-color: #0284c7; color: #ffffff; border-color: #0369a1;">PRACTICAL WORKSHOP • CLASS 2 &amp; 3</span>
               <h3 style="font-size: 22px; margin: 14px 0 8px; font-weight: 800; color: var(--text-primary);">
-                🚁 F450 Drone Assembly &amp; Wiring Master Blueprint
+                F450 Drone Assembly &amp; Wiring Master Blueprint
               </h3>
               <p style="max-width: 620px; margin: 0 auto 24px; color: var(--text-secondary); line-height: 1.6; font-size: 14px;">
                 This comprehensive hands-on workshop is now hosted in its own full-width dedicated practical lab with giant high-definition engineering blueprints, interactive zoom controls, theory &amp; practical modes, and step-by-step Pixhawk 2.4.8 &amp; APM 2.8 wiring schematics.
               </p>
               <button class="btn-primary" data-jump-tab="tab-hardware-assembly" style="font-size: 14px; padding: 12px 28px; font-weight: 700; cursor: pointer;">
-                Launch Full-Width Assembly Workshop ➔
+                Launch Full-Width Assembly Workshop &rarr;
               </button>
             </div>
           </div>
