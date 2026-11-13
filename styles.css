@@ -103,8 +103,8 @@ body {
   align-items: center;
   justify-content: space-between;
   height: 52px;
-  padding: 0 20px;
-  max-width: 1440px;
+  padding: 0 24px;
+  max-width: 1400px;
   margin: 0 auto;
   gap: 12px;
 }
@@ -326,7 +326,7 @@ body {
 .main-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 14px 20px 48px;
+  padding: 20px 24px 48px;
 }
 
 .tab-pane {
@@ -2132,6 +2132,15 @@ body {
   line-height: 1.6;
 }
 
+.hour-text p:last-child,
+.bullet-list:last-child,
+.bullet-list li:last-child,
+.sim-launch-card p:last-child,
+.quiz-topic-btn:last-child,
+.quiz-question-box:last-child {
+  margin-bottom: 0;
+}
+
 /* ==========================================================================
    RESPONSIVE & MOBILE UI OPTIMIZATIONS
    ========================================================================== */
@@ -2214,12 +2223,14 @@ img, canvas, svg {
   }
 
   .main-content {
-    padding: 12px 12px 36px;
+    padding: 12px 12px 32px;
   }
 
-  .hero-card {
+  .hero-card,
+  .day-header-banner,
+  .quiz-hub-card {
     padding: 18px 16px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
 
   .hero-header {
@@ -2228,9 +2239,27 @@ img, canvas, svg {
     margin-bottom: 18px;
   }
 
-  .hero-header h2 {
+  .hero-header h2,
+  .day-header-banner h2,
+  .quiz-hub-header h2 {
     font-size: 21px;
     line-height: 1.25;
+  }
+
+  .hours-container {
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+
+  .hour-header {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .hour-title {
+    font-size: 15.5px;
+    line-height: 1.35;
   }
 
   .hour-body {
@@ -2238,10 +2267,37 @@ img, canvas, svg {
     gap: 18px;
   }
 
+  .concept-box {
+    padding: 14px 16px;
+  }
+
   .glossary-grid,
-  .quiz-grid,
+  .quiz-days-grid,
   .asm-theory-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .glossary-card,
+  .quiz-day-card,
+  .active-quiz-modal {
+    padding: 16px;
+  }
+
+  .quiz-hub-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .quiz-topic-btn {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .quiz-opt-btn {
+    padding: 12px 14px;
   }
 
   /* Simulators Mobile Layout */
