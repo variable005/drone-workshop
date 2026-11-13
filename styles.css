@@ -2131,3 +2131,229 @@ body {
   margin-top: var(--space-3xl);
   line-height: 1.6;
 }
+
+/* ==========================================================================
+   RESPONSIVE & MOBILE UI OPTIMIZATIONS
+   ========================================================================== */
+html, body {
+  overflow-x: hidden;
+}
+
+img, canvas, svg {
+  max-width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .site-topbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 16px;
+    gap: 8px;
+  }
+
+  .brand-group {
+    order: 1;
+  }
+
+  .header-tools-compact {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .nav-bar-compact {
+    order: 3;
+    width: 100%;
+    flex-basis: 100%;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 960px) {
+  .asm-display-wrapper.layout-split,
+  .asm-actions-rack-fullwidth {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-topbar {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .brand-badge {
+    display: none;
+  }
+
+  .brand-title-main {
+    font-size: 14px;
+  }
+
+  .search-box-compact {
+    width: 105px;
+    padding: 4px 8px;
+  }
+
+  .search-box-compact:focus-within {
+    width: 140px;
+  }
+
+  .search-hint {
+    display: none;
+  }
+
+  .progress-pill-compact {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .nav-tab-btn {
+    padding: 6px 9px;
+    font-size: 12px;
+  }
+
+  .main-content {
+    padding: 12px 12px 36px;
+  }
+
+  .hero-card {
+    padding: 18px 16px;
+    margin-bottom: 24px;
+  }
+
+  .hero-header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .hero-header h2 {
+    font-size: 21px;
+    line-height: 1.25;
+  }
+
+  .hour-body {
+    padding: 16px;
+    gap: 18px;
+  }
+
+  .glossary-grid,
+  .quiz-grid,
+  .asm-theory-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Simulators Mobile Layout */
+  .sim-sidebar {
+    padding: 12px;
+    gap: 6px;
+  }
+
+  .sim-tab-btn {
+    padding: 9px 12px;
+    font-size: 12.5px;
+  }
+
+  .sim-viewport {
+    padding: 14px;
+    min-height: auto;
+  }
+
+  .sim-panel-header h3 {
+    font-size: 18px;
+  }
+
+  .sim-controls-card {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .channel-row {
+    grid-template-columns: 82px 1fr 48px;
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  /* Slide Deck Mobile Layout */
+  .slides-toolbar {
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .slide-controls-left {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .slide-day-select {
+    flex: 1;
+    min-width: 0;
+    font-size: 12.5px;
+    padding: 7px 10px;
+  }
+
+  .slide-stage {
+    padding: 18px 14px;
+    min-height: 360px;
+  }
+
+  .slide-heading {
+    font-size: 21px;
+    margin-bottom: 14px;
+  }
+
+  .slide-bullets li {
+    font-size: 14px;
+    padding-left: 20px;
+    margin-bottom: 10px;
+  }
+
+  .slide-takeaway-box {
+    padding: 14px;
+    font-size: 13px;
+  }
+
+  /* F450 Assembly Lab Mobile Layout */
+  .asm-unified-header {
+    padding: 10px;
+  }
+
+  .asm-step-main-title {
+    white-space: normal;
+    font-size: 13.5px;
+  }
+
+  .asm-step-pills-slim {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .asm-actions-rack-fullwidth {
+    padding: 14px;
+  }
+
+  .asm-canvas-floating-tools {
+    top: 6px;
+    right: 6px;
+    padding: 2px 4px;
+    gap: 2px;
+  }
+
+  .asm-tool-btn {
+    padding: 3px 5px;
+    font-size: 10px;
+  }
+
+  .asm-theory-card {
+    padding: 14px;
+    overflow-x: auto;
+  }
+
+  .site-footer {
+    padding: 20px 14px;
+    margin-top: 32px;
+    font-size: 12px;
+  }
+}
